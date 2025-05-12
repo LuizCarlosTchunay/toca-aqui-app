@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import ProfileCard from "@/components/ProfileCard";
 import { Button } from "@/components/ui/button";
@@ -131,31 +132,31 @@ const ExploreProfessionals = () => {
     }
     
     // City filter
-    if (filters.city && matches) {
+    if (filters.city && filters.city !== "all" && matches) {
       matches = matches && professional.city.toLowerCase() === filters.city.toLowerCase();
     }
     
     // State filter
-    if (filters.state && matches) {
+    if (filters.state && filters.state !== "all" && matches) {
       matches = matches && professional.state.toLowerCase() === filters.state.toLowerCase();
     }
     
     // Min price filter
     if (filters.minPrice && matches) {
       const minPrice = parseInt(filters.minPrice);
-      matches = matches && (professional.hourlyRate >= minPrice || professional.eventRate >= minPrice);
+      matches = matches && !isNaN(minPrice) && (professional.hourlyRate >= minPrice || professional.eventRate >= minPrice);
     }
     
     // Max price filter
     if (filters.maxPrice && matches) {
       const maxPrice = parseInt(filters.maxPrice);
-      matches = matches && (professional.hourlyRate <= maxPrice || professional.eventRate <= maxPrice);
+      matches = matches && !isNaN(maxPrice) && (professional.hourlyRate <= maxPrice || professional.eventRate <= maxPrice);
     }
     
     // Rating filter
-    if (filters.rating && matches) {
+    if (filters.rating && filters.rating !== "any" && matches) {
       const rating = parseInt(filters.rating);
-      matches = matches && professional.rating >= rating;
+      matches = matches && !isNaN(rating) && professional.rating >= rating;
     }
     
     return matches;
@@ -169,49 +170,49 @@ const ExploreProfessionals = () => {
         <div className="flex overflow-x-auto scrollbar-hide pb-4 gap-2 mb-4">
           <Button
             variant={activeType === "" ? "default" : "outline"}
-            className={activeType === "" ? "bg-toca-accent hover:bg-toca-accent-hover" : "border-toca-border"}
+            className={activeType === "" ? "bg-toca-accent hover:bg-toca-accent-hover" : "bg-black text-white hover:bg-gray-800"}
             onClick={() => setActiveType("")}
           >
             <Users size={18} className="mr-2" /> Todos
           </Button>
           <Button
             variant={activeType === "Músico" ? "default" : "outline"}
-            className={activeType === "Músico" ? "bg-toca-accent hover:bg-toca-accent-hover" : "border-toca-border"}
+            className={activeType === "Músico" ? "bg-toca-accent hover:bg-toca-accent-hover" : "bg-black text-white hover:bg-gray-800"}
             onClick={() => setActiveType(activeType === "Músico" ? "" : "Músico")}
           >
             <Music size={18} className="mr-2" /> Músicos
           </Button>
           <Button
             variant={activeType === "DJ" ? "default" : "outline"}
-            className={activeType === "DJ" ? "bg-toca-accent hover:bg-toca-accent-hover" : "border-toca-border"}
+            className={activeType === "DJ" ? "bg-toca-accent hover:bg-toca-accent-hover" : "bg-black text-white hover:bg-gray-800"}
             onClick={() => setActiveType(activeType === "DJ" ? "" : "DJ")}
           >
             <Disc size={18} className="mr-2" /> DJs
           </Button>
           <Button
             variant={activeType === "Fotógrafo" ? "default" : "outline"}
-            className={activeType === "Fotógrafo" ? "bg-toca-accent hover:bg-toca-accent-hover" : "border-toca-border"}
+            className={activeType === "Fotógrafo" ? "bg-toca-accent hover:bg-toca-accent-hover" : "bg-black text-white hover:bg-gray-800"}
             onClick={() => setActiveType(activeType === "Fotógrafo" ? "" : "Fotógrafo")}
           >
             <Camera size={18} className="mr-2" /> Fotógrafos
           </Button>
           <Button
             variant={activeType === "Filmmaker" ? "default" : "outline"}
-            className={activeType === "Filmmaker" ? "bg-toca-accent hover:bg-toca-accent-hover" : "border-toca-border"}
+            className={activeType === "Filmmaker" ? "bg-toca-accent hover:bg-toca-accent-hover" : "bg-black text-white hover:bg-gray-800"}
             onClick={() => setActiveType(activeType === "Filmmaker" ? "" : "Filmmaker")}
           >
             <Film size={18} className="mr-2" /> Filmmakers
           </Button>
           <Button
             variant={activeType === "Técnico de Som" ? "default" : "outline"}
-            className={activeType === "Técnico de Som" ? "bg-toca-accent hover:bg-toca-accent-hover" : "border-toca-border"}
+            className={activeType === "Técnico de Som" ? "bg-toca-accent hover:bg-toca-accent-hover" : "bg-black text-white hover:bg-gray-800"}
             onClick={() => setActiveType(activeType === "Técnico de Som" ? "" : "Técnico de Som")}
           >
             Técnicos de Som
           </Button>
           <Button
             variant={activeType === "Técnico de Luz" ? "default" : "outline"}
-            className={activeType === "Técnico de Luz" ? "bg-toca-accent hover:bg-toca-accent-hover" : "border-toca-border"}
+            className={activeType === "Técnico de Luz" ? "bg-toca-accent hover:bg-toca-accent-hover" : "bg-black text-white hover:bg-gray-800"}
             onClick={() => setActiveType(activeType === "Técnico de Luz" ? "" : "Técnico de Luz")}
           >
             Técnicos de Luz
@@ -320,7 +321,7 @@ const ExploreProfessionals = () => {
             <div className="flex justify-end mt-4">
               <Button 
                 variant="outline" 
-                className="mr-2"
+                className="mr-2 bg-black text-white hover:bg-gray-800"
                 onClick={() => setFilters({ city: "", state: "", minPrice: "", maxPrice: "", rating: "" })}
               >
                 Limpar
@@ -349,7 +350,7 @@ const ExploreProfessionals = () => {
           <div className="col-span-full text-center py-16">
             <p className="text-toca-text-secondary mb-4">Nenhum profissional encontrado com os filtros atuais.</p>
             <Button 
-              className="bg-toca-accent hover:bg-toca-accent-hover"
+              className="bg-black text-toca-accent hover:bg-gray-900"
               onClick={() => {
                 setSearchTerm("");
                 setActiveType("");

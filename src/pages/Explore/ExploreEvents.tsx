@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import EventCard from "@/components/EventCard";
 import { Button } from "@/components/ui/button";
@@ -93,22 +94,22 @@ const ExploreEvents = () => {
     }
     
     // City filter
-    if (filters.city && matches) {
+    if (filters.city && filters.city !== "all") {
       matches = matches && event.city.toLowerCase() === filters.city.toLowerCase();
     }
     
     // State filter
-    if (filters.state && matches) {
+    if (filters.state && filters.state !== "all") {
       matches = matches && event.state.toLowerCase() === filters.state.toLowerCase();
     }
     
     // Date filter
-    if (filters.date && matches) {
+    if (filters.date) {
       matches = matches && event.date === filters.date;
     }
     
     // Service filter
-    if (filters.service && matches) {
+    if (filters.service && filters.service !== "all") {
       matches = matches && event.services.some(
         service => service.toLowerCase() === filters.service.toLowerCase()
       );
@@ -215,7 +216,7 @@ const ExploreEvents = () => {
             <div className="flex justify-end mt-4">
               <Button 
                 variant="outline" 
-                className="mr-2"
+                className="mr-2 bg-black text-white hover:bg-gray-800"
                 onClick={() => setFilters({ city: "", state: "", date: "", service: "" })}
               >
                 Limpar
@@ -245,7 +246,7 @@ const ExploreEvents = () => {
           <div className="col-span-full text-center py-16">
             <p className="text-toca-text-secondary mb-4">Nenhum evento encontrado com os filtros atuais.</p>
             <Button 
-              className="bg-toca-accent hover:bg-toca-accent-hover"
+              className="bg-black text-toca-accent hover:bg-gray-900"
               onClick={() => {
                 setSearchTerm("");
                 setFilters({ city: "", state: "", date: "", service: "" });

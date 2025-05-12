@@ -171,7 +171,7 @@ const CreateEvent = () => {
                   type="button" 
                   variant="outline" 
                   onClick={() => navigate("/dashboard")}
-                  className="border-toca-border"
+                  className="bg-black text-white hover:bg-gray-800"
                 >
                   Cancelar
                 </Button>
