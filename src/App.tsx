@@ -12,6 +12,15 @@ import Dashboard from "./pages/Dashboard";
 import ExploreProfessionals from "./pages/Explore/ExploreProfessionals";
 import ExploreEvents from "./pages/Explore/ExploreEvents";
 import SplashScreen from "./components/SplashScreen";
+import About from "./pages/About";
+import EditProfile from "./pages/Profile/EditProfile";
+import ProfessionalProfile from "./pages/Profile/ProfessionalProfile";
+import CreateEvent from "./pages/Events/CreateEvent";
+import MyApplications from "./pages/Professional/MyApplications";
+import Notifications from "./pages/Notifications";
+import Settings from "./pages/Settings";
+import BookProfessional from "./pages/Bookings/BookProfessional";
+import Checkout from "./pages/Checkout";
 
 const queryClient = new QueryClient();
 
@@ -42,9 +51,30 @@ const App = () => {
             {/* Dashboard Routes */}
             <Route path="/dashboard" element={<Dashboard />} />
             
+            {/* Profile Routes */}
+            <Route path="/editar-perfil" element={<EditProfile />} />
+            <Route path="/perfil-profissional" element={<ProfessionalProfile />} />
+            <Route path="/profissional/:id" element={<ProfessionalProfile />} />
+            
             {/* Explore Routes */}
             <Route path="/explorar" element={<ExploreProfessionals />} />
             <Route path="/eventos" element={<ExploreEvents />} />
+            
+            {/* Event Routes */}
+            <Route path="/criar-evento" element={<CreateEvent />} />
+            
+            {/* Professional Routes */}
+            <Route path="/minhas-candidaturas" element={<MyApplications />} />
+            
+            {/* Booking Routes */}
+            <Route path="/reservar" element={<BookProfessional />} />
+            <Route path="/reservar/:id" element={<BookProfessional />} />
+            <Route path="/checkout" element={<Checkout />} />
+            
+            {/* Utility Routes */}
+            <Route path="/notificacoes" element={<Notifications />} />
+            <Route path="/configuracoes" element={<Settings />} />
+            <Route path="/sobre" element={<About />} />
             
             {/* Catch-all route */}
             <Route path="*" element={<NotFound />} />
