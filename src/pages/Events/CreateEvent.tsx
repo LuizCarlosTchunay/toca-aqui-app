@@ -15,6 +15,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 const CreateEvent = () => {
   const navigate = useNavigate();
   const [isPublic, setIsPublic] = useState(false);
+  const [selectedState, setSelectedState] = useState<string>("SP");
   
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -104,7 +105,11 @@ const CreateEvent = () => {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="state">Estado</Label>
-                  <Select required>
+                  <Select 
+                    value={selectedState} 
+                    onValueChange={setSelectedState}
+                    required
+                  >
                     <SelectTrigger className="bg-toca-background border-toca-border text-white">
                       <SelectValue placeholder="Selecione" />
                     </SelectTrigger>

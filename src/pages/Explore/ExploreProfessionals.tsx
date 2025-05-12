@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import ProfileCard from "@/components/ProfileCard";
 import { Button } from "@/components/ui/button";
@@ -251,7 +250,7 @@ const ExploreProfessionals = () => {
                     <SelectValue placeholder="Selecione" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Todas</SelectItem>
+                    <SelectItem value="all">Todas</SelectItem>
                     <SelectItem value="São Paulo">São Paulo</SelectItem>
                     <SelectItem value="Rio de Janeiro">Rio de Janeiro</SelectItem>
                     <SelectItem value="Curitiba">Curitiba</SelectItem>
@@ -269,7 +268,7 @@ const ExploreProfessionals = () => {
                     <SelectValue placeholder="Selecione" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Todos</SelectItem>
+                    <SelectItem value="all">Todos</SelectItem>
                     <SelectItem value="SP">SP</SelectItem>
                     <SelectItem value="RJ">RJ</SelectItem>
                     <SelectItem value="PR">PR</SelectItem>
@@ -309,7 +308,7 @@ const ExploreProfessionals = () => {
                     <SelectValue placeholder="Selecione" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Qualquer</SelectItem>
+                    <SelectItem value="any">Qualquer</SelectItem>
                     <SelectItem value="5">5 estrelas</SelectItem>
                     <SelectItem value="4">4+ estrelas</SelectItem>
                     <SelectItem value="3">3+ estrelas</SelectItem>

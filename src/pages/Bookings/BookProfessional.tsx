@@ -16,6 +16,7 @@ import { toast } from "sonner";
 const BookProfessional = () => {
   const navigate = useNavigate();
   const [bookingType, setBookingType] = useState("event");
+  const [selectedEvent, setSelectedEvent] = useState("new");
   
   // Mock data for the professional
   const professional = {
@@ -91,7 +92,10 @@ const BookProfessional = () => {
                   
                   <div className="space-y-2">
                     <Label htmlFor="selectEvent">Escolha um Evento</Label>
-                    <Select>
+                    <Select 
+                      value={selectedEvent} 
+                      onValueChange={setSelectedEvent}
+                    >
                       <SelectTrigger className="bg-toca-background border-toca-border text-white">
                         <SelectValue placeholder="Selecione um evento ou crie um novo" />
                       </SelectTrigger>

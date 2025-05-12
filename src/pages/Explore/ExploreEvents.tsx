@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import EventCard from "@/components/EventCard";
 import { Button } from "@/components/ui/button";
@@ -155,7 +154,7 @@ const ExploreEvents = () => {
                     <SelectValue placeholder="Selecione" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Todas</SelectItem>
+                    <SelectItem value="all">Todas</SelectItem>
                     <SelectItem value="São Paulo">São Paulo</SelectItem>
                     <SelectItem value="Rio de Janeiro">Rio de Janeiro</SelectItem>
                   </SelectContent>
@@ -172,7 +171,7 @@ const ExploreEvents = () => {
                     <SelectValue placeholder="Selecione" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Todos</SelectItem>
+                    <SelectItem value="all">Todos</SelectItem>
                     <SelectItem value="SP">SP</SelectItem>
                     <SelectItem value="RJ">RJ</SelectItem>
                   </SelectContent>
@@ -202,7 +201,7 @@ const ExploreEvents = () => {
                     <SelectValue placeholder="Selecione" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Todos</SelectItem>
+                    <SelectItem value="all">Todos</SelectItem>
                     <SelectItem value="DJ">DJ</SelectItem>
                     <SelectItem value="Músico">Músico</SelectItem>
                     <SelectItem value="Fotógrafo">Fotógrafo</SelectItem>
