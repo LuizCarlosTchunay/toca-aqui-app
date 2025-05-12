@@ -21,3 +21,19 @@ export function formatCurrency(value: number): string {
     currency: 'BRL',
   }).format(value);
 }
+
+// Add a utility function to ensure text is properly formatted with the right colors
+export function getTextColorClass(type: 'heading' | 'subheading' | 'body' | 'muted' = 'body'): string {
+  switch (type) {
+    case 'heading':
+      return 'text-white font-semibold';
+    case 'subheading':
+      return 'text-white font-medium';
+    case 'body':
+      return 'text-toca-text-primary'; // White color
+    case 'muted':
+      return 'text-toca-text-secondary'; // Gray color
+    default:
+      return 'text-toca-text-primary';
+  }
+}
