@@ -1,3 +1,4 @@
+
 import type { Config } from "tailwindcss";
 
 export default {
@@ -61,6 +62,16 @@ export default {
 					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
+				},
+				// Opera GX inspired colors
+				toca: {
+					background: '#0D0D0D',
+					accent: '#ea384c',
+					'accent-hover': '#ff4c5c',
+					card: '#1A1A1A',
+					border: '#333333',
+					'text-primary': '#FFFFFF',
+					'text-secondary': '#AAAAAA'
 				}
 			},
 			borderRadius: {
@@ -84,11 +95,20 @@ export default {
 					to: {
 						height: '0'
 					}
+				},
+				'neon-pulse': {
+					'0%, 100%': {
+						boxShadow: '0 0 5px #ea384c, 0 0 10px #ea384c'
+					},
+					'50%': {
+						boxShadow: '0 0 20px #ea384c, 0 0 30px #ea384c'
+					}
 				}
 			},
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
-				'accordion-up': 'accordion-up 0.2s ease-out'
+				'accordion-up': 'accordion-up 0.2s ease-out',
+				'neon-pulse': 'neon-pulse 2s ease-in-out infinite'
 			}
 		}
 	},
