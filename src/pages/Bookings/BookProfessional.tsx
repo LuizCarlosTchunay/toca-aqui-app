@@ -49,18 +49,18 @@ const BookProfessional = () => {
           <ChevronLeft size={18} className="mr-1" /> Voltar
         </Button>
         
-        <h1 className="text-2xl font-bold mb-6">Reservar: {professional.artisticName}</h1>
+        <h1 className="text-2xl font-bold mb-6 text-white">Reservar: {professional.artisticName}</h1>
         
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2">
             <Card className="bg-toca-card border-toca-border mb-6">
               <CardHeader>
-                <CardTitle>Detalhes da Reserva</CardTitle>
+                <CardTitle className="text-white">Detalhes da Reserva</CardTitle>
               </CardHeader>
               <CardContent>
                 <form onSubmit={handleSubmit} className="space-y-4">
                   <div className="space-y-2">
-                    <Label>Tipo de Reserva</Label>
+                    <Label className="text-white">Tipo de Reserva</Label>
                     <RadioGroup 
                       defaultValue="event" 
                       className="flex flex-col sm:flex-row gap-4"
@@ -68,18 +68,18 @@ const BookProfessional = () => {
                     >
                       <div className="flex items-center space-x-2">
                         <RadioGroupItem value="event" id="event" />
-                        <Label htmlFor="event" className="cursor-pointer">Evento Completo</Label>
+                        <Label htmlFor="event" className="cursor-pointer text-white">Evento Completo</Label>
                       </div>
                       <div className="flex items-center space-x-2">
                         <RadioGroupItem value="hourly" id="hourly" />
-                        <Label htmlFor="hourly" className="cursor-pointer">Por Hora</Label>
+                        <Label htmlFor="hourly" className="cursor-pointer text-white">Por Hora</Label>
                       </div>
                     </RadioGroup>
                   </div>
                   
                   {bookingType === "hourly" && (
                     <div className="space-y-2">
-                      <Label htmlFor="hours">Quantidade de Horas</Label>
+                      <Label htmlFor="hours" className="text-white">Quantidade de Horas</Label>
                       <Input 
                         id="hours" 
                         type="number" 
@@ -91,7 +91,7 @@ const BookProfessional = () => {
                   )}
                   
                   <div className="space-y-2">
-                    <Label htmlFor="selectEvent">Escolha um Evento</Label>
+                    <Label htmlFor="selectEvent" className="text-white">Escolha um Evento</Label>
                     <Select 
                       value={selectedEvent} 
                       onValueChange={setSelectedEvent}
@@ -109,7 +109,7 @@ const BookProfessional = () => {
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="date">Data</Label>
+                      <Label htmlFor="date" className="text-white">Data</Label>
                       <div className="relative">
                         <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-toca-text-secondary" size={16} />
                         <Input 
@@ -121,7 +121,7 @@ const BookProfessional = () => {
                       </div>
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="time">Horário</Label>
+                      <Label htmlFor="time" className="text-white">Horário</Label>
                       <div className="relative">
                         <Clock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-toca-text-secondary" size={16} />
                         <Input 
@@ -135,7 +135,7 @@ const BookProfessional = () => {
                   </div>
                   
                   <div className="space-y-2">
-                    <Label htmlFor="location">Local</Label>
+                    <Label htmlFor="location" className="text-white">Local</Label>
                     <div className="relative">
                       <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 text-toca-text-secondary" size={16} />
                       <Input 
@@ -149,7 +149,7 @@ const BookProfessional = () => {
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="city">Cidade</Label>
+                      <Label htmlFor="city" className="text-white">Cidade</Label>
                       <Input 
                         id="city" 
                         defaultValue={professional.city}
@@ -158,7 +158,7 @@ const BookProfessional = () => {
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="state">Estado</Label>
+                      <Label htmlFor="state" className="text-white">Estado</Label>
                       <Select defaultValue={professional.state}>
                         <SelectTrigger className="bg-toca-background border-toca-border text-white">
                           <SelectValue />
@@ -174,7 +174,7 @@ const BookProfessional = () => {
                   </div>
                   
                   <div className="space-y-2">
-                    <Label htmlFor="details">Detalhes Adicionais</Label>
+                    <Label htmlFor="details" className="text-white">Detalhes Adicionais</Label>
                     <Textarea 
                       id="details" 
                       placeholder="Descreva detalhes importantes para o profissional..." 
@@ -187,7 +187,7 @@ const BookProfessional = () => {
                       type="button" 
                       variant="outline" 
                       onClick={() => navigate(-1)}
-                      className="border-toca-border"
+                      className="border-toca-border text-white"
                     >
                       Cancelar
                     </Button>
@@ -206,7 +206,7 @@ const BookProfessional = () => {
           <div>
             <Card className="bg-toca-card border-toca-border sticky top-24">
               <CardHeader>
-                <CardTitle>Resumo da Reserva</CardTitle>
+                <CardTitle className="text-white">Resumo da Reserva</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
@@ -242,7 +242,7 @@ const BookProfessional = () => {
                       </span>
                       <span className="text-white font-medium">
                         {formatCurrency(bookingType === "event" ? professional.eventRate : professional.hourlyRate)}
-                        {bookingType === "hourly" && <span> / hora</span>}
+                        {bookingType === "hourly" && <span className="text-white"> / hora</span>}
                       </span>
                     </div>
                     
