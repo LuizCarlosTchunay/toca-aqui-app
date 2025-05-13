@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, Filter, Calendar } from "lucide-react";
+import { Search, Filter, Calendar, ChevronLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 
@@ -120,7 +120,17 @@ const ExploreEvents = () => {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <h1 className="text-2xl font-bold mb-6">Explorar Eventos</h1>
+      <div className="mb-6 flex items-center justify-between">
+        <Button 
+          variant="outline" 
+          className="bg-black text-toca-accent hover:bg-gray-800"
+          onClick={() => navigate(-1)}
+        >
+          <ChevronLeft size={18} className="mr-1" /> Voltar
+        </Button>
+        <h1 className="text-2xl font-bold">Explorar Eventos</h1>
+        <div className="w-[80px]"></div> {/* Spacer for alignment */}
+      </div>
 
       <div className="mb-6">
         <div className="flex flex-col md:flex-row gap-4">

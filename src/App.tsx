@@ -15,6 +15,7 @@ import SplashScreen from "./components/SplashScreen";
 import About from "./pages/About";
 import EditProfile from "./pages/Profile/EditProfile";
 import ProfessionalProfile from "./pages/Profile/ProfessionalProfile";
+import MyProfile from "./pages/Profile/MyProfile";
 import CreateEvent from "./pages/Events/CreateEvent";
 import MyApplications from "./pages/Professional/MyApplications";
 import Notifications from "./pages/Notifications";
@@ -52,6 +53,7 @@ const App = () => {
             <Route path="/dashboard" element={<Dashboard />} />
             
             {/* Profile Routes */}
+            <Route path="/meu-perfil" element={<MyProfile />} />
             <Route path="/editar-perfil" element={<EditProfile />} />
             <Route path="/perfil-profissional" element={<ProfessionalProfile />} />
             <Route path="/profissional/:id" element={<ProfessionalProfile />} />
