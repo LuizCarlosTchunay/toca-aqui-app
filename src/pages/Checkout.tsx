@@ -59,12 +59,12 @@ const Checkout = () => {
           <ChevronLeft size={18} className="mr-1" /> Voltar
         </Button>
         
-        <h1 className="text-2xl font-bold mb-6">Checkout</h1>
+        <h1 className="text-2xl font-bold mb-6 text-white">Checkout</h1>
         
         {isPaymentComplete ? (
           <Card className="bg-toca-card border-toca-border mb-6">
             <CardHeader>
-              <CardTitle>Pagamento Concluído</CardTitle>
+              <CardTitle className="text-white">Pagamento Concluído</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="flex flex-col items-center py-8">
@@ -90,7 +90,7 @@ const Checkout = () => {
             <div className="lg:col-span-2">
               <Card className="bg-toca-card border-toca-border mb-6">
                 <CardHeader>
-                  <CardTitle>Resumo do Pedido</CardTitle>
+                  <CardTitle className="text-white">Resumo do Pedido</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
@@ -122,7 +122,7 @@ const Checkout = () => {
               
               <Card className="bg-toca-card border-toca-border">
                 <CardHeader>
-                  <CardTitle>Método de Pagamento</CardTitle>
+                  <CardTitle className="text-white">Método de Pagamento</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <form onSubmit={handleSubmit} className="space-y-6">
@@ -133,7 +133,7 @@ const Checkout = () => {
                     >
                       <div className="flex items-center space-x-2 bg-toca-background p-3 rounded-md border border-toca-border">
                         <RadioGroupItem value="credit" id="credit" />
-                        <Label htmlFor="credit" className="flex items-center gap-2 cursor-pointer flex-1">
+                        <Label htmlFor="credit" className="flex items-center gap-2 cursor-pointer flex-1 text-white">
                           <CreditCard size={20} />
                           Cartão de Crédito
                         </Label>
@@ -141,7 +141,7 @@ const Checkout = () => {
                       
                       <div className="flex items-center space-x-2 bg-toca-background p-3 rounded-md border border-toca-border">
                         <RadioGroupItem value="debit" id="debit" />
-                        <Label htmlFor="debit" className="flex items-center gap-2 cursor-pointer flex-1">
+                        <Label htmlFor="debit" className="flex items-center gap-2 cursor-pointer flex-1 text-white">
                           <CreditCard size={20} />
                           Cartão de Débito
                         </Label>
@@ -149,7 +149,7 @@ const Checkout = () => {
                       
                       <div className="flex items-center space-x-2 bg-toca-background p-3 rounded-md border border-toca-border">
                         <RadioGroupItem value="pix" id="pix" />
-                        <Label htmlFor="pix" className="flex items-center gap-2 cursor-pointer flex-1">
+                        <Label htmlFor="pix" className="flex items-center gap-2 cursor-pointer flex-1 text-white">
                           <QrCode size={20} />
                           Pix
                         </Label>
@@ -159,7 +159,7 @@ const Checkout = () => {
                     {paymentMethod !== "pix" && (
                       <div className="space-y-4">
                         <div className="space-y-2">
-                          <Label htmlFor="cardName">Nome no Cartão</Label>
+                          <Label htmlFor="cardName" className="text-white">Nome no Cartão</Label>
                           <Input 
                             id="cardName" 
                             placeholder="Nome impresso no cartão" 
@@ -169,7 +169,7 @@ const Checkout = () => {
                         </div>
                         
                         <div className="space-y-2">
-                          <Label htmlFor="cardNumber">Número do Cartão</Label>
+                          <Label htmlFor="cardNumber" className="text-white">Número do Cartão</Label>
                           <Input 
                             id="cardNumber" 
                             placeholder="0000 0000 0000 0000" 
@@ -180,7 +180,7 @@ const Checkout = () => {
                         
                         <div className="grid grid-cols-2 gap-4">
                           <div className="space-y-2">
-                            <Label htmlFor="expiry">Data de Validade</Label>
+                            <Label htmlFor="expiry" className="text-white">Data de Validade</Label>
                             <Input 
                               id="expiry" 
                               placeholder="MM/AA" 
@@ -189,7 +189,7 @@ const Checkout = () => {
                             />
                           </div>
                           <div className="space-y-2">
-                            <Label htmlFor="cvv">CVV</Label>
+                            <Label htmlFor="cvv" className="text-white">CVV</Label>
                             <Input 
                               id="cvv" 
                               placeholder="123" 
@@ -238,7 +238,7 @@ const Checkout = () => {
             <div>
               <Card className="bg-toca-card border-toca-border sticky top-24">
                 <CardHeader>
-                  <CardTitle>Resumo de Valores</CardTitle>
+                  <CardTitle className="text-white">Resumo de Valores</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
@@ -254,7 +254,7 @@ const Checkout = () => {
                     <Separator className="bg-toca-border" />
                     
                     <div className="flex justify-between items-center">
-                      <span className="font-semibold">Total:</span>
+                      <span className="font-semibold text-white">Total:</span>
                       <span className="text-toca-accent font-semibold text-lg">{formatCurrency(total)}</span>
                     </div>
                     
