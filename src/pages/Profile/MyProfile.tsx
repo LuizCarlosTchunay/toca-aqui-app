@@ -1,15 +1,18 @@
 
-import React from "react";
+import React, { useState } from "react";
 import Navbar from "@/components/Navbar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { ChevronLeft, MapPin, Mail, Phone, Calendar } from "lucide-react";
+import { ChevronLeft, MapPin, Mail, Phone, Calendar, UserPlus } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { toast } from "sonner";
 
 const MyProfile = () => {
   const navigate = useNavigate();
+  const [isProfessional, setIsProfessional] = useState(false);
   
   // Mock user data
   const user = {
@@ -21,6 +24,12 @@ const MyProfile = () => {
     state: "SP",
     bio: "Apaixonado por música e eventos culturais.",
     image: ""
+  };
+
+  const handleBecomeProfessional = () => {
+    // In a real app, we would make an API call to update the user's status
+    setIsProfessional(true);
+    toast.success("Parabéns! Agora você é um profissional e pode aparecer na aba Explorar.");
   };
 
   return (
@@ -63,11 +72,55 @@ const MyProfile = () => {
                   
                   <Button 
                     variant="outline"
-                    className="w-full bg-black text-white hover:bg-gray-800"
+                    className="w-full bg-black text-white hover:bg-gray-800 mb-3"
                     onClick={() => navigate("/configuracoes")}
                   >
                     Configurações
                   </Button>
+
+                  {!isProfessional && (
+                    <Dialog>
+                      <DialogTrigger asChild>
+                        <Button 
+                          variant="outline" 
+                          className="w-full bg-toca-background border-toca-accent text-toca-accent hover:bg-toca-accent hover:text-white"
+                        >
+                          <UserPlus size={16} className="mr-2" /> Tornar-se Profissional
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent className="bg-toca-card border-toca-border text-white">
+                        <DialogHeader>
+                          <DialogTitle className="text-toca-accent">Tornar-se um Profissional</DialogTitle>
+                          <DialogDescription className="text-toca-text-secondary">
+                            Como profissional, você poderá oferecer seus serviços, candidatar-se a eventos e aparecer na aba Explorar.
+                          </DialogDescription>
+                        </DialogHeader>
+                        <div className="py-4 text-toca-text-primary">
+                          <p className="mb-2">Ao se tornar um profissional, você precisará:</p>
+                          <ul className="list-disc pl-5 space-y-1 text-toca-text-secondary">
+                            <li>Completar seu perfil profissional</li>
+                            <li>Adicionar seus serviços e preços</li>
+                            <li>Enviar documentos para verificação</li>
+                          </ul>
+                        </div>
+                        <DialogFooter>
+                          <Button onClick={handleBecomeProfessional} className="bg-toca-accent hover:bg-toca-accent-hover">
+                            Continuar
+                          </Button>
+                        </DialogFooter>
+                      </DialogContent>
+                    </Dialog>
+                  )}
+                  
+                  {isProfessional && (
+                    <Button 
+                      variant="outline" 
+                      className="w-full bg-toca-background border-toca-accent text-toca-accent hover:bg-toca-accent hover:text-white"
+                      onClick={() => navigate("/perfil-profissional")}
+                    >
+                      Ver Perfil Profissional
+                    </Button>
+                  )}
                 </div>
               </CardContent>
             </Card>

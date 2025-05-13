@@ -54,6 +54,7 @@ const App = () => {
             
             {/* Profile Routes */}
             <Route path="/meu-perfil" element={<MyProfile />} />
+            <Route path="/perfil" element={<MyProfile />} />
             <Route path="/editar-perfil" element={<EditProfile />} />
             <Route path="/perfil-profissional" element={<ProfessionalProfile />} />
             <Route path="/profissional/:id" element={<ProfessionalProfile />} />
