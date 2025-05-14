@@ -28,16 +28,16 @@ const CreateEvent = () => {
       <Navbar isAuthenticated={true} currentRole="contratante" />
       
       <div className="container mx-auto px-4 py-8">
-        <h1 className="text-2xl font-bold mb-6">Criar Novo Evento</h1>
+        <h1 className="text-2xl font-bold mb-6 text-white">Criar Novo Evento</h1>
         
         <Card className="bg-toca-card border-toca-border">
           <CardHeader>
-            <CardTitle>Detalhes do Evento</CardTitle>
+            <CardTitle className="text-white">Detalhes do Evento</CardTitle>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="name">Nome do Evento</Label>
+                <Label htmlFor="name" className="text-white">Nome do Evento</Label>
                 <Input 
                   id="name" 
                   placeholder="Ex: Casamento Silva, Festival de Verão, etc." 
@@ -47,7 +47,7 @@ const CreateEvent = () => {
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="description">Descrição</Label>
+                <Label htmlFor="description" className="text-white">Descrição</Label>
                 <Textarea 
                   id="description" 
                   placeholder="Descreva os detalhes do seu evento..." 
@@ -58,7 +58,7 @@ const CreateEvent = () => {
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="date">Data</Label>
+                  <Label htmlFor="date" className="text-white">Data</Label>
                   <div className="relative">
                     <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-toca-text-secondary" size={16} />
                     <Input 
@@ -70,7 +70,7 @@ const CreateEvent = () => {
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="time">Horário</Label>
+                  <Label htmlFor="time" className="text-white">Horário</Label>
                   <Input 
                     id="time" 
                     type="time" 
@@ -81,7 +81,7 @@ const CreateEvent = () => {
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="location">Local</Label>
+                <Label htmlFor="location" className="text-white">Local</Label>
                 <div className="relative">
                   <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 text-toca-text-secondary" size={16} />
                   <Input 
@@ -95,7 +95,7 @@ const CreateEvent = () => {
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="city">Cidade</Label>
+                  <Label htmlFor="city" className="text-white">Cidade</Label>
                   <Input 
                     id="city" 
                     placeholder="Nome da cidade" 
@@ -104,53 +104,42 @@ const CreateEvent = () => {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="state">Estado</Label>
-                  <Select 
-                    value={selectedState} 
-                    onValueChange={setSelectedState}
+                  <Label htmlFor="state" className="text-white">Estado</Label>
+                  <Input 
+                    id="state" 
+                    placeholder="Digite o estado" 
+                    className="bg-toca-background border-toca-border text-white"
                     required
-                  >
-                    <SelectTrigger className="bg-toca-background border-toca-border text-white">
-                      <SelectValue placeholder="Selecione" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="SP">SP</SelectItem>
-                      <SelectItem value="RJ">RJ</SelectItem>
-                      <SelectItem value="MG">MG</SelectItem>
-                      <SelectItem value="PR">PR</SelectItem>
-                      <SelectItem value="SC">SC</SelectItem>
-                      <SelectItem value="RS">RS</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  />
                 </div>
               </div>
               
               <div className="space-y-2">
-                <Label>Serviços Necessários</Label>
+                <Label className="text-white">Serviços Necessários</Label>
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                   <div className="flex items-center space-x-2">
                     <Checkbox id="dj" />
-                    <Label htmlFor="dj" className="text-sm cursor-pointer">DJ</Label>
+                    <Label htmlFor="dj" className="text-sm cursor-pointer text-white">DJ</Label>
                   </div>
                   <div className="flex items-center space-x-2">
                     <Checkbox id="musico" />
-                    <Label htmlFor="musico" className="text-sm cursor-pointer">Músico</Label>
+                    <Label htmlFor="musico" className="text-sm cursor-pointer text-white">Músico</Label>
                   </div>
                   <div className="flex items-center space-x-2">
                     <Checkbox id="fotografo" />
-                    <Label htmlFor="fotografo" className="text-sm cursor-pointer">Fotógrafo</Label>
+                    <Label htmlFor="fotografo" className="text-sm cursor-pointer text-white">Fotógrafo</Label>
                   </div>
                   <div className="flex items-center space-x-2">
                     <Checkbox id="filmmaker" />
-                    <Label htmlFor="filmmaker" className="text-sm cursor-pointer">Filmmaker</Label>
+                    <Label htmlFor="filmmaker" className="text-sm cursor-pointer text-white">Filmmaker</Label>
                   </div>
                   <div className="flex items-center space-x-2">
                     <Checkbox id="tecnico_som" />
-                    <Label htmlFor="tecnico_som" className="text-sm cursor-pointer">Técnico de Som</Label>
+                    <Label htmlFor="tecnico_som" className="text-sm cursor-pointer text-white">Técnico de Som</Label>
                   </div>
                   <div className="flex items-center space-x-2">
                     <Checkbox id="tecnico_luz" />
-                    <Label htmlFor="tecnico_luz" className="text-sm cursor-pointer">Técnico de Luz</Label>
+                    <Label htmlFor="tecnico_luz" className="text-sm cursor-pointer text-white">Técnico de Luz</Label>
                   </div>
                 </div>
               </div>
@@ -161,7 +150,7 @@ const CreateEvent = () => {
                   checked={isPublic} 
                   onCheckedChange={(checked) => setIsPublic(checked as boolean)} 
                 />
-                <Label htmlFor="isPublic" className="cursor-pointer">
+                <Label htmlFor="isPublic" className="cursor-pointer text-white">
                   Tornar evento público (profissionais poderão se candidatar)
                 </Label>
               </div>

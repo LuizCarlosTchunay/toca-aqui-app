@@ -73,7 +73,7 @@
   }
 
   body {
-    @apply bg-toca-background text-toca-text-primary;
+    @apply bg-toca-background text-white;
   }
 
   /* Card title styling to ensure visibility */
@@ -84,6 +84,16 @@
   /* Card description styling */
   .card-description {
     @apply text-toca-text-secondary;
+  }
+
+  /* Form labels should be white */
+  label {
+    @apply text-white;
+  }
+  
+  /* Secondary text should be light gray */
+  .text-secondary {
+    @apply text-[#C8C8C9];
   }
 
   /* Neon button styles */

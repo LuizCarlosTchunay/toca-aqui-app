@@ -24,16 +24,16 @@ const EditProfile = () => {
       <Navbar isAuthenticated={true} currentRole="profissional" />
       
       <div className="container mx-auto px-4 py-8">
-        <h1 className="text-2xl font-bold mb-6">Editar Perfil Profissional</h1>
+        <h1 className="text-2xl font-bold mb-6 text-white">Editar Perfil Profissional</h1>
         
         <Card className="bg-toca-card border-toca-border">
           <CardHeader>
-            <CardTitle>Informações do Perfil</CardTitle>
+            <CardTitle className="text-white">Informações do Perfil</CardTitle>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="artisticName">Nome Artístico</Label>
+                <Label htmlFor="artisticName" className="text-white">Nome Artístico</Label>
                 <Input 
                   id="artisticName" 
                   defaultValue="DJ Pulse" 
@@ -42,7 +42,7 @@ const EditProfile = () => {
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="profileType">Tipo de Profissional</Label>
+                <Label htmlFor="profileType" className="text-white">Tipo de Profissional</Label>
                 <Select defaultValue="dj">
                   <SelectTrigger className="bg-toca-background border-toca-border text-white">
                     <SelectValue placeholder="Selecione" />
@@ -59,7 +59,7 @@ const EditProfile = () => {
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="bio">Biografia</Label>
+                <Label htmlFor="bio" className="text-white">Biografia</Label>
                 <Textarea 
                   id="bio" 
                   defaultValue="DJ com experiência em eventos corporativos e casamentos. Especialista em música eletrônica e house."
@@ -69,7 +69,7 @@ const EditProfile = () => {
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="city">Cidade</Label>
+                  <Label htmlFor="city" className="text-white">Cidade</Label>
                   <Input 
                     id="city" 
                     defaultValue="São Paulo" 
@@ -77,24 +77,19 @@ const EditProfile = () => {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="state">Estado</Label>
-                  <Select defaultValue="SP">
-                    <SelectTrigger className="bg-toca-background border-toca-border text-white">
-                      <SelectValue placeholder="Selecione" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="SP">SP</SelectItem>
-                      <SelectItem value="RJ">RJ</SelectItem>
-                      <SelectItem value="MG">MG</SelectItem>
-                      <SelectItem value="PR">PR</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <Label htmlFor="state" className="text-white">Estado</Label>
+                  <Input 
+                    id="state" 
+                    defaultValue="SP" 
+                    placeholder="Digite o estado" 
+                    className="bg-toca-background border-toca-border text-white"
+                  />
                 </div>
               </div>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="hourlyRate">Cachê por Hora (R$)</Label>
+                  <Label htmlFor="hourlyRate" className="text-white">Cachê por Hora (R$)</Label>
                   <Input 
                     id="hourlyRate" 
                     type="number" 
@@ -103,7 +98,7 @@ const EditProfile = () => {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="eventRate">Cachê por Evento (R$)</Label>
+                  <Label htmlFor="eventRate" className="text-white">Cachê por Evento (R$)</Label>
                   <Input 
                     id="eventRate" 
                     type="number" 
@@ -118,7 +113,7 @@ const EditProfile = () => {
                   type="button" 
                   variant="outline" 
                   onClick={() => navigate("/dashboard")}
-                  className="border-toca-border"
+                  className="border-toca-border text-white"
                 >
                   Cancelar
                 </Button>
