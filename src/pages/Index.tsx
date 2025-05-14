@@ -54,10 +54,10 @@ const Index = () => {
         <div className="container mx-auto px-4 py-20 md:py-32 relative z-10">
           <div className="max-w-3xl mx-auto text-center">
             <Logo size="lg" className="mx-auto mb-8" />
-            <h1 className="text-4xl md:text-6xl font-bold mb-6">
+            <h1 className="text-4xl md:text-6xl font-bold mb-6 text-white">
               Conectando talentos do audiovisual
             </h1>
-            <p className="text-xl md:text-2xl text-toca-text-secondary mb-10 max-w-2xl mx-auto">
+            <p className="text-xl md:text-2xl text-white mb-10 max-w-2xl mx-auto">
               A plataforma que conecta contratantes e profissionais do audiovisual 
               de forma rápida, segura e prática.
             </p>
@@ -83,7 +83,7 @@ const Index = () => {
       {/* Features Section */}
       <section className="py-20 bg-gradient-to-br from-toca-card to-toca-background">
         <div className="container mx-auto px-4">
-          <h2 className="text-3xl md:text-4xl font-bold text-center mb-16">
+          <h2 className="text-3xl md:text-4xl font-bold text-center mb-16 text-white">
             Como o <span className="text-toca-accent">Toca Aqui</span> funciona
           </h2>
 
@@ -93,7 +93,7 @@ const Index = () => {
                 <div className="mb-4">
                   {feature.icon}
                 </div>
-                <h3 className="text-xl font-bold mb-2">{feature.title}</h3>
+                <h3 className="text-xl font-bold mb-2 text-white">{feature.title}</h3>
                 <p className="text-toca-text-secondary">{feature.description}</p>
               </div>
             ))}
@@ -104,7 +104,7 @@ const Index = () => {
       {/* Professional Types Section */}
       <section className="py-20">
         <div className="container mx-auto px-4">
-          <h2 className="text-3xl md:text-4xl font-bold text-center mb-6">
+          <h2 className="text-3xl md:text-4xl font-bold text-center mb-6 text-white">
             Profissionais para seu evento
           </h2>
           <p className="text-toca-text-secondary text-xl text-center mb-16 max-w-2xl mx-auto">
@@ -119,7 +119,7 @@ const Index = () => {
                 onClick={() => navigate(`/explorar?tipo=${type.name.toLowerCase()}`)}
               >
                 {type.icon}
-                <h3 className="text-xl font-semibold">{type.name}</h3>
+                <h3 className="text-xl font-semibold text-white">{type.name}</h3>
               </div>
             ))}
           </div>
@@ -140,7 +140,7 @@ const Index = () => {
       <section className="bg-toca-card py-20">
         <div className="container mx-auto px-4">
           <div className="max-w-3xl mx-auto text-center">
-            <h2 className="text-3xl md:text-4xl font-bold mb-6">
+            <h2 className="text-3xl md:text-4xl font-bold mb-6 text-white">
               Pronto para começar?
             </h2>
             <p className="text-toca-text-secondary text-xl mb-8">

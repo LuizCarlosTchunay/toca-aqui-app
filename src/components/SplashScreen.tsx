@@ -26,10 +26,6 @@ const SplashScreen: React.FC<SplashScreenProps> = ({ onComplete }) => {
     >
       <div className="flex flex-col items-center">
         <Logo size="lg" withText={false} className="mb-6 animate-neon-pulse" />
-        <h1 className="text-3xl font-bold mb-2">
-          <span className="text-white">Toca</span>
-          <span className="text-toca-accent">Aqui</span>
-        </h1>
         <p className="text-toca-text-secondary text-sm">
           Conectando talentos audiovisuais
         </p>
