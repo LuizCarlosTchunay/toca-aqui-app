@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, Filter, Calendar, ChevronLeft, MapPin, City } from "lucide-react";
+import { Search, Filter, Calendar, ChevronLeft, MapPin } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 
@@ -157,7 +157,7 @@ const ExploreEvents = () => {
               <div>
                 <Label>Cidade</Label>
                 <div className="relative">
-                  <City className="absolute left-3 top-1/2 transform -translate-y-1/2 text-toca-text-secondary" size={16} />
+                  <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 text-toca-text-secondary" size={16} />
                   <Input
                     placeholder="Digite a cidade"
                     className="bg-toca-background border-toca-border text-white pl-10"
