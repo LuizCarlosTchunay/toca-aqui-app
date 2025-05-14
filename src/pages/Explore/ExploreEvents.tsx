@@ -1,11 +1,10 @@
-
 import React, { useState } from "react";
 import EventCard from "@/components/EventCard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, Filter, Calendar, ChevronLeft } from "lucide-react";
+import { Search, Filter, Calendar, ChevronLeft, MapPin, City } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 
@@ -94,13 +93,13 @@ const ExploreEvents = () => {
     }
     
     // City filter
-    if (filters.city && filters.city !== "all") {
-      matches = matches && event.city.toLowerCase() === filters.city.toLowerCase();
+    if (filters.city) {
+      matches = matches && event.city.toLowerCase().includes(filters.city.toLowerCase());
     }
     
     // State filter
-    if (filters.state && filters.state !== "all") {
-      matches = matches && event.state.toLowerCase() === filters.state.toLowerCase();
+    if (filters.state) {
+      matches = matches && event.state.toLowerCase().includes(filters.state.toLowerCase());
     }
     
     // Date filter
@@ -157,36 +156,28 @@ const ExploreEvents = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               <div>
                 <Label>Cidade</Label>
-                <Select
-                  value={filters.city}
-                  onValueChange={(value) => setFilters({ ...filters, city: value })}
-                >
-                  <SelectTrigger className="bg-toca-background border-toca-border">
-                    <SelectValue placeholder="Selecione" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Todas</SelectItem>
-                    <SelectItem value="São Paulo">São Paulo</SelectItem>
-                    <SelectItem value="Rio de Janeiro">Rio de Janeiro</SelectItem>
-                  </SelectContent>
-                </Select>
+                <div className="relative">
+                  <City className="absolute left-3 top-1/2 transform -translate-y-1/2 text-toca-text-secondary" size={16} />
+                  <Input
+                    placeholder="Digite a cidade"
+                    className="bg-toca-background border-toca-border text-white pl-10"
+                    value={filters.city}
+                    onChange={(e) => setFilters({ ...filters, city: e.target.value })}
+                  />
+                </div>
               </div>
 
               <div>
                 <Label>Estado</Label>
-                <Select
-                  value={filters.state}
-                  onValueChange={(value) => setFilters({ ...filters, state: value })}
-                >
-                  <SelectTrigger className="bg-toca-background border-toca-border">
-                    <SelectValue placeholder="Selecione" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Todos</SelectItem>
-                    <SelectItem value="SP">SP</SelectItem>
-                    <SelectItem value="RJ">RJ</SelectItem>
-                  </SelectContent>
-                </Select>
+                <div className="relative">
+                  <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 text-toca-text-secondary" size={16} />
+                  <Input
+                    placeholder="Digite o estado"
+                    className="bg-toca-background border-toca-border text-white pl-10"
+                    value={filters.state}
+                    onChange={(e) => setFilters({ ...filters, state: e.target.value })}
+                  />
+                </div>
               </div>
 
               <div>
