@@ -53,7 +53,9 @@ const Index = () => {
 
         <div className="container mx-auto px-4 py-20 md:py-32 relative z-10">
           <div className="max-w-3xl mx-auto text-center">
-            <Logo size="lg" className="mx-auto mb-8" />
+            <div className="flex justify-center mb-8">
+              <Logo size="lg" withText={false} className="mx-auto" />
+            </div>
             <h1 className="text-4xl md:text-6xl font-bold mb-6 text-white">
               Conectando talentos do audiovisual
             </h1>
