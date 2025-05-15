@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useState } from "react";
 import Navbar from "@/components/Navbar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -9,14 +9,33 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import ImageUploader from "@/components/ImageUploader";
 
 const EditProfile = () => {
   const navigate = useNavigate();
+  const [profileImage, setProfileImage] = useState<File | null>(null);
   
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // In a real application, you would upload the image to a server
+    if (profileImage) {
+      console.log("New profile image selected:", profileImage.name);
+      // Here you would typically upload the file to your backend
+    }
+    
     toast.success("Perfil atualizado com sucesso!");
     navigate("/dashboard");
+  };
+
+  const handleImageChange = (imageFile: File) => {
+    setProfileImage(imageFile);
+  };
+
+  // Mock user data for demonstration
+  const user = {
+    name: "DJ Pulse",
+    image: "" // Empty by default to show the placeholder
   };
 
   return (
@@ -31,7 +50,15 @@ const EditProfile = () => {
             <CardTitle className="text-white">Informações do Perfil</CardTitle>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <div className="flex flex-col items-center mb-6">
+                <ImageUploader 
+                  currentImage={user.image}
+                  onImageChange={handleImageChange}
+                  size="lg"
+                />
+              </div>
+              
               <div className="space-y-2">
                 <Label htmlFor="artisticName" className="text-white">Nome Artístico</Label>
                 <Input 
@@ -81,7 +108,6 @@ const EditProfile = () => {
                   <Input 
                     id="state" 
                     defaultValue="SP" 
-                    placeholder="Digite o estado" 
                     className="bg-toca-background border-toca-border text-white"
                   />
                 </div>

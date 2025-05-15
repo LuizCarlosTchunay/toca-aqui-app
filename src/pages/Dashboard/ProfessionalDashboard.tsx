@@ -2,9 +2,10 @@
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Calendar, ChevronRight, CheckCheck, Clock, AlertTriangle } from "lucide-react";
+import { Calendar, ChevronRight, CheckCheck, Clock, AlertTriangle, Camera } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 // Mock data
 const upcomingBookings = [
@@ -85,6 +86,16 @@ const getStatusIcon = (status: string) => {
 
 const ProfessionalDashboard = () => {
   const navigate = useNavigate();
+
+  // Mock user data for the professional
+  const professional = {
+    name: "DJ Pulse",
+    image: "", // In a real app, this would be a URL to the user's profile image
+    city: "São Paulo",
+    state: "SP",
+    hourlyRate: 150,
+    eventRate: 1200
+  };
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -223,20 +234,34 @@ const ProfessionalDashboard = () => {
             </CardHeader>
             <CardContent>
               <div className="flex flex-col items-center">
-                <div className="w-20 h-20 rounded-full bg-toca-accent/20 flex items-center justify-center mb-4">
-                  <span className="text-2xl font-bold text-toca-accent">DJ</span>
+                <div className="relative group mb-4">
+                  <Avatar className="w-20 h-20 border-2 border-toca-accent">
+                    <AvatarImage src={professional.image} />
+                    <AvatarFallback className="text-2xl bg-toca-accent/20 text-toca-accent">
+                      {professional.name.split(' ')[0][0]}
+                    </AvatarFallback>
+                  </Avatar>
+                  <Button 
+                    variant="outline" 
+                    size="icon"
+                    className="absolute bottom-0 right-0 rounded-full border-toca-accent bg-toca-card text-toca-accent hover:bg-toca-accent hover:text-white"
+                    onClick={() => navigate("/editar-perfil")}
+                  >
+                    <Camera size={14} />
+                  </Button>
                 </div>
-                <h3 className="font-bold text-lg mb-1">DJ Pulse</h3>
-                <div className="text-sm text-toca-text-secondary mb-4">São Paulo, SP</div>
+                
+                <h3 className="font-bold text-lg mb-1">{professional.name}</h3>
+                <div className="text-sm text-toca-text-secondary mb-4">{professional.city}, {professional.state}</div>
                 
                 <div className="grid grid-cols-2 gap-2 w-full mb-4">
                   <div className="text-center p-2 bg-toca-background rounded">
                     <div className="text-xs text-toca-text-secondary">Por hora</div>
-                    <div className="font-semibold text-toca-accent">R$150</div>
+                    <div className="font-semibold text-toca-accent">R${professional.hourlyRate}</div>
                   </div>
                   <div className="text-center p-2 bg-toca-background rounded">
                     <div className="text-xs text-toca-text-secondary">Por evento</div>
-                    <div className="font-semibold text-toca-accent">R$1200</div>
+                    <div className="font-semibold text-toca-accent">R${professional.eventRate}</div>
                   </div>
                 </div>
                 

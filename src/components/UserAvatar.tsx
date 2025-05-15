@@ -10,6 +10,9 @@ interface UserAvatarProps {
     name?: string;
     image?: string;
   };
+  editable?: boolean;
+  onEditClick?: () => void;
+  size?: "sm" | "md" | "lg";
 }
 
 const UserAvatar: React.FC<UserAvatarProps> = ({
@@ -18,7 +21,10 @@ const UserAvatar: React.FC<UserAvatarProps> = ({
   user = {
     name: "Usuário",
     image: "",
-  }
+  },
+  editable = false,
+  onEditClick,
+  size = "md"
 }) => {
   const initials = user?.name
     ?.split(" ")
@@ -27,10 +33,16 @@ const UserAvatar: React.FC<UserAvatarProps> = ({
     .toUpperCase()
     .substring(0, 2) || "U";
 
+  const sizeClasses = {
+    sm: "h-8 w-8",
+    md: "h-10 w-10",
+    lg: "h-16 w-16"
+  };
+
   return (
     <div className={`flex items-center gap-3 ${className}`}>
       <Link to="/perfil">
-        <Avatar className="border-2 border-toca-accent">
+        <Avatar className={`border-2 border-toca-accent ${sizeClasses[size]}`}>
           <AvatarImage src={user.image} alt={user.name} />
           <AvatarFallback className="bg-toca-card text-white">
             {initials}

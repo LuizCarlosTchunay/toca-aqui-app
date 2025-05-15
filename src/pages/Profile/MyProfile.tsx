@@ -1,18 +1,21 @@
-
 import React, { useState } from "react";
 import Navbar from "@/components/Navbar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { ChevronLeft, MapPin, Mail, Phone, Calendar, UserPlus } from "lucide-react";
+import { ChevronLeft, MapPin, Mail, Phone, Calendar, UserPlus, Camera } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { toast } from "sonner";
+import ImageUploader from "@/components/ImageUploader";
 
 const MyProfile = () => {
   const navigate = useNavigate();
   const [isProfessional, setIsProfessional] = useState(false);
+  const [showPhotoDialog, setShowPhotoDialog] = useState(false);
+  const [profileImage, setProfileImage] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | undefined>(undefined);
   
   // Mock user data
   const user = {
@@ -30,6 +33,19 @@ const MyProfile = () => {
     // In a real app, we would make an API call to update the user's status
     setIsProfessional(true);
     toast.success("Parabéns! Agora você é um profissional e pode aparecer na aba Explorar.");
+  };
+  
+  const handleImageChange = (imageFile: File) => {
+    setProfileImage(imageFile);
+    setImagePreview(URL.createObjectURL(imageFile));
+  };
+  
+  const handleSavePhoto = () => {
+    if (profileImage) {
+      // In a real app, we would upload the image to a server
+      toast.success("Foto de perfil atualizada com sucesso!");
+    }
+    setShowPhotoDialog(false);
   };
 
   return (
@@ -50,12 +66,22 @@ const MyProfile = () => {
             <Card className="bg-toca-card border-toca-border mb-6">
               <CardContent className="pt-6">
                 <div className="flex flex-col items-center">
-                  <Avatar className="w-32 h-32 mb-4">
-                    <AvatarImage src={user.image} />
-                    <AvatarFallback className="text-4xl bg-toca-accent/20 text-toca-accent">
-                      {user.name.charAt(0)}
-                    </AvatarFallback>
-                  </Avatar>
+                  <div className="relative group mb-4">
+                    <Avatar className="w-32 h-32 border-2 border-toca-accent">
+                      <AvatarImage src={imagePreview || user.image} />
+                      <AvatarFallback className="text-4xl bg-toca-accent/20 text-toca-accent">
+                        {user.name.charAt(0)}
+                      </AvatarFallback>
+                    </Avatar>
+                    <Button 
+                      variant="outline" 
+                      size="icon"
+                      className="absolute bottom-0 right-0 rounded-full border-toca-accent bg-toca-card text-toca-accent hover:bg-toca-accent hover:text-white"
+                      onClick={() => setShowPhotoDialog(true)}
+                    >
+                      <Camera size={16} />
+                    </Button>
+                  </div>
                   
                   <h1 className="text-2xl font-bold text-white mb-1">{user.name}</h1>
                   <div className="flex items-center text-toca-text-secondary mb-4">
@@ -190,6 +216,41 @@ const MyProfile = () => {
           </div>
         </div>
       </div>
+
+      {/* Photo Change Dialog */}
+      <Dialog open={showPhotoDialog} onOpenChange={setShowPhotoDialog}>
+        <DialogContent className="bg-toca-card border-toca-border text-white">
+          <DialogHeader>
+            <DialogTitle className="text-toca-accent">Alterar Foto de Perfil</DialogTitle>
+            <DialogDescription className="text-toca-text-secondary">
+              Selecione uma nova foto para o seu perfil.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex justify-center py-6">
+            <ImageUploader
+              currentImage={user.image}
+              onImageChange={handleImageChange}
+              size="lg"
+            />
+          </div>
+          <DialogFooter>
+            <Button 
+              variant="outline"
+              className="border-toca-border text-white"
+              onClick={() => setShowPhotoDialog(false)}
+            >
+              Cancelar
+            </Button>
+            <Button 
+              className="bg-toca-accent hover:bg-toca-accent-hover"
+              onClick={handleSavePhoto}
+              disabled={!profileImage}
+            >
+              Salvar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
