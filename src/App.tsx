@@ -22,6 +22,9 @@ import Notifications from "./pages/Notifications";
 import Settings from "./pages/Settings";
 import BookProfessional from "./pages/Bookings/BookProfessional";
 import Checkout from "./pages/Checkout";
+import TermsOfUse from "./pages/TermsOfUse";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
+import Contact from "./pages/Contact";
 
 const queryClient = new QueryClient();
 
@@ -74,10 +77,15 @@ const App = () => {
             <Route path="/reservar/:id" element={<BookProfessional />} />
             <Route path="/checkout" element={<Checkout />} />
             
+            {/* Static Info Routes */}
+            <Route path="/sobre" element={<About />} />
+            <Route path="/termos" element={<TermsOfUse />} />
+            <Route path="/privacidade" element={<PrivacyPolicy />} />
+            <Route path="/contato" element={<Contact />} />
+            
             {/* Utility Routes */}
             <Route path="/notificacoes" element={<Notifications />} />
             <Route path="/configuracoes" element={<Settings />} />
-            <Route path="/sobre" element={<About />} />
             
             {/* Catch-all route */}
             <Route path="*" element={<NotFound />} />
