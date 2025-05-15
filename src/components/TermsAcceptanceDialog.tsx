@@ -23,7 +23,7 @@ const TermsAcceptanceDialog: React.FC<TermsAcceptanceDialogProps> = ({
 }) => {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-toca-card border-toca-border text-white">
+      <DialogContent className="bg-toca-card border-toca-border text-white w-[95%] max-w-md mx-auto max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-white text-xl">Termos de Serviço</DialogTitle>
         </DialogHeader>
@@ -31,7 +31,7 @@ const TermsAcceptanceDialog: React.FC<TermsAcceptanceDialogProps> = ({
           Ao utilizar o serviço Toca Aqui, você concorda com os seguintes termos:
         </DialogDescription>
         
-        <div className="space-y-4 my-4 text-toca-text-secondary">
+        <div className="space-y-4 my-4 text-toca-text-secondary overflow-y-auto">
           <p>
             <span className="font-semibold text-white">Taxa de Serviço:</span> O Toca Aqui cobra uma taxa fixa de 9,98% por profissional 
             contratado. Esta taxa cobre o serviço de intermediação entre você e o profissional.
@@ -55,11 +55,11 @@ const TermsAcceptanceDialog: React.FC<TermsAcceptanceDialogProps> = ({
           </p>
         </div>
         
-        <DialogFooter>
+        <DialogFooter className="flex flex-col sm:flex-row gap-2 sm:gap-0 mt-4">
           <Button 
             variant="outline" 
             onClick={() => onOpenChange(false)} 
-            className="border-toca-border text-toca-text-secondary"
+            className="border-toca-border text-toca-text-secondary w-full sm:w-auto"
           >
             Cancelar
           </Button>
@@ -68,7 +68,7 @@ const TermsAcceptanceDialog: React.FC<TermsAcceptanceDialogProps> = ({
               onAccept();
               onOpenChange(false);
             }}
-            className="bg-toca-accent hover:bg-toca-accent-hover"
+            className="bg-toca-accent hover:bg-toca-accent-hover w-full sm:w-auto"
           >
             Aceitar Termos
           </Button>
