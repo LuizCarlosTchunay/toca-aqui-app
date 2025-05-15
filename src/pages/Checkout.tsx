@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Navbar from "@/components/Navbar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -9,13 +9,16 @@ import { Input } from "@/components/ui/input";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Separator } from "@/components/ui/separator";
 import { formatCurrency } from "@/lib/utils";
-import { toast } from "sonner";
-import { ChevronLeft, CreditCard, QrCode, CheckCircle2, Trash2 } from "lucide-react";
+import { toast } from "@/hooks/use-toast";
+import { ChevronLeft, CreditCard, QrCode, CheckCircle2, Trash2, AlertTriangle } from "lucide-react";
+import TermsAcceptanceDialog from "@/components/TermsAcceptanceDialog";
 
 const Checkout = () => {
   const navigate = useNavigate();
   const [paymentMethod, setPaymentMethod] = useState<"credit" | "pix" | "debit">("credit");
   const [isPaymentComplete, setIsPaymentComplete] = useState(false);
+  const [showTermsDialog, setShowTermsDialog] = useState(true);
+  const [termsAccepted, setTermsAccepted] = useState(false);
   
   // Mock data for cart items
   const cartItems = [
@@ -31,23 +34,50 @@ const Checkout = () => {
   
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!termsAccepted) {
+      setShowTermsDialog(true);
+      toast({
+        title: "Atenção",
+        description: "Você precisa aceitar os termos de serviço para continuar.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     // Simulate payment processing
     setIsPaymentComplete(true);
-    toast.success("Pagamento processado com sucesso!");
+    toast({
+      title: "Sucesso",
+      description: "Pagamento processado com sucesso!",
+    });
+  };
+  
+  const handleAcceptTerms = () => {
+    setTermsAccepted(true);
   };
   
   const handleViewReservation = () => {
     navigate("/dashboard");
-    toast("Reserva confirmada! Você receberá um e-mail com os detalhes.");
+    toast({
+      title: "Reserva confirmada",
+      description: "Você receberá um e-mail com os detalhes.",
+    });
   };
   
   const subtotal = cartItems.reduce((sum, item) => sum + item.price, 0);
-  const fee = subtotal * 0.05; // 5% platform fee
+  const fee = subtotal * 0.0998; // 9.98% platform fee
   const total = subtotal + fee;
 
   return (
     <div className="min-h-screen flex flex-col bg-toca-background">
       <Navbar isAuthenticated={true} />
+      
+      <TermsAcceptanceDialog 
+        open={showTermsDialog} 
+        onOpenChange={setShowTermsDialog}
+        onAccept={handleAcceptTerms}
+      />
       
       <div className="container mx-auto px-4 py-8">
         <Button 
@@ -125,6 +155,24 @@ const Checkout = () => {
                   <CardTitle className="text-white">Método de Pagamento</CardTitle>
                 </CardHeader>
                 <CardContent>
+                  {!termsAccepted && (
+                    <div className="mb-6 p-4 border border-amber-500 bg-amber-500/10 rounded-md flex items-start gap-3">
+                      <AlertTriangle className="text-amber-500 mt-0.5" size={20} />
+                      <div className="flex-1">
+                        <p className="text-white text-sm">
+                          É necessário aceitar os termos de serviço para prosseguir com o pagamento.
+                        </p>
+                        <Button 
+                          variant="link" 
+                          className="text-toca-accent p-0 h-auto text-sm mt-1"
+                          onClick={() => setShowTermsDialog(true)}
+                        >
+                          Ler e aceitar os termos
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                
                   <form onSubmit={handleSubmit} className="space-y-6">
                     <RadioGroup 
                       defaultValue="credit" 
@@ -215,7 +263,10 @@ const Checkout = () => {
                         <Button 
                           variant="outline" 
                           className="border-toca-border text-toca-text-secondary"
-                          onClick={() => toast("Código Pix copiado!")}
+                          onClick={() => toast({
+                            title: "Copiado",
+                            description: "Código Pix copiado para a área de transferência!"
+                          })}
                         >
                           Copiar código Pix
                         </Button>
@@ -226,9 +277,16 @@ const Checkout = () => {
                       <Button 
                         type="submit"
                         className="w-full bg-toca-accent hover:bg-toca-accent-hover"
+                        disabled={!termsAccepted}
                       >
                         {paymentMethod === "pix" ? "Confirmar Pagamento" : "Pagar"}
                       </Button>
+                      
+                      {!termsAccepted && (
+                        <p className="text-amber-400 text-xs text-center mt-2">
+                          Você precisa aceitar os termos de serviço para continuar
+                        </p>
+                      )}
                     </div>
                   </form>
                 </CardContent>
@@ -247,7 +305,7 @@ const Checkout = () => {
                       <span className="text-white">{formatCurrency(subtotal)}</span>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="text-toca-text-secondary">Taxa de serviço:</span>
+                      <span className="text-toca-text-secondary">Taxa de serviço (9,98%):</span>
                       <span className="text-white">{formatCurrency(fee)}</span>
                     </div>
                     
@@ -259,7 +317,12 @@ const Checkout = () => {
                     </div>
                     
                     <div className="pt-4 text-xs text-toca-text-secondary">
-                      <p>A taxa de serviço ajuda a manter nossa plataforma e garantir segurança nas transações.</p>
+                      <p>A taxa de serviço de 9,98% é aplicada para garantir:</p>
+                      <ul className="list-disc pl-4 mt-1 space-y-0.5">
+                        <li>Intermediação segura entre você e o profissional</li>
+                        <li>Garantia de recebimento ao profissional</li>
+                        <li>Garantia de reserva ao contratante</li>
+                      </ul>
                     </div>
                   </div>
                 </CardContent>
