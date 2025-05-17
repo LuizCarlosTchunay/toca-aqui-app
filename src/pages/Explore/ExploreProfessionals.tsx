@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import ProfileCard from "@/components/ProfileCard";
 import { Button } from "@/components/ui/button";
@@ -6,91 +7,64 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Search, Filter, Music, Film, Camera, Disc, Users, ChevronLeft, MapPin } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { useQuery } from "@tanstack/react-query";
 
-// Mock data
-const professionals = [
-  {
-    id: "1",
-    name: "João Silva",
-    artisticName: "DJ Pulse",
-    type: "DJ",
-    rating: 4.8,
-    instruments: [],
-    services: ["DJ", "Produção Musical", "Mixagem"],
-    genres: ["Eletrônica", "House", "EDM"],
-    hourlyRate: 150,
-    eventRate: 1200,
-    image: "https://images.unsplash.com/photo-1618160702438-9b02ab6515c9",
-    city: "São Paulo",
-    state: "SP",
-  },
-  {
-    id: "2",
-    name: "Maria Santos",
-    artisticName: "Maria Santos",
-    type: "Fotógrafo",
-    rating: 4.9,
-    instruments: [],
-    services: ["Fotografia", "Edição", "Cobertura de Eventos"],
-    hourlyRate: 200,
-    eventRate: 1500,
-    city: "Rio de Janeiro",
-    state: "RJ",
-  },
-  {
-    id: "3",
-    name: "Carlos Mendes",
-    artisticName: "Mendes Trio",
-    type: "Músico",
-    rating: 4.7,
-    instruments: ["Violão", "Voz", "Piano"],
-    services: ["Shows ao Vivo", "Eventos Corporativos", "Casamentos"],
-    genres: ["MPB", "Pop", "Jazz"],
-    hourlyRate: 180,
-    eventRate: 1300,
-    city: "São Paulo",
-    state: "SP",
-  },
-  {
-    id: "4",
-    name: "Ana Ferreira",
-    artisticName: "Ana Films",
-    type: "Filmmaker",
-    rating: 4.6,
-    instruments: [],
-    services: ["Videografia", "Edição", "Documentários", "Clipes"],
-    hourlyRate: 250,
-    eventRate: 2000,
-    city: "Curitiba",
-    state: "PR",
-  },
-  {
-    id: "5",
-    name: "Pedro Souza",
-    artisticName: "Pedro Sound",
-    type: "Técnico de Som",
-    rating: 4.5,
-    instruments: [],
-    services: ["Sonorização de Eventos", "Mixagem ao Vivo", "Montagem de Equipamentos"],
-    hourlyRate: 120,
-    eventRate: 950,
-    city: "São Paulo",
-    state: "SP",
-  },
-  {
-    id: "6",
-    name: "Juliana Costa",
-    artisticName: "Ju Lights",
-    type: "Técnico de Luz",
-    rating: 4.4,
-    instruments: [],
-    services: ["Iluminação para Eventos", "Desenho de Luz", "Operação de Mesa"],
-    hourlyRate: 130,
-    eventRate: 900,
-    city: "Rio de Janeiro",
-    state: "RJ",
+interface Professional {
+  id: string;
+  name: string;
+  artisticName?: string;
+  type: string;
+  rating?: number;
+  instruments?: string[];
+  services?: string[];
+  genres?: string[];
+  hourlyRate?: number;
+  eventRate?: number;
+  image?: string;
+  city?: string;
+  state?: string;
+}
+
+const fetchProfessionals = async () => {
+  const { data, error } = await supabase
+    .from("professionals")
+    .select(`
+      id,
+      profiles!inner(
+        full_name,
+        city,
+        state
+      ),
+      artistic_name,
+      type,
+      rating,
+      services,
+      genres,
+      hourly_rate,
+      event_rate
+    `);
+
+  if (error) {
+    console.error("Erro ao buscar profissionais:", error);
+    throw error;
   }
-];
+
+  return data.map((item) => ({
+    id: item.id,
+    name: item.profiles.full_name,
+    artisticName: item.artistic_name,
+    type: item.type,
+    rating: item.rating,
+    services: item.services ? Object.values(item.services) : [],
+    genres: item.genres,
+    hourlyRate: item.hourly_rate,
+    eventRate: item.event_rate,
+    image: "https://images.unsplash.com/photo-1618160702438-9b02ab6515c9", // Imagem padrão
+    city: item.profiles.city,
+    state: item.profiles.state,
+  }));
+};
 
 const ExploreProfessionals = () => {
   const navigate = useNavigate();
@@ -103,6 +77,11 @@ const ExploreProfessionals = () => {
     minPrice: "",
     maxPrice: "",
     rating: "",
+  });
+
+  const { data: professionals = [], isLoading, isError } = useQuery({
+    queryKey: ['professionals'],
+    queryFn: fetchProfessionals
   });
 
   const toggleFilters = () => {
@@ -121,7 +100,7 @@ const ExploreProfessionals = () => {
         (professional.artisticName?.toLowerCase().includes(searchLower) || false) ||
         professional.type.toLowerCase().includes(searchLower) ||
         (professional.services?.some(service => service.toLowerCase().includes(searchLower)) || false) ||
-        (professional.instruments?.some(instrument => instrument.toLowerCase().includes(searchLower)) || false)
+        (professional.genres?.some(genre => genre.toLowerCase().includes(searchLower)) || false)
       );
     }
     
@@ -131,31 +110,31 @@ const ExploreProfessionals = () => {
     }
     
     // City filter
-    if (filters.city && matches) {
+    if (filters.city && matches && professional.city) {
       matches = matches && professional.city.toLowerCase().includes(filters.city.toLowerCase());
     }
     
     // State filter
-    if (filters.state && matches) {
+    if (filters.state && matches && professional.state) {
       matches = matches && professional.state.toLowerCase().includes(filters.state.toLowerCase());
     }
     
     // Min price filter
     if (filters.minPrice && matches) {
       const minPrice = parseInt(filters.minPrice);
-      matches = matches && !isNaN(minPrice) && (professional.hourlyRate >= minPrice || professional.eventRate >= minPrice);
+      matches = matches && !isNaN(minPrice) && ((professional.hourlyRate && professional.hourlyRate >= minPrice) || (professional.eventRate && professional.eventRate >= minPrice));
     }
     
     // Max price filter
     if (filters.maxPrice && matches) {
       const maxPrice = parseInt(filters.maxPrice);
-      matches = matches && !isNaN(maxPrice) && (professional.hourlyRate <= maxPrice || professional.eventRate <= maxPrice);
+      matches = matches && !isNaN(maxPrice) && ((professional.hourlyRate && professional.hourlyRate <= maxPrice) || (professional.eventRate && professional.eventRate <= maxPrice));
     }
     
     // Rating filter
     if (filters.rating && filters.rating !== "any" && matches) {
       const rating = parseInt(filters.rating);
-      matches = matches && !isNaN(rating) && professional.rating >= rating;
+      matches = matches && !isNaN(rating) && (professional.rating !== undefined && professional.rating >= rating);
     }
     
     return matches;
@@ -337,11 +316,33 @@ const ExploreProfessionals = () => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-        {filteredProfessionals.length > 0 ? (
+        {isLoading ? (
+          <div className="col-span-full text-center py-16">
+            <p className="text-toca-text-secondary">Carregando profissionais...</p>
+          </div>
+        ) : isError ? (
+          <div className="col-span-full text-center py-16">
+            <p className="text-toca-text-secondary">Erro ao carregar profissionais. Tente novamente mais tarde.</p>
+          </div>
+        ) : filteredProfessionals.length > 0 ? (
           filteredProfessionals.map((professional) => (
             <ProfileCard
               key={professional.id}
-              professional={professional}
+              professional={{
+                id: professional.id,
+                name: professional.name,
+                artisticName: professional.artisticName || professional.name,
+                type: professional.type,
+                rating: professional.rating || 0,
+                instruments: professional.genres || [],
+                services: professional.services || [],
+                genres: professional.genres || [],
+                hourlyRate: professional.hourlyRate || 0,
+                eventRate: professional.eventRate || 0,
+                image: professional.image,
+                city: professional.city || "",
+                state: professional.state || "",
+              }}
               onClick={() => navigate(`/profissional/${professional.id}`)}
             />
           ))

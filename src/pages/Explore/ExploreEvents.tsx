@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+
+import React, { useState, useEffect } from "react";
 import EventCard from "@/components/EventCard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,57 +8,48 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Search, Filter, Calendar, ChevronLeft, MapPin } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { useQuery } from "@tanstack/react-query";
 
-// Mock data
-const events = [
-  {
-    id: "1",
-    name: "Festival de Verão",
-    description: "Um grande festival de música e artes para celebrar o verão.",
-    date: "2025-01-15",
-    time: "14:00",
-    location: "Parque Municipal",
-    city: "São Paulo",
-    state: "SP",
-    services: ["Músico", "DJ", "Técnico de Som"],
-    image: "https://images.unsplash.com/photo-1527576539890-dfa815648363",
-  },
-  {
-    id: "2",
-    name: "Feira Cultural",
-    description: "Uma feira de artes e cultura com apresentações ao vivo.",
-    date: "2025-07-20",
-    time: "10:00",
-    location: "Centro de Exposições",
-    city: "Rio de Janeiro",
-    state: "RJ",
-    services: ["Fotógrafo", "Filmmaker", "Músico"],
-  },
-  {
-    id: "3",
-    name: "Casamento Silva",
-    description: "Cerimônia e recepção de casamento para 150 convidados.",
-    date: "2025-06-15",
-    time: "19:00",
-    location: "Buffet Estrela",
-    city: "São Paulo",
-    state: "SP",
-    services: ["DJ", "Fotógrafo", "Filmmaker"],
-    image: "https://images.unsplash.com/photo-1527576539890-dfa815648363",
-  },
-  {
-    id: "4",
-    name: "Aniversário Empresarial",
-    description: "Celebração do aniversário de 10 anos da empresa.",
-    date: "2025-06-22",
-    time: "20:00",
-    location: "Hotel Continental",
-    city: "São Paulo",
-    state: "SP",
-    services: ["Músico", "Técnico de Som", "DJ"],
-    image: "https://images.unsplash.com/photo-1527576539890-dfa815648363",
-  },
-];
+interface Event {
+  id: string;
+  name: string;
+  description: string;
+  date: string;
+  time: string;
+  location: string;
+  city: string;
+  state: string;
+  required_services: string[];
+  is_public: boolean;
+  image?: string;
+}
+
+const fetchEvents = async () => {
+  const { data, error } = await supabase
+    .from("events")
+    .select("*")
+    .eq("is_public", true);
+
+  if (error) {
+    console.error("Erro ao buscar eventos:", error);
+    throw error;
+  }
+
+  return data.map((event) => ({
+    id: event.id,
+    name: event.name,
+    description: event.description,
+    date: event.date,
+    time: event.time,
+    location: event.location,
+    city: event.city,
+    state: event.state,
+    required_services: event.required_services || [],
+    is_public: event.is_public,
+    image: "https://images.unsplash.com/photo-1527576539890-dfa815648363", // Imagem padrão
+  }));
+};
 
 const ExploreEvents = () => {
   const navigate = useNavigate();
@@ -70,12 +62,62 @@ const ExploreEvents = () => {
     service: "",
   });
 
+  const { data: events = [], isLoading, isError } = useQuery({
+    queryKey: ['events'],
+    queryFn: fetchEvents
+  });
+
   const toggleFilters = () => {
     setShowFilters(!showFilters);
   };
 
-  const handleApply = (eventId: string) => {
-    toast.success("Candidatura enviada com sucesso!");
+  const handleApply = async (eventId: string) => {
+    const { data: session } = await supabase.auth.getSession();
+    
+    if (!session?.session) {
+      toast.error("Você precisa estar logado para se candidatar a um evento");
+      navigate("/login");
+      return;
+    }
+
+    const userId = session.session.user.id;
+    
+    // Verificar se o usuário é um profissional
+    const { data: professional } = await supabase
+      .from("professionals")
+      .select("*")
+      .eq("id", userId)
+      .single();
+
+    if (!professional) {
+      toast.error("Você precisa ter um perfil profissional para se candidatar");
+      navigate("/editar-perfil");
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from("applications")
+        .insert({
+          event_id: eventId,
+          professional_id: userId,
+          message: "Estou interessado em trabalhar neste evento.",
+        });
+
+      if (error) {
+        if (error.code === "23505") {  // Código para violação de uniqueness
+          toast.error("Você já se candidatou para este evento");
+        } else {
+          console.error("Erro ao candidatar-se:", error);
+          toast.error("Erro ao enviar candidatura");
+        }
+      } else {
+        toast.success("Candidatura enviada com sucesso!");
+      }
+    } catch (error) {
+      console.error("Erro ao candidatar-se:", error);
+      toast.error("Erro ao enviar candidatura");
+    }
   };
 
   // Filter events based on search term and filters
@@ -109,7 +151,7 @@ const ExploreEvents = () => {
     
     // Service filter
     if (filters.service && filters.service !== "all") {
-      matches = matches && event.services.some(
+      matches = matches && event.required_services.some(
         service => service.toLowerCase() === filters.service.toLowerCase()
       );
     }
@@ -234,11 +276,30 @@ const ExploreEvents = () => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredEvents.length > 0 ? (
+        {isLoading ? (
+          <div className="col-span-full text-center py-16">
+            <p className="text-toca-text-secondary">Carregando eventos...</p>
+          </div>
+        ) : isError ? (
+          <div className="col-span-full text-center py-16">
+            <p className="text-toca-text-secondary">Erro ao carregar eventos. Tente novamente mais tarde.</p>
+          </div>
+        ) : filteredEvents.length > 0 ? (
           filteredEvents.map((event) => (
             <EventCard
               key={event.id}
-              event={event}
+              event={{
+                id: event.id,
+                name: event.name,
+                description: event.description,
+                date: event.date,
+                time: event.time,
+                location: event.location,
+                city: event.city,
+                state: event.state,
+                services: event.required_services,
+                image: event.image
+              }}
               onClick={() => navigate(`/eventos/${event.id}`)}
               onApply={() => handleApply(event.id)}
             />
