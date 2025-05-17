@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import Navbar from "@/components/Navbar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -27,6 +26,14 @@ interface ProfessionalData {
   state?: string;
   bio?: string;
   portfolio?: string[];
+}
+
+interface Review {
+  id: string;
+  reviewerName: string;
+  rating: number;
+  comment: string;
+  eventType: string;
 }
 
 const ProfessionalProfile = () => {
@@ -86,15 +93,17 @@ const ProfessionalProfile = () => {
         console.error("Erro ao buscar avaliações:", reviewsError);
       }
 
+      const reviewCount = reviews ? reviews.length : 0;
+
       return {
         id: data.id,
         name: data.profiles.full_name,
         artisticName: data.artistic_name || data.profiles.full_name,
         type: data.type,
         rating: data.rating || 4.5,
-        reviewCount: reviews?.length || 0,
-        services: data.services ? Object.values(data.services) : [],
-        genres: data.genres || [],
+        reviewCount: reviewCount,
+        services: data.services ? Object.values(data.services as string[]) : [],
+        genres: data.genres as string[] || [],
         hourlyRate: data.hourly_rate,
         eventRate: data.event_rate,
         image: "https://images.unsplash.com/photo-1618160702438-9b02ab6515c9", // Imagem padrão
@@ -126,9 +135,11 @@ const ProfessionalProfile = () => {
         return [];
       }
 
+      if (!data) return [];
+
       return data.map(review => ({
         id: review.id,
-        reviewerName: review.profiles.full_name,
+        reviewerName: review.profiles?.full_name || "Usuário",
         rating: review.rating,
         comment: review.comment,
         eventType: "Evento"

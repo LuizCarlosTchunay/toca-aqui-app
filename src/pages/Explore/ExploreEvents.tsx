@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import EventCard from "@/components/EventCard";
 import { Button } from "@/components/ui/button";

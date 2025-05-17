@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import ProfileCard from "@/components/ProfileCard";
 import { Button } from "@/components/ui/button";
@@ -56,8 +55,8 @@ const fetchProfessionals = async () => {
     artisticName: item.artistic_name,
     type: item.type,
     rating: item.rating,
-    services: item.services ? Object.values(item.services) : [],
-    genres: item.genres,
+    services: item.services ? Object.values(item.services as string[]) : [],
+    genres: item.genres as string[] || [],
     hourlyRate: item.hourly_rate,
     eventRate: item.event_rate,
     image: "https://images.unsplash.com/photo-1618160702438-9b02ab6515c9", // Imagem padrão
