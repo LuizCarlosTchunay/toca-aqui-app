@@ -60,7 +60,7 @@ const ProfessionalProfile = () => {
         .from("professionals")
         .select(`
           id,
-          profiles!inner(
+          profiles(
             id,
             full_name,
             biography,
@@ -94,11 +94,12 @@ const ProfessionalProfile = () => {
       }
 
       const reviewCount = reviews ? reviews.length : 0;
+      const profileData = data.profiles[0] || {};
 
       return {
         id: data.id,
-        name: data.profiles.full_name,
-        artisticName: data.artistic_name || data.profiles.full_name,
+        name: profileData.full_name || "Sem nome",
+        artisticName: data.artistic_name || profileData.full_name || "Sem nome",
         type: data.type,
         rating: data.rating || 4.5,
         reviewCount: reviewCount,
@@ -107,9 +108,9 @@ const ProfessionalProfile = () => {
         hourlyRate: data.hourly_rate,
         eventRate: data.event_rate,
         image: "https://images.unsplash.com/photo-1618160702438-9b02ab6515c9", // Imagem padrão
-        city: data.profiles.city,
-        state: data.profiles.state,
-        bio: data.profiles.biography,
+        city: profileData.city,
+        state: profileData.state,
+        bio: profileData.biography,
         portfolio: ["Evento Corporativo XYZ", "Casamento Silva", "Festival de Verão 2024"] // Mock para portfolio
       };
     },

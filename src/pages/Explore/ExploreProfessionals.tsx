@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import ProfileCard from "@/components/ProfileCard";
 import { Button } from "@/components/ui/button";
@@ -30,7 +31,7 @@ const fetchProfessionals = async () => {
     .from("professionals")
     .select(`
       id,
-      profiles!inner(
+      profiles(
         full_name,
         city,
         state
@@ -51,7 +52,7 @@ const fetchProfessionals = async () => {
 
   return data.map((item) => ({
     id: item.id,
-    name: item.profiles.full_name,
+    name: item.profiles[0]?.full_name || "Sem nome",
     artisticName: item.artistic_name,
     type: item.type,
     rating: item.rating,
@@ -60,8 +61,8 @@ const fetchProfessionals = async () => {
     hourlyRate: item.hourly_rate,
     eventRate: item.event_rate,
     image: "https://images.unsplash.com/photo-1618160702438-9b02ab6515c9", // Imagem padrão
-    city: item.profiles.city,
-    state: item.profiles.state,
+    city: item.profiles[0]?.city || "",
+    state: item.profiles[0]?.state || "",
   }));
 };
 
