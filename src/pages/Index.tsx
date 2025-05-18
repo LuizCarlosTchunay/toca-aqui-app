@@ -42,9 +42,9 @@ const Index = () => {
       <section className="relative overflow-hidden">
         <div className="absolute inset-0 z-0 bg-gradient-to-br from-black to-toca-background">
           <div 
-            className="absolute inset-0 opacity-20" 
+            className="absolute inset-0 opacity-30" 
             style={{
-              backgroundImage: "url(/lovable-uploads/558bc385-f7ce-4f49-a3ff-efd95f17da92.png)",
+              backgroundImage: "url(/lovable-uploads/e246f252-69f3-421e-bb5b-dd658b4def09.png)",
               backgroundSize: "cover",
               backgroundPosition: "center",
             }}
