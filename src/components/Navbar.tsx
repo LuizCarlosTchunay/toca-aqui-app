@@ -1,11 +1,12 @@
 
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Menu, X, User, Search, Bell } from "lucide-react";
 import Logo from "./Logo";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import UserAvatar from "./UserAvatar";
+import { useAuth } from "@/hooks/useAuth";
 
 interface NavbarProps {
   isAuthenticated?: boolean;
@@ -14,14 +15,32 @@ interface NavbarProps {
 }
 
 const Navbar: React.FC<NavbarProps> = ({
-  isAuthenticated = false,
-  currentRole = "contratante",
-  onRoleToggle,
+  isAuthenticated: propIsAuthenticated,
+  currentRole: propCurrentRole,
+  onRoleToggle: propOnRoleToggle,
 }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const { user, signOut, currentRole, setCurrentRole } = useAuth();
+  
+  const isAuthenticated = propIsAuthenticated !== undefined ? propIsAuthenticated : !!user;
+  const currentRole = propCurrentRole || user?.user_metadata?.tipo_inicial || "contratante";
+  const navigate = useNavigate();
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
+  };
+  
+  const handleRoleToggle = () => {
+    if (propOnRoleToggle) {
+      propOnRoleToggle();
+    } else {
+      setCurrentRole(currentRole === "contratante" ? "profissional" : "contratante");
+    }
+  };
+  
+  const handleSignOut = async () => {
+    await signOut();
+    setIsMenuOpen(false);
   };
 
   return (
@@ -58,7 +77,7 @@ const Navbar: React.FC<NavbarProps> = ({
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={onRoleToggle}
+                  onClick={handleRoleToggle}
                   className={cn(
                     "border-toca-accent text-toca-accent hover:bg-toca-accent hover:text-white"
                   )}
@@ -74,7 +93,10 @@ const Navbar: React.FC<NavbarProps> = ({
                   <Bell size={20} />
                 </Button>
                 
-                <UserAvatar />
+                <UserAvatar user={{ 
+                  name: user?.user_metadata?.nome || "Usuário",
+                  image: user?.user_metadata?.avatar_url
+                }} />
               </>
             ) : (
               <>
@@ -124,13 +146,19 @@ const Navbar: React.FC<NavbarProps> = ({
             {isAuthenticated ? (
               <>
                 <div className="px-4 py-3 border-b border-toca-border">
-                  <UserAvatar showName />
+                  <UserAvatar 
+                    showName 
+                    user={{ 
+                      name: user?.user_metadata?.nome || "Usuário",
+                      image: user?.user_metadata?.avatar_url
+                    }} 
+                  />
                   <div className="mt-3">
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={() => {
-                        onRoleToggle?.();
+                        handleRoleToggle();
                         setIsMenuOpen(false);
                       }}
                       className="w-full border-toca-accent text-toca-accent hover:bg-toca-accent hover:text-white"
@@ -176,7 +204,7 @@ const Navbar: React.FC<NavbarProps> = ({
                 </Link>
                 <button 
                   className="block w-full text-left px-4 py-2 text-toca-text-secondary hover:bg-toca-card"
-                  onClick={() => setIsMenuOpen(false)}
+                  onClick={handleSignOut}
                 >
                   Sair
                 </button>

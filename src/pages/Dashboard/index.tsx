@@ -1,13 +1,12 @@
 
-import React, { useState } from "react";
+import React from "react";
 import ContractorDashboard from "./ContractorDashboard";
 import ProfessionalDashboard from "./ProfessionalDashboard";
 import Navbar from "@/components/Navbar";
-
-type UserRole = "contratante" | "profissional";
+import { useAuth } from "@/hooks/useAuth";
 
 const Dashboard = () => {
-  const [currentRole, setCurrentRole] = useState<UserRole>("contratante");
+  const { currentRole, setCurrentRole } = useAuth();
   
   const toggleRole = () => {
     setCurrentRole(currentRole === "contratante" ? "profissional" : "contratante");
