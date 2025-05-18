@@ -25,29 +25,21 @@ interface Professional {
   state?: string;
 }
 
-interface ProfileData {
-  full_name?: string;
-  city?: string;
-  state?: string;
-}
-
 const fetchProfessionals = async () => {
   const { data, error } = await supabase
-    .from("professionals")
+    .from("profissionais")
     .select(`
       id,
-      profiles(
-        full_name,
-        city,
-        state
-      ),
-      artistic_name,
-      type,
-      rating,
-      services,
-      genres,
-      hourly_rate,
-      event_rate
+      user_id,
+      nome_artistico,
+      tipo_profissional,
+      instrumentos,
+      subgeneros,
+      bio,
+      cidade,
+      estado,
+      cache_hora,
+      cache_evento
     `);
 
   if (error) {
@@ -56,22 +48,20 @@ const fetchProfessionals = async () => {
   }
 
   return data.map((item) => {
-    // Safely access profile data with defaults
-    const profileData: ProfileData = item.profiles && item.profiles[0] ? item.profiles[0] : {};
-    
     return {
       id: item.id,
-      name: profileData?.full_name || "Sem nome",
-      artisticName: item.artistic_name,
-      type: item.type,
-      rating: item.rating,
-      services: item.services ? Object.values(item.services as string[]) : [],
-      genres: item.genres as string[] || [],
-      hourlyRate: item.hourly_rate,
-      eventRate: item.event_rate,
+      name: item.nome_artistico || "Sem nome",
+      artisticName: item.nome_artistico,
+      type: item.tipo_profissional || "",
+      rating: 4.5, // Valor padrão até implementarmos avaliações
+      instruments: item.instrumentos || [],
+      services: item.instrumentos || [], // Temporariamente usando instrumentos como serviços
+      genres: item.subgeneros || [],
+      hourlyRate: item.cache_hora || 0,
+      eventRate: item.cache_evento || 0,
       image: "https://images.unsplash.com/photo-1618160702438-9b02ab6515c9", // Imagem padrão
-      city: profileData?.city || "",
-      state: profileData?.state || "",
+      city: item.cidade || "",
+      state: item.estado || "",
     };
   });
 };
@@ -334,8 +324,8 @@ const ExploreProfessionals = () => {
           <div className="col-span-full text-center py-16">
             <p className="text-toca-text-secondary">Erro ao carregar profissionais. Tente novamente mais tarde.</p>
           </div>
-        ) : filteredProfessionals.length > 0 ? (
-          filteredProfessionals.map((professional) => (
+        ) : professionals.length > 0 ? (
+          professionals.map((professional) => (
             <ProfileCard
               key={professional.id}
               professional={{
@@ -344,7 +334,7 @@ const ExploreProfessionals = () => {
                 artisticName: professional.artisticName || professional.name,
                 type: professional.type,
                 rating: professional.rating || 0,
-                instruments: professional.genres || [],
+                instruments: professional.instruments || [],
                 services: professional.services || [],
                 genres: professional.genres || [],
                 hourlyRate: professional.hourlyRate || 0,

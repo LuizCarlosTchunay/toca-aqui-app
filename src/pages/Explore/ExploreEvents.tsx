@@ -26,9 +26,9 @@ interface Event {
 
 const fetchEvents = async () => {
   const { data, error } = await supabase
-    .from("events")
+    .from("eventos")
     .select("*")
-    .eq("is_public", true);
+    .eq("status", "aberto");
 
   if (error) {
     console.error("Erro ao buscar eventos:", error);
@@ -37,15 +37,15 @@ const fetchEvents = async () => {
 
   return data.map((event) => ({
     id: event.id,
-    name: event.name,
-    description: event.description,
-    date: event.date,
-    time: event.time,
-    location: event.location,
-    city: event.city,
-    state: event.state,
-    required_services: event.required_services || [],
-    is_public: event.is_public,
+    name: event.titulo || "",
+    description: event.descricao || "",
+    date: event.data || "",
+    time: "", // O novo schema não tem campo para hora específica
+    location: event.local || "",
+    city: event.local?.split(",").pop()?.trim() || "", // Extraindo cidade do campo local temporariamente
+    state: "", // O novo schema não tem campo específico para estado
+    required_services: event.servicos_requeridos || [],
+    is_public: true, // Assumindo que todos os eventos listados são públicos
     image: "https://images.unsplash.com/photo-1527576539890-dfa815648363", // Imagem padrão
   }));
 };
@@ -83,9 +83,9 @@ const ExploreEvents = () => {
     
     // Verificar se o usuário é um profissional
     const { data: professional } = await supabase
-      .from("professionals")
+      .from("profissionais")
       .select("*")
-      .eq("id", userId)
+      .eq("user_id", userId)
       .single();
 
     if (!professional) {
@@ -96,11 +96,11 @@ const ExploreEvents = () => {
 
     try {
       const { error } = await supabase
-        .from("applications")
+        .from("candidaturas")
         .insert({
-          event_id: eventId,
-          professional_id: userId,
-          message: "Estou interessado em trabalhar neste evento.",
+          evento_id: eventId,
+          profissional_id: professional.id,
+          mensagem: "Estou interessado em trabalhar neste evento.",
         });
 
       if (error) {

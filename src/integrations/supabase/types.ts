@@ -9,7 +9,373 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      avaliacoes: {
+        Row: {
+          comentario: string | null
+          contratante_id: string | null
+          data_avaliacao: string | null
+          evento_id: string | null
+          id: string
+          nota: number | null
+          profissional_id: string | null
+        }
+        Insert: {
+          comentario?: string | null
+          contratante_id?: string | null
+          data_avaliacao?: string | null
+          evento_id?: string | null
+          id?: string
+          nota?: number | null
+          profissional_id?: string | null
+        }
+        Update: {
+          comentario?: string | null
+          contratante_id?: string | null
+          data_avaliacao?: string | null
+          evento_id?: string | null
+          id?: string
+          nota?: number | null
+          profissional_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "avaliacoes_evento_id_fkey"
+            columns: ["evento_id"]
+            isOneToOne: false
+            referencedRelation: "eventos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "avaliacoes_profissional_id_fkey"
+            columns: ["profissional_id"]
+            isOneToOne: false
+            referencedRelation: "profissionais"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      candidaturas: {
+        Row: {
+          data_candidatura: string | null
+          evento_id: string | null
+          id: string
+          mensagem: string | null
+          profissional_id: string | null
+          status: string | null
+        }
+        Insert: {
+          data_candidatura?: string | null
+          evento_id?: string | null
+          id?: string
+          mensagem?: string | null
+          profissional_id?: string | null
+          status?: string | null
+        }
+        Update: {
+          data_candidatura?: string | null
+          evento_id?: string | null
+          id?: string
+          mensagem?: string | null
+          profissional_id?: string | null
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "candidaturas_evento_id_fkey"
+            columns: ["evento_id"]
+            isOneToOne: false
+            referencedRelation: "eventos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "candidaturas_profissional_id_fkey"
+            columns: ["profissional_id"]
+            isOneToOne: false
+            referencedRelation: "profissionais"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      carrinho_itens: {
+        Row: {
+          carrinho_id: string | null
+          id: string
+          preco: number | null
+          profissional_id: string | null
+          servico: string | null
+        }
+        Insert: {
+          carrinho_id?: string | null
+          id?: string
+          preco?: number | null
+          profissional_id?: string | null
+          servico?: string | null
+        }
+        Update: {
+          carrinho_id?: string | null
+          id?: string
+          preco?: number | null
+          profissional_id?: string | null
+          servico?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "carrinho_itens_carrinho_id_fkey"
+            columns: ["carrinho_id"]
+            isOneToOne: false
+            referencedRelation: "carrinhos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "carrinho_itens_profissional_id_fkey"
+            columns: ["profissional_id"]
+            isOneToOne: false
+            referencedRelation: "profissionais"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      carrinhos: {
+        Row: {
+          contratante_id: string | null
+          data_atualizacao: string | null
+          id: string
+          status: string | null
+        }
+        Insert: {
+          contratante_id?: string | null
+          data_atualizacao?: string | null
+          id?: string
+          status?: string | null
+        }
+        Update: {
+          contratante_id?: string | null
+          data_atualizacao?: string | null
+          id?: string
+          status?: string | null
+        }
+        Relationships: []
+      }
+      eventos: {
+        Row: {
+          contratante_id: string | null
+          data: string | null
+          descricao: string | null
+          id: string
+          local: string | null
+          servicos_requeridos: string[] | null
+          status: string | null
+          titulo: string | null
+        }
+        Insert: {
+          contratante_id?: string | null
+          data?: string | null
+          descricao?: string | null
+          id?: string
+          local?: string | null
+          servicos_requeridos?: string[] | null
+          status?: string | null
+          titulo?: string | null
+        }
+        Update: {
+          contratante_id?: string | null
+          data?: string | null
+          descricao?: string | null
+          id?: string
+          local?: string | null
+          servicos_requeridos?: string[] | null
+          status?: string | null
+          titulo?: string | null
+        }
+        Relationships: []
+      }
+      pagamentos: {
+        Row: {
+          comprovante_url: string | null
+          data_pagamento: string | null
+          id: string
+          metodo: string | null
+          reserva_id: string | null
+          status: string | null
+          valor_total: number | null
+        }
+        Insert: {
+          comprovante_url?: string | null
+          data_pagamento?: string | null
+          id?: string
+          metodo?: string | null
+          reserva_id?: string | null
+          status?: string | null
+          valor_total?: number | null
+        }
+        Update: {
+          comprovante_url?: string | null
+          data_pagamento?: string | null
+          id?: string
+          metodo?: string | null
+          reserva_id?: string | null
+          status?: string | null
+          valor_total?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pagamentos_reserva_id_fkey"
+            columns: ["reserva_id"]
+            isOneToOne: false
+            referencedRelation: "reservas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      portfolio: {
+        Row: {
+          id: string
+          profissional_id: string | null
+          tipo: string | null
+          url: string | null
+        }
+        Insert: {
+          id?: string
+          profissional_id?: string | null
+          tipo?: string | null
+          url?: string | null
+        }
+        Update: {
+          id?: string
+          profissional_id?: string | null
+          tipo?: string | null
+          url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "portfolio_profissional_id_fkey"
+            columns: ["profissional_id"]
+            isOneToOne: false
+            referencedRelation: "profissionais"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profissionais: {
+        Row: {
+          bio: string | null
+          cache_evento: number | null
+          cache_hora: number | null
+          cidade: string | null
+          estado: string | null
+          id: string
+          instrumentos: string[] | null
+          nome_artistico: string | null
+          status: string | null
+          subgeneros: string[] | null
+          tipo_profissional: string | null
+          user_id: string | null
+        }
+        Insert: {
+          bio?: string | null
+          cache_evento?: number | null
+          cache_hora?: number | null
+          cidade?: string | null
+          estado?: string | null
+          id?: string
+          instrumentos?: string[] | null
+          nome_artistico?: string | null
+          status?: string | null
+          subgeneros?: string[] | null
+          tipo_profissional?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          bio?: string | null
+          cache_evento?: number | null
+          cache_hora?: number | null
+          cidade?: string | null
+          estado?: string | null
+          id?: string
+          instrumentos?: string[] | null
+          nome_artistico?: string | null
+          status?: string | null
+          subgeneros?: string[] | null
+          tipo_profissional?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      reservas: {
+        Row: {
+          contratante_id: string | null
+          data_reserva: string | null
+          evento_id: string | null
+          id: string
+          profissional_id: string | null
+          status: string | null
+        }
+        Insert: {
+          contratante_id?: string | null
+          data_reserva?: string | null
+          evento_id?: string | null
+          id?: string
+          profissional_id?: string | null
+          status?: string | null
+        }
+        Update: {
+          contratante_id?: string | null
+          data_reserva?: string | null
+          evento_id?: string | null
+          id?: string
+          profissional_id?: string | null
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reservas_evento_id_fkey"
+            columns: ["evento_id"]
+            isOneToOne: false
+            referencedRelation: "eventos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reservas_profissional_id_fkey"
+            columns: ["profissional_id"]
+            isOneToOne: false
+            referencedRelation: "profissionais"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      users: {
+        Row: {
+          data_cadastro: string | null
+          email: string | null
+          id: string
+          nome: string | null
+          senha_hash: string | null
+          telefone: string | null
+          tem_perfil_profissional: boolean | null
+          tipo_inicial: string | null
+        }
+        Insert: {
+          data_cadastro?: string | null
+          email?: string | null
+          id?: string
+          nome?: string | null
+          senha_hash?: string | null
+          telefone?: string | null
+          tem_perfil_profissional?: boolean | null
+          tipo_inicial?: string | null
+        }
+        Update: {
+          data_cadastro?: string | null
+          email?: string | null
+          id?: string
+          nome?: string | null
+          senha_hash?: string | null
+          telefone?: string | null
+          tem_perfil_profissional?: boolean | null
+          tipo_inicial?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

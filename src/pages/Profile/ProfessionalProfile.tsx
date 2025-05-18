@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from "react";
 import Navbar from "@/components/Navbar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -36,14 +37,6 @@ interface Review {
   eventType: string;
 }
 
-interface ProfileData {
-  id?: string;
-  full_name?: string;
-  biography?: string;
-  city?: string;
-  state?: string;
-}
-
 const ProfessionalProfile = () => {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
@@ -65,23 +58,19 @@ const ProfessionalProfile = () => {
       if (!id) throw new Error("ID do profissional não fornecido");
 
       const { data, error } = await supabase
-        .from("professionals")
+        .from("profissionais")
         .select(`
           id,
-          profiles(
-            id,
-            full_name,
-            biography,
-            city,
-            state
-          ),
-          artistic_name,
-          type,
-          rating,
-          services,
-          genres,
-          hourly_rate,
-          event_rate
+          user_id,
+          nome_artistico,
+          tipo_profissional,
+          instrumentos,
+          subgeneros,
+          bio,
+          cidade,
+          estado,
+          cache_hora,
+          cache_evento
         `)
         .eq("id", id)
         .single();
@@ -91,37 +80,46 @@ const ProfessionalProfile = () => {
         throw error;
       }
 
-      // Buscar reviews
-      const { data: reviews, error: reviewsError } = await supabase
-        .from("reviews")
+      // Buscar avaliações
+      const { data: avaliacoes, error: avaliacoesError } = await supabase
+        .from("avaliacoes")
         .select("*")
-        .eq("reviewed_id", id);
+        .eq("profissional_id", id);
 
-      if (reviewsError) {
-        console.error("Erro ao buscar avaliações:", reviewsError);
+      if (avaliacoesError) {
+        console.error("Erro ao buscar avaliações:", avaliacoesError);
       }
 
-      const reviewCount = reviews ? reviews.length : 0;
+      const reviewCount = avaliacoes ? avaliacoes.length : 0;
       
-      // Handle the case where profiles might be empty
-      const profileData: ProfileData = data.profiles && data.profiles[0] ? data.profiles[0] : {};
+      // Buscar portfolio
+      const { data: portfolioItems, error: portfolioError } = await supabase
+        .from("portfolio")
+        .select("*")
+        .eq("profissional_id", id);
+        
+      if (portfolioError) {
+        console.error("Erro ao buscar portfólio:", portfolioError);
+      }
+
+      const portfolioList = portfolioItems ? portfolioItems.map(item => item.tipo || 'Item de portfólio') : [];
 
       return {
         id: data.id,
-        name: profileData?.full_name || "Sem nome",
-        artisticName: data.artistic_name || profileData?.full_name || "Sem nome",
-        type: data.type,
-        rating: data.rating || 4.5,
+        name: data.nome_artistico || "Sem nome",
+        artisticName: data.nome_artistico || "Sem nome artístico",
+        type: data.tipo_profissional || "Músico",
+        rating: 4.5, // Valor padrão até implementarmos avaliações reais
         reviewCount: reviewCount,
-        services: data.services ? Object.values(data.services as string[]) : [],
-        genres: data.genres as string[] || [],
-        hourlyRate: data.hourly_rate,
-        eventRate: data.event_rate,
+        services: data.instrumentos || [],
+        genres: data.subgeneros || [],
+        hourlyRate: data.cache_hora || 0,
+        eventRate: data.cache_evento || 0,
         image: "https://images.unsplash.com/photo-1618160702438-9b02ab6515c9", // Imagem padrão
-        city: profileData?.city,
-        state: profileData?.state,
-        bio: profileData?.biography,
-        portfolio: ["Evento Corporativo XYZ", "Casamento Silva", "Festival de Verão 2024"] // Mock para portfolio
+        city: data.cidade || "",
+        state: data.estado || "",
+        bio: data.bio || "",
+        portfolio: portfolioList.length > 0 ? portfolioList : ["Evento Corporativo XYZ", "Casamento Silva", "Festival de Verão 2024"] // Mock se não houver dados reais
       };
     },
     enabled: !!id
@@ -133,12 +131,12 @@ const ProfessionalProfile = () => {
       if (!id) return [];
 
       const { data, error } = await supabase
-        .from("reviews")
+        .from("avaliacoes")
         .select(`
           *,
-          profiles!reviewer_id(full_name)
+          users!contratante_id (nome)
         `)
-        .eq("reviewed_id", id)
+        .eq("profissional_id", id)
         .limit(2);
 
       if (error) {
@@ -150,9 +148,9 @@ const ProfessionalProfile = () => {
 
       return data.map(review => ({
         id: review.id,
-        reviewerName: review.profiles?.full_name || "Usuário",
-        rating: review.rating,
-        comment: review.comment,
+        reviewerName: review.users?.nome || "Usuário",
+        rating: review.nota || 5,
+        comment: review.comentario || "Ótimo profissional!",
         eventType: "Evento"
       }));
     },
@@ -317,7 +315,18 @@ const ProfessionalProfile = () => {
               <CardContent>
                 {professional.reviewCount && professional.reviewCount > 0 ? (
                   <div className="space-y-4">
-                    {/* Reviews will be displayed here */}
+                    {reviews.map(review => (
+                      <div key={review.id} className="p-4 bg-toca-background rounded-md">
+                        <div className="flex justify-between mb-2">
+                          <div className="font-semibold text-white">{review.reviewerName}</div>
+                          <div className="flex items-center">
+                            <Star className="text-yellow-500 mr-1" size={14} />
+                            <span>{review.rating}</span>
+                          </div>
+                        </div>
+                        <p className="text-toca-text-secondary text-sm">{review.comment}</p>
+                      </div>
+                    ))}
                     <Button 
                       variant="outline" 
                       className="w-full border-toca-border text-toca-text-secondary"

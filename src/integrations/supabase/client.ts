@@ -6,205 +6,285 @@ import { createClient } from '@supabase/supabase-js';
 export type Database = {
   public: {
     Tables: {
-      profiles: {
+      users: {
         Row: {
           id: string;
-          full_name: string;
-          biography: string | null;
-          city: string | null;
-          state: string | null;
-          created_at: string;
-        };
-        Insert: {
-          id: string;
-          full_name?: string;
-          biography?: string | null;
-          city?: string | null;
-          state?: string | null;
-          created_at?: string;
-        };
-        Update: {
-          id?: string;
-          full_name?: string;
-          biography?: string | null;
-          city?: string | null;
-          state?: string | null;
-          created_at?: string;
-        };
-      };
-      professionals: {
-        Row: {
-          id: string;
-          artistic_name: string | null;
-          type: string;
-          services: string[] | null;
-          genres: string[] | null;
-          rating: number | null;
-          hourly_rate: number | null;
-          event_rate: number | null;
-          created_at: string;
-        };
-        Insert: {
-          id: string;
-          artistic_name?: string | null;
-          type: string;
-          services?: string[] | null;
-          genres?: string[] | null;
-          rating?: number | null;
-          hourly_rate?: number | null;
-          event_rate?: number | null;
-          created_at?: string;
-        };
-        Update: {
-          id?: string;
-          artistic_name?: string | null;
-          type?: string;
-          services?: string[] | null;
-          genres?: string[] | null;
-          rating?: number | null;
-          hourly_rate?: number | null;
-          event_rate?: number | null;
-          created_at?: string;
-        };
-      };
-      events: {
-        Row: {
-          id: string;
-          creator_id: string;
-          name: string;
-          description: string;
-          date: string;
-          time: string;
-          location: string;
-          city: string;
-          state: string;
-          is_public: boolean;
-          required_services: string[];
-          created_at: string;
+          nome: string | null;
+          email: string | null;
+          telefone: string | null;
+          senha_hash: string | null;
+          tipo_inicial: string;
+          tem_perfil_profissional: boolean;
+          data_cadastro: string;
         };
         Insert: {
           id?: string;
-          creator_id: string;
-          name: string;
-          description: string;
-          date: string;
-          time: string;
-          location: string;
-          city: string;
-          state: string;
-          is_public: boolean;
-          required_services: string[];
-          created_at?: string;
+          nome?: string | null;
+          email?: string | null;
+          telefone?: string | null;
+          senha_hash?: string | null;
+          tipo_inicial?: string;
+          tem_perfil_profissional?: boolean;
+          data_cadastro?: string;
         };
         Update: {
           id?: string;
-          creator_id?: string;
-          name?: string;
-          description?: string;
-          date?: string;
-          time?: string;
-          location?: string;
-          city?: string;
-          state?: string;
-          is_public?: boolean;
-          required_services?: string[];
-          created_at?: string;
+          nome?: string | null;
+          email?: string | null;
+          telefone?: string | null;
+          senha_hash?: string | null;
+          tipo_inicial?: string;
+          tem_perfil_profissional?: boolean;
+          data_cadastro?: string;
         };
       };
-      applications: {
+      profissionais: {
         Row: {
           id: string;
-          event_id: string;
-          professional_id: string;
+          user_id: string;
+          nome_artistico: string | null;
+          tipo_profissional: string | null;
+          instrumentos: string[] | null;
+          subgeneros: string[] | null;
+          bio: string | null;
+          cidade: string | null;
+          estado: string | null;
+          cache_hora: number | null;
+          cache_evento: number | null;
           status: string;
-          message: string;
-          created_at: string;
         };
         Insert: {
           id?: string;
-          event_id: string;
-          professional_id: string;
+          user_id: string;
+          nome_artistico?: string | null;
+          tipo_profissional?: string | null;
+          instrumentos?: string[] | null;
+          subgeneros?: string[] | null;
+          bio?: string | null;
+          cidade?: string | null;
+          estado?: string | null;
+          cache_hora?: number | null;
+          cache_evento?: number | null;
           status?: string;
-          message: string;
-          created_at?: string;
         };
         Update: {
           id?: string;
-          event_id?: string;
-          professional_id?: string;
+          user_id?: string;
+          nome_artistico?: string | null;
+          tipo_profissional?: string | null;
+          instrumentos?: string[] | null;
+          subgeneros?: string[] | null;
+          bio?: string | null;
+          cidade?: string | null;
+          estado?: string | null;
+          cache_hora?: number | null;
+          cache_evento?: number | null;
           status?: string;
-          message?: string;
-          created_at?: string;
         };
       };
-      bookings: {
+      eventos: {
         Row: {
           id: string;
-          client_id: string;
-          professional_id: string;
-          event_id: string | null;
+          titulo: string | null;
+          descricao: string | null;
+          data: string | null;
+          local: string | null;
+          servicos_requeridos: string[] | null;
+          contratante_id: string;
           status: string;
-          date: string;
-          time: string;
-          duration: number;
-          total_amount: number;
-          payment_status: string;
-          created_at: string;
         };
         Insert: {
           id?: string;
-          client_id: string;
-          professional_id: string;
-          event_id?: string | null;
+          titulo?: string | null;
+          descricao?: string | null;
+          data?: string | null;
+          local?: string | null;
+          servicos_requeridos?: string[] | null;
+          contratante_id: string;
           status?: string;
-          date: string;
-          time: string;
-          duration: number;
-          total_amount: number;
-          payment_status?: string;
-          created_at?: string;
         };
         Update: {
           id?: string;
-          client_id?: string;
-          professional_id?: string;
-          event_id?: string | null;
+          titulo?: string | null;
+          descricao?: string | null;
+          data?: string | null;
+          local?: string | null;
+          servicos_requeridos?: string[] | null;
+          contratante_id?: string;
           status?: string;
-          date?: string;
-          time?: string;
-          duration?: number;
-          total_amount?: number;
-          payment_status?: string;
-          created_at?: string;
         };
       };
-      reviews: {
+      candidaturas: {
         Row: {
           id: string;
-          reviewer_id: string;
-          reviewed_id: string;
-          booking_id: string | null;
-          rating: number;
-          comment: string | null;
-          created_at: string;
+          evento_id: string;
+          profissional_id: string;
+          mensagem: string | null;
+          status: string;
+          data_candidatura: string;
         };
         Insert: {
           id?: string;
-          reviewer_id: string;
-          reviewed_id: string;
-          booking_id?: string | null;
-          rating: number;
-          comment?: string | null;
-          created_at?: string;
+          evento_id: string;
+          profissional_id: string;
+          mensagem?: string | null;
+          status?: string;
+          data_candidatura?: string;
         };
         Update: {
           id?: string;
-          reviewer_id?: string;
-          reviewed_id?: string;
-          booking_id?: string | null;
-          rating?: number;
-          comment?: string | null;
-          created_at?: string;
+          evento_id?: string;
+          profissional_id?: string;
+          mensagem?: string | null;
+          status?: string;
+          data_candidatura?: string;
+        };
+      };
+      portfolio: {
+        Row: {
+          id: string;
+          profissional_id: string;
+          tipo: string | null;
+          url: string | null;
+        };
+        Insert: {
+          id?: string;
+          profissional_id: string;
+          tipo?: string | null;
+          url?: string | null;
+        };
+        Update: {
+          id?: string;
+          profissional_id?: string;
+          tipo?: string | null;
+          url?: string | null;
+        };
+      };
+      avaliacoes: {
+        Row: {
+          id: string;
+          profissional_id: string;
+          evento_id: string;
+          contratante_id: string;
+          nota: number | null;
+          comentario: string | null;
+          data_avaliacao: string;
+        };
+        Insert: {
+          id?: string;
+          profissional_id: string;
+          evento_id: string;
+          contratante_id: string;
+          nota?: number | null;
+          comentario?: string | null;
+          data_avaliacao?: string;
+        };
+        Update: {
+          id?: string;
+          profissional_id?: string;
+          evento_id?: string;
+          contratante_id?: string;
+          nota?: number | null;
+          comentario?: string | null;
+          data_avaliacao?: string;
+        };
+      };
+      carrinhos: {
+        Row: {
+          id: string;
+          contratante_id: string;
+          status: string;
+          data_atualizacao: string;
+        };
+        Insert: {
+          id?: string;
+          contratante_id: string;
+          status?: string;
+          data_atualizacao?: string;
+        };
+        Update: {
+          id?: string;
+          contratante_id?: string;
+          status?: string;
+          data_atualizacao?: string;
+        };
+      };
+      carrinho_itens: {
+        Row: {
+          id: string;
+          carrinho_id: string;
+          profissional_id: string;
+          servico: string | null;
+          preco: number | null;
+        };
+        Insert: {
+          id?: string;
+          carrinho_id: string;
+          profissional_id: string;
+          servico?: string | null;
+          preco?: number | null;
+        };
+        Update: {
+          id?: string;
+          carrinho_id?: string;
+          profissional_id?: string;
+          servico?: string | null;
+          preco?: number | null;
+        };
+      };
+      reservas: {
+        Row: {
+          id: string;
+          profissional_id: string;
+          contratante_id: string;
+          evento_id: string;
+          status: string;
+          data_reserva: string;
+        };
+        Insert: {
+          id?: string;
+          profissional_id: string;
+          contratante_id: string;
+          evento_id: string;
+          status?: string;
+          data_reserva?: string;
+        };
+        Update: {
+          id?: string;
+          profissional_id?: string;
+          contratante_id?: string;
+          evento_id?: string;
+          status?: string;
+          data_reserva?: string;
+        };
+      };
+      pagamentos: {
+        Row: {
+          id: string;
+          reserva_id: string;
+          valor_total: number | null;
+          metodo: string | null;
+          status: string | null;
+          comprovante_url: string | null;
+          data_pagamento: string;
+        };
+        Insert: {
+          id?: string;
+          reserva_id: string;
+          valor_total?: number | null;
+          metodo?: string | null;
+          status?: string | null;
+          comprovante_url?: string | null;
+          data_pagamento?: string;
+        };
+        Update: {
+          id?: string;
+          reserva_id?: string;
+          valor_total?: number | null;
+          metodo?: string | null;
+          status?: string | null;
+          comprovante_url?: string | null;
+          data_pagamento?: string;
         };
       };
     };
