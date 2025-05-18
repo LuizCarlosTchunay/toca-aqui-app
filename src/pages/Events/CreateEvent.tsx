@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
+import { format } from "date-fns";
 
 const CreateEvent = () => {
   const navigate = useNavigate();
@@ -23,10 +24,18 @@ const CreateEvent = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
+    if (e.target.name === "requiredServices") {
+      // Split comma-separated values into array
+      setFormData({
+        ...formData,
+        requiredServices: e.target.value.split(",").map(item => item.trim()),
+      });
+    } else {
+      setFormData({
+        ...formData,
+        [e.target.name]: e.target.value,
+      });
+    }
   };
 
   const handleDateChange = (date: Date | undefined) => {
@@ -42,13 +51,16 @@ const CreateEvent = () => {
     try {
       setIsSubmitting(true);
       
+      // Format date as ISO string for database compatibility
+      const formattedDate = format(formData.date, "yyyy-MM-dd");
+      
       const { data, error } = await supabase
         .from("eventos")
         .insert({
           contratante_id: user?.id,
           titulo: formData.title,
           descricao: formData.description,
-          data: formData.date,
+          data: formattedDate,
           local: formData.location,
           servicos_requeridos: formData.requiredServices,
           status: "aberto"
@@ -141,7 +153,7 @@ const CreateEvent = () => {
               <Input
                 id="requiredServices"
                 name="requiredServices"
-                placeholder="Quais serviços você precisa?"
+                placeholder="Quais serviços você precisa? (separados por vírgula)"
                 value={formData.requiredServices.join(", ")}
                 onChange={handleChange}
                 required
