@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Menu, X, User, Search, Bell } from "lucide-react";
@@ -20,10 +19,10 @@ const Navbar: React.FC<NavbarProps> = ({
   onRoleToggle: propOnRoleToggle,
 }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const { user, signOut, currentRole, setCurrentRole } = useAuth();
+  const { user, signOut, currentRole: authCurrentRole, setCurrentRole } = useAuth();
   
   const isAuthenticated = propIsAuthenticated !== undefined ? propIsAuthenticated : !!user;
-  const currentRole = propCurrentRole || user?.user_metadata?.tipo_inicial || "contratante";
+  const activeRole = propCurrentRole || authCurrentRole || "contratante";
   const navigate = useNavigate();
 
   const toggleMenu = () => {
@@ -34,7 +33,7 @@ const Navbar: React.FC<NavbarProps> = ({
     if (propOnRoleToggle) {
       propOnRoleToggle();
     } else {
-      setCurrentRole(currentRole === "contratante" ? "profissional" : "contratante");
+      setCurrentRole(activeRole === "contratante" ? "profissional" : "contratante");
     }
   };
   
@@ -82,7 +81,7 @@ const Navbar: React.FC<NavbarProps> = ({
                     "border-toca-accent text-toca-accent hover:bg-toca-accent hover:text-white"
                   )}
                 >
-                  {currentRole === "contratante" ? "Modo profissional" : "Modo contratante"}
+                  {activeRole === "contratante" ? "Modo profissional" : "Modo contratante"}
                 </Button>
                 
                 <Button variant="ghost" size="icon" className="text-toca-text-secondary">
@@ -163,7 +162,7 @@ const Navbar: React.FC<NavbarProps> = ({
                       }}
                       className="w-full border-toca-accent text-toca-accent hover:bg-toca-accent hover:text-white"
                     >
-                      {currentRole === "contratante" ? "Modo profissional" : "Modo contratante"}
+                      {activeRole === "contratante" ? "Modo profissional" : "Modo contratante"}
                     </Button>
                   </div>
                 </div>

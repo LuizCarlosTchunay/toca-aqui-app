@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import Navbar from "@/components/Navbar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -125,6 +124,7 @@ const ProfessionalProfile = () => {
     enabled: !!id
   });
 
+  // Corrigir a consulta de avaliações para não fazer join com users
   const { data: reviews = [] } = useQuery({
     queryKey: ['reviews', id],
     queryFn: async () => {
@@ -132,10 +132,7 @@ const ProfessionalProfile = () => {
 
       const { data, error } = await supabase
         .from("avaliacoes")
-        .select(`
-          *,
-          users!contratante_id (nome)
-        `)
+        .select("*")
         .eq("profissional_id", id)
         .limit(2);
 
@@ -146,9 +143,10 @@ const ProfessionalProfile = () => {
 
       if (!data) return [];
 
+      // Usamos dados mock para o nome do usuário já que não podemos fazer join
       return data.map(review => ({
         id: review.id,
-        reviewerName: review.users?.nome || "Usuário",
+        reviewerName: "Usuário", // Anteriormente tentava acessar review.users?.nome
         rating: review.nota || 5,
         comment: review.comentario || "Ótimo profissional!",
         eventType: "Evento"
