@@ -44,7 +44,7 @@ const Index = () => {
           <div 
             className="absolute inset-0 opacity-20" 
             style={{
-              backgroundImage: "url(https://images.unsplash.com/photo-1605810230434-7631ac76ec81)",
+              backgroundImage: "url(/lovable-uploads/558bc385-f7ce-4f49-a3ff-efd95f17da92.png)",
               backgroundSize: "cover",
               backgroundPosition: "center",
             }}
