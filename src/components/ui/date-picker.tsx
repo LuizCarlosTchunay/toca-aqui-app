@@ -38,32 +38,44 @@ export function DatePicker({
   }
 
   return (
-    <Popover>
-      <PopoverTrigger asChild>
-        <Button
-          id={id}
+    <div className="relative">
+      {/* We add a hidden input field with the required attribute when needed */}
+      {required && (
+        <input
+          type="hidden"
+          id={`${id}-hidden`}
           name={name}
-          variant={"outline"}
-          className={cn(
-            "w-full justify-start text-left font-normal",
-            !date && "text-muted-foreground",
-            className
-          )}
           required={required}
-        >
-          <CalendarIcon className="mr-2 h-4 w-4" />
-          {date ? format(date, "dd/MM/yyyy") : <span>Selecione uma data</span>}
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent className="w-auto p-0" align="start">
-        <Calendar
-          mode="single"
-          selected={date}
-          onSelect={handleSelect}
-          initialFocus
-          className={cn("p-3 pointer-events-auto")}
+          value={date ? format(date, "yyyy-MM-dd") : ""}
         />
-      </PopoverContent>
-    </Popover>
+      )}
+      <Popover>
+        <PopoverTrigger asChild>
+          <Button
+            id={id}
+            name={name} 
+            variant={"outline"}
+            className={cn(
+              "w-full justify-start text-left font-normal",
+              !date && "text-muted-foreground",
+              className
+            )}
+            // We removed the required prop as it's not accepted by Button
+          >
+            <CalendarIcon className="mr-2 h-4 w-4" />
+            {date ? format(date, "dd/MM/yyyy") : <span>Selecione uma data</span>}
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-auto p-0" align="start">
+          <Calendar
+            mode="single"
+            selected={date}
+            onSelect={handleSelect}
+            initialFocus
+            className={cn("p-3 pointer-events-auto")}
+          />
+        </PopoverContent>
+      </Popover>
+    </div>
   )
 }
