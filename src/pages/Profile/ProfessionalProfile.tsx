@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import Navbar from "@/components/Navbar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -42,12 +43,15 @@ const ProfessionalProfile = () => {
             nome_artistico,
             tipo_profissional,
             instrumentos,
+            servicos,
             subgeneros,
             bio,
             cidade,
             estado,
             cache_hora,
-            cache_evento
+            cache_evento,
+            instagram_url,
+            youtube_url
           `)
           .eq("id", id)
           .single();
@@ -82,14 +86,17 @@ const ProfessionalProfile = () => {
           type: professionalData.tipo_profissional || "Músico",
           rating: 4.5, // Default rating until we implement a rating system
           reviewCount: 0, // Default count until we implement reviews
-          services: professionalData.instrumentos || [],
+          instruments: professionalData.instrumentos || [],
+          services: professionalData.servicos || [], // Add services
           genres: professionalData.subgeneros || [],
           hourlyRate: professionalData.cache_hora || 0,
           eventRate: professionalData.cache_evento || 0,
           image: imageUrl || "https://images.unsplash.com/photo-1618160702438-9b02ab6515c9", // Default image
           city: professionalData.cidade || "",
           state: professionalData.estado || "",
-          bio: professionalData.bio || ""
+          bio: professionalData.bio || "",
+          instagram: professionalData.instagram_url,
+          youtube: professionalData.youtube_url
         };
       } catch (error) {
         console.error("Error fetching professional:", error);
@@ -230,6 +237,32 @@ const ProfessionalProfile = () => {
                     </div>
                   </div>
                   
+                  {/* Social Media Links (if available) */}
+                  {(professional.instagram || professional.youtube) && (
+                    <div className="flex justify-center gap-4 mb-4">
+                      {professional.instagram && (
+                        <a 
+                          href={professional.instagram} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="text-pink-400 hover:text-pink-300 transition-colors"
+                        >
+                          <Instagram size={20} />
+                        </a>
+                      )}
+                      {professional.youtube && (
+                        <a 
+                          href={professional.youtube} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="text-red-500 hover:text-red-400 transition-colors"
+                        >
+                          <Youtube size={20} />
+                        </a>
+                      )}
+                    </div>
+                  )}
+                  
                   <Button 
                     className="w-full bg-toca-accent hover:bg-toca-accent-hover"
                     onClick={() => navigate(`/reservar/${professional.id}`)}
@@ -246,12 +279,20 @@ const ProfessionalProfile = () => {
               </CardHeader>
               <CardContent>
                 <div className="flex flex-wrap gap-2">
-                  {professional.services && professional.services.map((service, index) => (
-                    <Badge key={index} className="bg-toca-background border-toca-border text-white">
-                      {service}
-                    </Badge>
-                  ))}
-                  {(!professional.services || professional.services.length === 0) && (
+                  {/* Priority to services if available, otherwise use instruments */}
+                  {(professional.services && professional.services.length > 0) ? (
+                    professional.services.map((service, index) => (
+                      <Badge key={index} className="bg-toca-background border-toca-border text-white">
+                        {service}
+                      </Badge>
+                    ))
+                  ) : professional.instruments && professional.instruments.length > 0 ? (
+                    professional.instruments.map((instrument, index) => (
+                      <Badge key={index} className="bg-toca-background border-toca-border text-white">
+                        {instrument}
+                      </Badge>
+                    ))
+                  ) : (
                     <p className="text-toca-text-secondary">Nenhum serviço cadastrado</p>
                   )}
                 </div>

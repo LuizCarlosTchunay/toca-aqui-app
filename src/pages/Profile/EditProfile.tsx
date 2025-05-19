@@ -12,7 +12,8 @@ import { toast } from "sonner";
 import ImageUploader from "@/components/ImageUploader";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { Instagram, Youtube } from "lucide-react";
+import { Instagram, Youtube, X, Plus } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 
 const EditProfile = () => {
   const navigate = useNavigate();
@@ -22,6 +23,11 @@ const EditProfile = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [existingProfessionalId, setExistingProfessionalId] = useState<string | null>(null);
   const [otherType, setOtherType] = useState<string>("");
+  
+  // New state for services management
+  const [newService, setNewService] = useState<string>("");
+  const [services, setServices] = useState<string[]>([]);
+  
   const [profileData, setProfileData] = useState({
     artisticName: "",
     profileType: "dj",
@@ -30,8 +36,8 @@ const EditProfile = () => {
     state: "",
     hourlyRate: "",
     eventRate: "",
-    instagramUrl: "", // New field for Instagram URL
-    youtubeUrl: "",   // New field for YouTube URL
+    instagramUrl: "",
+    youtubeUrl: "",
   });
   
   useEffect(() => {
@@ -63,6 +69,9 @@ const EditProfile = () => {
           const predefinedTypes = ["dj", "musico", "baterista", "guitarrista", "baixista", "voz e violão", "duo", "trio", "banda", "fotografo", "filmmaker", "tecnico_som", "tecnico_luz"];
           const isPredefined = predefinedTypes.includes(data.tipo_profissional?.toLowerCase() || "");
           
+          // Load services from database
+          setServices(data.servicos || data.instrumentos || []);
+          
           // Update state with existing data
           setProfileData({
             artisticName: data.nome_artistico || "",
@@ -72,8 +81,8 @@ const EditProfile = () => {
             state: data.estado || "",
             hourlyRate: data.cache_hora?.toString() || "",
             eventRate: data.cache_evento?.toString() || "",
-            instagramUrl: data.instagram_url || "", // Load Instagram URL
-            youtubeUrl: data.youtube_url || "",     // Load YouTube URL
+            instagramUrl: data.instagram_url || "",
+            youtubeUrl: data.youtube_url || "",
           });
           
           if (!isPredefined && data.tipo_profissional) {
@@ -117,6 +126,23 @@ const EditProfile = () => {
     });
   };
   
+  // Add a new service to the list
+  const handleAddService = () => {
+    if (!newService.trim()) return;
+    
+    if (!services.includes(newService.trim())) {
+      setServices([...services, newService.trim()]);
+      setNewService("");
+    } else {
+      toast.error("Este serviço já foi adicionado");
+    }
+  };
+  
+  // Remove a service from the list
+  const handleRemoveService = (serviceToRemove: string) => {
+    setServices(services.filter(service => service !== serviceToRemove));
+  };
+  
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -145,8 +171,9 @@ const EditProfile = () => {
         estado: profileData.state,
         cache_hora: profileData.hourlyRate ? parseFloat(profileData.hourlyRate) : null,
         cache_evento: profileData.eventRate ? parseFloat(profileData.eventRate) : null,
-        instagram_url: profileData.instagramUrl, // Save Instagram URL
-        youtube_url: profileData.youtubeUrl     // Save YouTube URL
+        instagram_url: profileData.instagramUrl,
+        youtube_url: profileData.youtubeUrl,
+        servicos: services, // Save the services array
       };
       
       if (existingProfessionalId) {
@@ -299,6 +326,58 @@ const EditProfile = () => {
                 </div>
               )}
               
+              {/* New Services Management Section */}
+              <div className="space-y-4">
+                <Label htmlFor="services" className="text-white text-lg">Serviços Oferecidos</Label>
+                <div className="flex flex-wrap gap-2 p-3 bg-toca-background rounded-md border border-toca-border">
+                  {services.length > 0 ? (
+                    services.map((service, index) => (
+                      <Badge 
+                        key={index} 
+                        className="bg-toca-accent/20 hover:bg-toca-accent/30 text-white flex items-center gap-1"
+                      >
+                        {service}
+                        <button 
+                          type="button" 
+                          onClick={() => handleRemoveService(service)}
+                          className="ml-1 hover:text-red-400 transition-colors"
+                        >
+                          <X size={14} />
+                        </button>
+                      </Badge>
+                    ))
+                  ) : (
+                    <p className="text-toca-text-secondary text-sm">Nenhum serviço adicionado ainda. Adicione seus serviços abaixo.</p>
+                  )}
+                </div>
+                
+                <div className="flex gap-2">
+                  <Input 
+                    id="newService" 
+                    value={newService}
+                    onChange={(e) => setNewService(e.target.value)}
+                    placeholder="Ex: DJ para festas, Música para casamentos..."
+                    className="bg-toca-background border-toca-border text-white flex-1"
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        handleAddService();
+                      }
+                    }}
+                  />
+                  <Button 
+                    type="button" 
+                    onClick={handleAddService}
+                    className="bg-toca-accent hover:bg-toca-accent-hover"
+                  >
+                    <Plus size={16} className="mr-1" /> Adicionar
+                  </Button>
+                </div>
+                <p className="text-xs text-toca-text-secondary">
+                  Pressione Enter ou clique em Adicionar para incluir um serviço. Estes serviços ficarão visíveis no seu perfil.
+                </p>
+              </div>
+              
               <div className="space-y-2">
                 <Label htmlFor="bio" className="text-white">Biografia</Label>
                 <Textarea 
@@ -353,7 +432,7 @@ const EditProfile = () => {
                 </div>
               </div>
               
-              {/* New social media URL fields */}
+              {/* Social media URL fields */}
               <div className="space-y-6">
                 <h3 className="text-white text-lg font-medium">Links para Redes Sociais</h3>
                 

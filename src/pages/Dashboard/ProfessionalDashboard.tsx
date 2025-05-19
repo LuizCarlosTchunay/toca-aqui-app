@@ -149,14 +149,16 @@ const ProfessionalDashboard = () => {
     city: professionalData.cidade || "",
     state: professionalData.estado || "",
     hourlyRate: professionalData.cache_hora || 0,
-    eventRate: professionalData.cache_evento || 0
+    eventRate: professionalData.cache_evento || 0,
+    services: professionalData.servicos || professionalData.instrumentos || [],
   } : {
     name: "Profissional",
     image: "",
     city: "",
     state: "",
     hourlyRate: 0,
-    eventRate: 0
+    eventRate: 0,
+    services: [],
   };
 
   return (
@@ -328,6 +330,25 @@ const ProfessionalDashboard = () => {
                     ? `${professional.city}, ${professional.state}` 
                     : "Adicione sua localização"}
                 </div>
+
+                {/* Display services if any */}
+                {professional.services && professional.services.length > 0 && (
+                  <div className="w-full mb-4">
+                    <h4 className="text-sm text-toca-text-secondary mb-2">Serviços:</h4>
+                    <div className="flex flex-wrap gap-1">
+                      {professional.services.slice(0, 3).map((service, index) => (
+                        <Badge key={index} className="bg-toca-background/70 text-white text-xs">
+                          {service}
+                        </Badge>
+                      ))}
+                      {professional.services.length > 3 && (
+                        <Badge className="bg-toca-background/70 text-white text-xs">
+                          +{professional.services.length - 3}
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
+                )}
                 
                 <div className="grid grid-cols-2 gap-2 w-full mb-4">
                   <div className="text-center p-2 bg-toca-background rounded">

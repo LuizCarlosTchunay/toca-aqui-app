@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -220,7 +221,10 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
             </div>
             
             <div className="flex flex-wrap gap-1 mb-3">
-              {(professional.instruments || professional.services || []).slice(0, 3).map((item, i) => (
+              {/* Priority to display services if available, otherwise use instruments */}
+              {(professional.services && professional.services.length > 0 
+                ? professional.services 
+                : professional.instruments || []).slice(0, 3).map((item, i) => (
                 <Badge 
                   key={i} 
                   variant="secondary" 
@@ -232,7 +236,11 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
                   {item}
                 </Badge>
               ))}
-              {(professional.instruments || professional.services || []).length > 3 && (
+              
+              {/* Show count of remaining services/instruments */}
+              {(professional.services && professional.services.length > 0 
+                ? professional.services.length 
+                : (professional.instruments || []).length) > 3 && (
                 <Badge 
                   variant="secondary" 
                   className={cn(
@@ -240,7 +248,9 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
                     isHovered ? "bg-toca-accent/20 text-toca-accent" : ""
                   )}
                 >
-                  +{(professional.instruments || professional.services || []).length - 3}
+                  +{(professional.services && professional.services.length > 0 
+                    ? professional.services.length 
+                    : (professional.instruments || []).length) - 3}
                 </Badge>
               )}
             </div>

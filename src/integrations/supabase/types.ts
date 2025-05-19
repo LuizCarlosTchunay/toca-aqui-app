@@ -303,6 +303,7 @@ export type Database = {
           instagram_url: string | null
           instrumentos: string[] | null
           nome_artistico: string | null
+          servicos: string[] | null
           status: string | null
           subgeneros: string[] | null
           tipo_profissional: string | null
@@ -319,6 +320,7 @@ export type Database = {
           instagram_url?: string | null
           instrumentos?: string[] | null
           nome_artistico?: string | null
+          servicos?: string[] | null
           status?: string | null
           subgeneros?: string[] | null
           tipo_profissional?: string | null
@@ -335,6 +337,7 @@ export type Database = {
           instagram_url?: string | null
           instrumentos?: string[] | null
           nome_artistico?: string | null
+          servicos?: string[] | null
           status?: string | null
           subgeneros?: string[] | null
           tipo_profissional?: string | null
