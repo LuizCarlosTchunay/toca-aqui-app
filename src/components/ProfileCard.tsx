@@ -105,86 +105,94 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
   return (
     <Card 
       className={cn(
-        "bg-toca-card border-toca-border hover:border-toca-accent transition-all cursor-pointer",
+        "bg-gradient-to-br from-toca-card to-toca-background border-toca-border hover:border-toca-accent transition-all cursor-pointer shadow-lg hover:shadow-xl overflow-hidden",
         className
       )}
       onClick={onClick}
     >
-      <div className="p-4 flex items-center gap-4">
-        <Avatar className="h-16 w-16 border-2 border-toca-accent">
-          <AvatarImage src={imageUrl || ""} alt={professional.artisticName || professional.name} />
-          <AvatarFallback className="bg-toca-accent/20 text-toca-accent">
-            {initials}
-          </AvatarFallback>
-        </Avatar>
-        <div>
-          <h3 className="font-bold text-white">
-            {professional.artisticName || professional.name}
-          </h3>
-          <div className="flex items-center gap-1 text-white">
-            <Star className="fill-yellow-500 text-yellow-500" size={14} />
-            <span className="text-sm font-medium">{professional.rating}</span>
-          </div>
-          <Badge 
-            variant="outline"
-            className="border-toca-accent text-toca-accent flex items-center gap-1 mt-1"
-          >
-            {getTypeIcon(professional.type)}
-            {professional.type}
-          </Badge>
-        </div>
-      </div>
-
-      <CardContent className="pt-0 pb-4">        
-        {professional.bio && (
-          <div className="mb-3 text-sm text-toca-text-secondary line-clamp-2">
-            {professional.bio}
-          </div>
-        )}
-        
-        <div className="text-sm text-toca-text-secondary mb-3">
-          {professional.city && professional.state 
-            ? `${professional.city}, ${professional.state}`
-            : "Local não informado"}
-        </div>
-        
-        <div className="flex flex-wrap gap-1 mb-3">
-          {(professional.instruments || professional.services || []).slice(0, 3).map((item, i) => (
-            <Badge key={i} variant="secondary" className="bg-toca-background text-white text-xs">
-              {item}
-            </Badge>
-          ))}
-          {(professional.instruments || professional.services || []).length > 3 && (
-            <Badge variant="secondary" className="bg-toca-background text-white text-xs">
-              +{(professional.instruments || professional.services || []).length - 3}
-            </Badge>
-          )}
-        </div>
-        
-        <div className="flex justify-between items-center pt-2 border-t border-toca-border">
-          {professional.hourlyRate ? (
-            <div className="text-right">
-              <span className="text-xs text-toca-text-secondary">Por hora</span>
-              <div className="text-toca-accent font-semibold">
-                R${professional.hourlyRate}
-              </div>
+      <div className="pt-4 px-4 flex flex-col">
+        <div className="flex items-center gap-4 mb-3">
+          <Avatar className="h-16 w-16 border-2 border-toca-accent ring-2 ring-toca-accent/20 shadow-md">
+            <AvatarImage src={imageUrl || ""} alt={professional.artisticName || professional.name} />
+            <AvatarFallback className="bg-toca-accent/20 text-toca-accent font-bold">
+              {initials}
+            </AvatarFallback>
+          </Avatar>
+          <div>
+            <h3 className="font-bold text-white text-lg">
+              {professional.artisticName || professional.name}
+            </h3>
+            <div className="flex items-center gap-1 text-white">
+              <Star className="fill-yellow-500 text-yellow-500" size={14} />
+              <span className="text-sm font-medium">{professional.rating}</span>
             </div>
-          ) : (
-            <div></div>
+            <Badge 
+              variant="outline"
+              className="border-toca-accent text-toca-accent flex items-center gap-1 mt-1"
+            >
+              {getTypeIcon(professional.type)}
+              {professional.type}
+            </Badge>
+          </div>
+        </div>
+
+        <CardContent className="px-0 pt-0 pb-4">        
+          {professional.bio && (
+            <div className="mb-3 text-sm text-white/90 bg-black/20 p-3 rounded-md border-l-2 border-toca-accent line-clamp-2">
+              "{professional.bio}"
+            </div>
           )}
           
-          {professional.eventRate ? (
-            <div className="text-right">
-              <span className="text-xs text-toca-text-secondary">Por evento</span>
-              <div className="text-toca-accent font-semibold">
-                R${professional.eventRate}
+          <div className="flex items-center gap-1 text-sm text-toca-text-secondary mb-3">
+            <span className="inline-block bg-toca-accent/20 p-1 rounded-full">
+              {professional.city && professional.state 
+                ? <Users size={14} className="text-toca-accent" />
+                : <UserRound size={14} className="text-toca-accent" />
+              }
+            </span>
+            {professional.city && professional.state 
+              ? `${professional.city}, ${professional.state}`
+              : "Local não informado"}
+          </div>
+          
+          <div className="flex flex-wrap gap-1 mb-3">
+            {(professional.instruments || professional.services || []).slice(0, 3).map((item, i) => (
+              <Badge key={i} variant="secondary" className="bg-toca-background/80 text-white text-xs">
+                {item}
+              </Badge>
+            ))}
+            {(professional.instruments || professional.services || []).length > 3 && (
+              <Badge variant="secondary" className="bg-toca-background/80 text-white text-xs">
+                +{(professional.instruments || professional.services || []).length - 3}
+              </Badge>
+            )}
+          </div>
+          
+          <div className="grid grid-cols-2 gap-2 pt-2 border-t border-toca-border">
+            {professional.hourlyRate ? (
+              <div className="bg-toca-background/50 p-2 rounded-md text-center">
+                <span className="text-xs text-toca-text-secondary block">Por hora</span>
+                <div className="text-toca-accent font-semibold">
+                  R${professional.hourlyRate}
+                </div>
               </div>
-            </div>
-          ) : (
-            <div></div>
-          )}
-        </div>
-      </CardContent>
+            ) : (
+              <div></div>
+            )}
+            
+            {professional.eventRate ? (
+              <div className="bg-toca-background/50 p-2 rounded-md text-center">
+                <span className="text-xs text-toca-text-secondary block">Por evento</span>
+                <div className="text-toca-accent font-semibold">
+                  R${professional.eventRate}
+                </div>
+              </div>
+            ) : (
+              <div></div>
+            )}
+          </div>
+        </CardContent>
+      </div>
     </Card>
   );
 };
