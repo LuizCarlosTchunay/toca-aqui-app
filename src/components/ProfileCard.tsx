@@ -2,9 +2,10 @@
 import React, { useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Star, Music, Disc, Camera, Film, Users, Mic, Guitar, Headphones, UserRound, MicVocal, Drum } from "lucide-react";
+import { Star, Music, Disc, Camera, Film, Users, UserRound, MicVocal, Drum, Guitar, Headphones } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 interface ProfileCardProps {
   professional: {
@@ -21,6 +22,7 @@ interface ProfileCardProps {
     image?: string;
     city: string;
     state: string;
+    bio?: string;
   };
   className?: string;
   onClick?: () => void;
@@ -92,40 +94,53 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
     }
   }, [professional.id, professional.image]);
 
+  // Generate initials for avatar fallback
+  const initials = (professional.artisticName || professional.name || "")
+    .split(" ")
+    .map((n) => n[0])
+    .join("")
+    .toUpperCase()
+    .substring(0, 2);
+
   return (
     <Card 
       className={cn(
-        "bg-toca-card border-toca-border hover:border-toca-accent transition-all cursor-pointer overflow-hidden",
+        "bg-toca-card border-toca-border hover:border-toca-accent transition-all cursor-pointer",
         className
       )}
       onClick={onClick}
     >
-      <div className="aspect-[4/3] relative overflow-hidden">
-        <img
-          src={imageUrl || "https://images.unsplash.com/photo-1618160702438-9b02ab6515c9"}
-          alt={professional.artisticName || professional.name}
-          className="w-full h-full object-cover"
-        />
-        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-3">
+      <div className="p-4 flex items-center gap-4">
+        <Avatar className="h-16 w-16 border-2 border-toca-accent">
+          <AvatarImage src={imageUrl || ""} alt={professional.artisticName || professional.name} />
+          <AvatarFallback className="bg-toca-accent/20 text-toca-accent">
+            {initials}
+          </AvatarFallback>
+        </Avatar>
+        <div>
+          <h3 className="font-bold text-white">
+            {professional.artisticName || professional.name}
+          </h3>
           <div className="flex items-center gap-1 text-white">
             <Star className="fill-yellow-500 text-yellow-500" size={14} />
             <span className="text-sm font-medium">{professional.rating}</span>
           </div>
-        </div>
-      </div>
-      <CardContent className="p-4">
-        <div className="flex items-center justify-between mb-2">
-          <h3 className="font-bold text-white truncate">
-            {professional.artisticName || professional.name}
-          </h3>
           <Badge 
             variant="outline"
-            className="border-toca-accent text-toca-accent flex items-center gap-1"
+            className="border-toca-accent text-toca-accent flex items-center gap-1 mt-1"
           >
             {getTypeIcon(professional.type)}
             {professional.type}
           </Badge>
         </div>
+      </div>
+
+      <CardContent className="pt-0 pb-4">        
+        {professional.bio && (
+          <div className="mb-3 text-sm text-toca-text-secondary line-clamp-2">
+            {professional.bio}
+          </div>
+        )}
         
         <div className="text-sm text-toca-text-secondary mb-3">
           {professional.city && professional.state 

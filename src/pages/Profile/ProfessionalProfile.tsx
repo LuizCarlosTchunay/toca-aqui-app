@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import Navbar from "@/components/Navbar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,6 +9,7 @@ import { formatCurrency } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 const ProfessionalProfile = () => {
   const navigate = useNavigate();
@@ -146,6 +146,14 @@ const ProfessionalProfile = () => {
     );
   }
 
+  // Generate initials for avatar fallback
+  const initials = (professional?.artisticName || professional?.name || "")
+    .split(" ")
+    .map((n) => n[0])
+    .join("")
+    .toUpperCase()
+    .substring(0, 2);
+
   return (
     <div className="min-h-screen flex flex-col bg-toca-background">
       <Navbar isAuthenticated={!!user} />
@@ -164,17 +172,15 @@ const ProfessionalProfile = () => {
             <Card className="bg-toca-card border-toca-border mb-6">
               <CardContent className="pt-6">
                 <div className="flex flex-col items-center">
-                  <div className="w-32 h-32 rounded-full overflow-hidden bg-toca-accent/20 flex items-center justify-center mb-4">
-                    {professional.image ? (
-                      <img 
-                        src={professional.image} 
-                        alt={professional.name}
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <span className="text-4xl font-bold text-toca-accent">{professional.type.substring(0, 2)}</span>
-                    )}
-                  </div>
+                  <Avatar className="w-32 h-32 border-4 border-toca-accent mb-4">
+                    <AvatarImage 
+                      src={professional.image} 
+                      alt={professional.name}
+                    />
+                    <AvatarFallback className="text-4xl font-bold text-toca-accent bg-toca-accent/20">
+                      {initials}
+                    </AvatarFallback>
+                  </Avatar>
                   
                   <h1 className="text-2xl font-bold text-white mb-1">{professional.artisticName}</h1>
                   <div className="text-toca-text-secondary mb-2">{professional.name}</div>
