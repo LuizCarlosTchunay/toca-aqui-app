@@ -300,12 +300,14 @@ export type Database = {
           cidade: string | null
           estado: string | null
           id: string
+          instagram_url: string | null
           instrumentos: string[] | null
           nome_artistico: string | null
           status: string | null
           subgeneros: string[] | null
           tipo_profissional: string | null
           user_id: string | null
+          youtube_url: string | null
         }
         Insert: {
           bio?: string | null
@@ -314,12 +316,14 @@ export type Database = {
           cidade?: string | null
           estado?: string | null
           id?: string
+          instagram_url?: string | null
           instrumentos?: string[] | null
           nome_artistico?: string | null
           status?: string | null
           subgeneros?: string[] | null
           tipo_profissional?: string | null
           user_id?: string | null
+          youtube_url?: string | null
         }
         Update: {
           bio?: string | null
@@ -328,12 +332,14 @@ export type Database = {
           cidade?: string | null
           estado?: string | null
           id?: string
+          instagram_url?: string | null
           instrumentos?: string[] | null
           nome_artistico?: string | null
           status?: string | null
           subgeneros?: string[] | null
           tipo_profissional?: string | null
           user_id?: string | null
+          youtube_url?: string | null
         }
         Relationships: []
       }

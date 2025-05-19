@@ -12,6 +12,7 @@ import { toast } from "sonner";
 import ImageUploader from "@/components/ImageUploader";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { Instagram, Youtube } from "lucide-react";
 
 const EditProfile = () => {
   const navigate = useNavigate();
@@ -29,6 +30,8 @@ const EditProfile = () => {
     state: "",
     hourlyRate: "",
     eventRate: "",
+    instagramUrl: "", // New field for Instagram URL
+    youtubeUrl: "",   // New field for YouTube URL
   });
   
   useEffect(() => {
@@ -69,6 +72,8 @@ const EditProfile = () => {
             state: data.estado || "",
             hourlyRate: data.cache_hora?.toString() || "",
             eventRate: data.cache_evento?.toString() || "",
+            instagramUrl: data.instagram_url || "", // Load Instagram URL
+            youtubeUrl: data.youtube_url || "",     // Load YouTube URL
           });
           
           if (!isPredefined && data.tipo_profissional) {
@@ -139,7 +144,9 @@ const EditProfile = () => {
         cidade: profileData.city,
         estado: profileData.state,
         cache_hora: profileData.hourlyRate ? parseFloat(profileData.hourlyRate) : null,
-        cache_evento: profileData.eventRate ? parseFloat(profileData.eventRate) : null
+        cache_evento: profileData.eventRate ? parseFloat(profileData.eventRate) : null,
+        instagram_url: profileData.instagramUrl, // Save Instagram URL
+        youtube_url: profileData.youtubeUrl     // Save YouTube URL
       };
       
       if (existingProfessionalId) {
@@ -202,6 +209,17 @@ const EditProfile = () => {
     setProfileImage(imageFile);
     if (imageUrl) {
       setProfileImageUrl(imageUrl);
+    }
+  };
+
+  // Simple URL validator function
+  const isValidUrl = (url: string) => {
+    if (!url) return true; // Empty URLs are valid (optional)
+    try {
+      new URL(url);
+      return true;
+    } catch (e) {
+      return false;
     }
   };
 
@@ -332,6 +350,48 @@ const EditProfile = () => {
                     onChange={(e) => handleChange('eventRate', e.target.value)}
                     className="bg-toca-background border-toca-border text-white"
                   />
+                </div>
+              </div>
+              
+              {/* New social media URL fields */}
+              <div className="space-y-6">
+                <h3 className="text-white text-lg font-medium">Links para Redes Sociais</h3>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="instagramUrl" className="text-white flex items-center gap-2">
+                    <Instagram size={18} className="text-pink-400" />
+                    Instagram
+                  </Label>
+                  <div className="relative">
+                    <Input 
+                      id="instagramUrl" 
+                      value={profileData.instagramUrl}
+                      onChange={(e) => handleChange('instagramUrl', e.target.value)}
+                      className="bg-toca-background border-toca-border text-white pl-10"
+                      placeholder="https://instagram.com/seu_perfil"
+                    />
+                    <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-pink-400">@</span>
+                  </div>
+                  {profileData.instagramUrl && !isValidUrl(profileData.instagramUrl) && (
+                    <p className="text-sm text-red-500">URL inválida. Inclua http:// ou https://</p>
+                  )}
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="youtubeUrl" className="text-white flex items-center gap-2">
+                    <Youtube size={18} className="text-red-500" />
+                    YouTube
+                  </Label>
+                  <Input 
+                    id="youtubeUrl" 
+                    value={profileData.youtubeUrl}
+                    onChange={(e) => handleChange('youtubeUrl', e.target.value)}
+                    className="bg-toca-background border-toca-border text-white"
+                    placeholder="https://youtube.com/c/seu_canal"
+                  />
+                  {profileData.youtubeUrl && !isValidUrl(profileData.youtubeUrl) && (
+                    <p className="text-sm text-red-500">URL inválida. Inclua http:// ou https://</p>
+                  )}
                 </div>
               </div>
               
