@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { 
   Card, 
@@ -26,7 +27,7 @@ interface PortfolioItem {
   profissional_id: string;
   tipo: string;
   url: string;
-  descricao?: string;
+  descricao?: string | null;
 }
 
 interface PortfolioManagerProps {

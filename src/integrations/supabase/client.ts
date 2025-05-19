@@ -16,7 +16,7 @@ export const supabase = createClient<DatabaseType>(SUPABASE_URL, SUPABASE_PUBLIS
   }
 });
 
-// Update the Database type for portfolio to include descricao
+// Database type definition with portfolio including descricao
 export type Database = {
   public: {
     Tables: {
@@ -334,10 +334,5 @@ export type Database = {
   };
 };
 
-// Create a Supabase client
-export const supabase = createClient<Database>(
-  'https://oyaddcvpllgppxeyyqqu.supabase.co',
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im95YWRkY3ZwbGxncHB4ZXl5cXF1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc0MTM4ODksImV4cCI6MjA2Mjk4OTg4OX0.QSMxd81BNWfW-Wd-x9zHt-Cs6B8o0bWn0qb6E-k5GXM'
-);
-
+// Remove the duplicate supabase client definition that was here
 export default supabase;

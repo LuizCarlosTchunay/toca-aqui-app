@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Camera, User } from "lucide-react";
@@ -8,7 +9,7 @@ import { toast } from "sonner";
 
 interface ImageUploaderProps {
   currentImage?: string;
-  onImageChange: (imageFile: File, imageUrl?: string) => void;
+  onImageChange?: (imageFile: File, imageUrl?: string) => void;
   className?: string;
   size?: "sm" | "md" | "lg";
   bucketName?: string;
@@ -108,11 +109,11 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
           .from(bucketName)
           .getPublicUrl(objectPath);
           
-        if (publicUrlData) {
+        if (publicUrlData && handleImageChange) {
           // Pass both the file and the public URL to the parent component
           handleImageChange(file, publicUrlData.publicUrl);
           toast.success("Imagem atualizada com sucesso!");
-        } else {
+        } else if (handleImageChange) {
           handleImageChange(file);
         }
       } else if (user) {
@@ -136,14 +137,14 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
           .from(bucketName)
           .getPublicUrl(fileName);
           
-        if (publicUrlData) {
+        if (publicUrlData && handleImageChange) {
           // Pass both the file and the public URL to the parent component
           handleImageChange(file, publicUrlData.publicUrl);
           toast.success("Imagem atualizada com sucesso!");
-        } else {
+        } else if (handleImageChange) {
           handleImageChange(file);
         }
-      } else {
+      } else if (handleImageChange) {
         // If no user, just pass the file
         handleImageChange(file);
       }

@@ -18,7 +18,7 @@ interface PortfolioItem {
   profissional_id: string | null;
   tipo: string | null;
   url: string | null;
-  descricao?: string | null;  // Make descricao optional since it might not exist in the database yet
+  descricao?: string | null;
 }
 
 const ProfessionalProfile = () => {
@@ -116,13 +116,13 @@ const ProfessionalProfile = () => {
           return [];
         }
         
-        // Map the portfolio items and make sure descricao exists (even if null)
+        // Map the portfolio items and ensure descricao exists
         return (data || []).map(item => ({
           id: item.id,
           profissional_id: item.profissional_id,
           tipo: item.tipo,
           url: item.url,
-          descricao: item.descricao || null  // Ensure descricao is included, even if null
+          descricao: item.descricao
         })) as PortfolioItem[];
       } catch (error) {
         console.error("Error fetching portfolio:", error);
