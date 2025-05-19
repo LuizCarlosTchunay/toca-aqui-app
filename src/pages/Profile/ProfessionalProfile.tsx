@@ -1,10 +1,9 @@
-
 import React, { useState, useEffect } from "react";
 import Navbar from "@/components/Navbar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useNavigate, useParams } from "react-router-dom";
-import { ChevronLeft, Calendar, MapPin, Star, Clock, Link as LinkIcon, ExternalLink } from "lucide-react";
+import { ChevronLeft, Calendar, MapPin, Star, Clock, Link as LinkIcon, ExternalLink, Instagram, Youtube } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { formatCurrency } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
@@ -183,6 +182,7 @@ const ProfessionalProfile = () => {
       <Navbar isAuthenticated={!!user} />
       
       <div className="container mx-auto px-4 py-8">
+        {/* Back button */}
         <Button 
           variant="ghost" 
           className="mb-6 text-toca-text-secondary hover:text-white"
@@ -192,10 +192,12 @@ const ProfessionalProfile = () => {
         </Button>
         
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Profile sidebar */}
           <div>
             <Card className="bg-toca-card border-toca-border mb-6">
               <CardContent className="pt-6">
                 <div className="flex flex-col items-center">
+                  {/* Avatar */}
                   <Avatar className="w-32 h-32 border-4 border-toca-accent mb-4">
                     <AvatarImage 
                       src={professional.image} 
@@ -215,6 +217,7 @@ const ProfessionalProfile = () => {
                     <span className="text-toca-text-secondary">({professional.reviewCount} avaliações)</span>
                   </div>
                   
+                  {/* Location */}
                   {(professional.city || professional.state) && (
                     <div className="flex items-center text-toca-text-secondary mb-4">
                       <MapPin size={16} className="mr-1" />
@@ -222,6 +225,7 @@ const ProfessionalProfile = () => {
                     </div>
                   )}
                   
+                  {/* Rates */}
                   <div className="grid grid-cols-2 gap-3 w-full mb-6">
                     <div className="text-center p-3 bg-toca-background rounded-md">
                       <div className="text-xs text-toca-text-secondary mb-1">
@@ -263,6 +267,7 @@ const ProfessionalProfile = () => {
                     </div>
                   )}
                   
+                  {/* Book button */}
                   <Button 
                     className="w-full bg-toca-accent hover:bg-toca-accent-hover"
                     onClick={() => navigate(`/reservar/${professional.id}`)}
@@ -273,13 +278,14 @@ const ProfessionalProfile = () => {
               </CardContent>
             </Card>
             
+            {/* Services card */}
             <Card className="bg-toca-card border-toca-border">
               <CardHeader>
                 <CardTitle className="text-lg">Serviços</CardTitle>
               </CardHeader>
               <CardContent>
+                {/* Services list */}
                 <div className="flex flex-wrap gap-2">
-                  {/* Priority to services if available, otherwise use instruments */}
                   {(professional.services && professional.services.length > 0) ? (
                     professional.services.map((service, index) => (
                       <Badge key={index} className="bg-toca-background border-toca-border text-white">
@@ -297,6 +303,7 @@ const ProfessionalProfile = () => {
                   )}
                 </div>
                 
+                {/* Genres list */}
                 {professional.genres && professional.genres.length > 0 && (
                   <>
                     <h4 className="text-white font-medium mt-4 mb-2">Gêneros</h4>
@@ -313,7 +320,9 @@ const ProfessionalProfile = () => {
             </Card>
           </div>
           
+          {/* Main content */}
           <div className="lg:col-span-2">
+            {/* About card */}
             <Card className="bg-toca-card border-toca-border mb-6">
               <CardHeader>
                 <CardTitle>Sobre</CardTitle>
@@ -325,6 +334,7 @@ const ProfessionalProfile = () => {
               </CardContent>
             </Card>
             
+            {/* Portfolio card */}
             <Card className="bg-toca-card border-toca-border mb-6">
               <CardHeader>
                 <CardTitle>Portfólio</CardTitle>
@@ -388,6 +398,7 @@ const ProfessionalProfile = () => {
               </CardContent>
             </Card>
             
+            {/* Reviews card */}
             <Card className="bg-toca-card border-toca-border">
               <CardHeader>
                 <CardTitle>Avaliações</CardTitle>
