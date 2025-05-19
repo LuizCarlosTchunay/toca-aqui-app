@@ -24,6 +24,7 @@ interface Professional {
   image?: string;
   city?: string;
   state?: string;
+  bio?: string;
 }
 
 const ExploreProfessionals = () => {
@@ -88,6 +89,7 @@ const ExploreProfessionals = () => {
           image: "", // Will be handled by the ProfileCard component
           city: item.cidade || "",
           state: item.estado || "",
+          bio: item.bio || "",
         };
       });
     }
@@ -331,6 +333,7 @@ const ExploreProfessionals = () => {
                 image: professional.image,
                 city: professional.city || "",
                 state: professional.state || "",
+                bio: professional.bio || "",
               }}
               onClick={() => navigate(`/profissional/${professional.id}`)}
             />

@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Star, Music, Disc, Camera, Film, Users, UserRound, MicVocal, Drum, Guitar, Headphones } from "lucide-react";
+import { Star, Music, Disc, Camera, Film, Users, UserRound, MicVocal, Drum, Guitar, Headphones, MapPin } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -145,10 +145,7 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
           
           <div className="flex items-center gap-1 text-sm text-toca-text-secondary mb-3">
             <span className="inline-block bg-toca-accent/20 p-1 rounded-full">
-              {professional.city && professional.state 
-                ? <Users size={14} className="text-toca-accent" />
-                : <UserRound size={14} className="text-toca-accent" />
-              }
+              <MapPin size={14} className="text-toca-accent" />
             </span>
             {professional.city && professional.state 
               ? `${professional.city}, ${professional.state}`
@@ -167,6 +164,24 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
               </Badge>
             )}
           </div>
+          
+          {(professional.genres || []).length > 0 && (
+            <div className="mb-3">
+              <p className="text-xs text-toca-text-secondary mb-1">Gêneros:</p>
+              <div className="flex flex-wrap gap-1">
+                {professional.genres.slice(0, 2).map((genre, i) => (
+                  <Badge key={i} variant="outline" className="bg-transparent text-white text-xs border-toca-text-secondary">
+                    {genre}
+                  </Badge>
+                ))}
+                {professional.genres.length > 2 && (
+                  <Badge variant="outline" className="bg-transparent text-white text-xs border-toca-text-secondary">
+                    +{professional.genres.length - 2}
+                  </Badge>
+                )}
+              </div>
+            </div>
+          )}
           
           <div className="grid grid-cols-2 gap-2 pt-2 border-t border-toca-border">
             {professional.hourlyRate ? (
