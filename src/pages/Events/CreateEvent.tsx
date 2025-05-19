@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Calendar } from "lucide-react";
@@ -10,6 +11,8 @@ import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
+import Navbar from "@/components/Navbar";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 const CreateEvent = () => {
   const navigate = useNavigate();
@@ -48,6 +51,17 @@ const CreateEvent = () => {
   };
 
   const handleCreateEvent = async () => {
+    if (!user) {
+      toast.error("Você precisa estar logado para criar um evento");
+      return;
+    }
+    
+    // Validation
+    if (!formData.title || !formData.description || !formData.location || formData.requiredServices.length === 0) {
+      toast.error("Por favor, preencha todos os campos obrigatórios");
+      return;
+    }
+    
     try {
       setIsSubmitting(true);
       
@@ -57,7 +71,7 @@ const CreateEvent = () => {
       const { data, error } = await supabase
         .from("eventos")
         .insert({
-          contratante_id: user?.id,
+          contratante_id: user.id,
           titulo: formData.title,
           descricao: formData.description,
           data: formattedDate,
@@ -74,102 +88,118 @@ const CreateEvent = () => {
       
       toast.success("Evento criado com sucesso!");
       navigate("/dashboard");
-    } catch (err) {
+    } catch (err: any) {
       console.error("Erro ao criar evento:", err);
-      toast.error("Ocorreu um erro ao criar o evento. Tente novamente.");
+      toast.error(err?.message || "Ocorreu um erro ao criar o evento. Tente novamente.");
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-toca-background px-4 py-12">
-      <div className="w-full max-w-md">
-        <div className="bg-toca-card rounded-lg border border-toca-border shadow-lg p-6 md:p-8">
-          <h2 className="text-2xl font-bold mb-6 text-center">
-            Criar Novo Evento
-          </h2>
-
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              handleCreateEvent();
-            }}
-            className="space-y-4"
-          >
-            <div className="space-y-2">
-              <Label htmlFor="title">Título do Evento</Label>
-              <Input
-                id="title"
-                name="title"
-                placeholder="Digite o título do evento"
-                value={formData.title}
-                onChange={handleChange}
-                required
-                className="bg-toca-background border-toca-border text-white"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="description">Descrição do Evento</Label>
-              <Textarea
-                id="description"
-                name="description"
-                placeholder="Descreva os detalhes do evento"
-                value={formData.description}
-                onChange={handleChange}
-                required
-                className="bg-toca-background border-toca-border text-white resize-none"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="date">Data do Evento</Label>
-              <DatePicker
-                id="date"
-                name="date"
-                onSelect={handleDateChange}
-                defaultDate={formData.date}
-                required
-                className="bg-toca-background border-toca-border text-white"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="location">Local do Evento</Label>
-              <Input
-                id="location"
-                name="location"
-                placeholder="Onde o evento acontecerá?"
-                value={formData.location}
-                onChange={handleChange}
-                required
-                className="bg-toca-background border-toca-border text-white"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="requiredServices">Serviços Requeridos</Label>
-              <Input
-                id="requiredServices"
-                name="requiredServices"
-                placeholder="Quais serviços você precisa? (separados por vírgula)"
-                value={formData.requiredServices.join(", ")}
-                onChange={handleChange}
-                required
-                className="bg-toca-background border-toca-border text-white"
-              />
-            </div>
-
-            <Button
-              type="submit"
-              className="w-full bg-toca-accent hover:bg-toca-accent-hover"
-              disabled={isSubmitting}
+    <div className="min-h-screen flex flex-col bg-toca-background">
+      <Navbar isAuthenticated={true} />
+      
+      <div className="container mx-auto px-4 py-8">
+        <h1 className="text-2xl font-bold mb-6 text-white">Criar Novo Evento</h1>
+        
+        <Card className="bg-toca-card border-toca-border">
+          <CardHeader>
+            <CardTitle className="text-white">Informações do Evento</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                handleCreateEvent();
+              }}
+              className="space-y-4"
             >
-              {isSubmitting ? "Criando Evento..." : "Criar Evento"}
-            </Button>
-          </form>
-        </div>
+              <div className="space-y-2">
+                <Label htmlFor="title">Título do Evento</Label>
+                <Input
+                  id="title"
+                  name="title"
+                  placeholder="Digite o título do evento"
+                  value={formData.title}
+                  onChange={handleChange}
+                  required
+                  className="bg-toca-background border-toca-border text-white"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="description">Descrição do Evento</Label>
+                <Textarea
+                  id="description"
+                  name="description"
+                  placeholder="Descreva os detalhes do evento"
+                  value={formData.description}
+                  onChange={handleChange}
+                  required
+                  className="bg-toca-background border-toca-border text-white resize-none"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="date">Data do Evento</Label>
+                <DatePicker
+                  id="date"
+                  name="date"
+                  onSelect={handleDateChange}
+                  defaultDate={formData.date}
+                  required
+                  className="bg-toca-background border-toca-border text-white"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="location">Local do Evento</Label>
+                <Input
+                  id="location"
+                  name="location"
+                  placeholder="Onde o evento acontecerá?"
+                  value={formData.location}
+                  onChange={handleChange}
+                  required
+                  className="bg-toca-background border-toca-border text-white"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="requiredServices">Serviços Requeridos</Label>
+                <Input
+                  id="requiredServices"
+                  name="requiredServices"
+                  placeholder="Quais serviços você precisa? (separados por vírgula)"
+                  value={formData.requiredServices.join(", ")}
+                  onChange={handleChange}
+                  required
+                  className="bg-toca-background border-toca-border text-white"
+                />
+              </div>
+
+              <div className="flex justify-end gap-4 pt-4">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => navigate("/dashboard")}
+                  className="border-toca-border text-white"
+                  disabled={isSubmitting}
+                >
+                  Cancelar
+                </Button>
+                <Button
+                  type="submit"
+                  className="bg-toca-accent hover:bg-toca-accent-hover"
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? "Criando Evento..." : "Criar Evento"}
+                </Button>
+              </div>
+            </form>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
