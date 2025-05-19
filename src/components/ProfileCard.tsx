@@ -107,37 +107,63 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
     <Card 
       className={cn(
         "relative overflow-hidden transition-all duration-300 cursor-pointer",
-        "bg-gradient-to-br from-toca-card to-toca-background border-toca-border",
-        "hover:border-toca-accent hover:shadow-lg",
-        isHovered && "shadow-[0_0_15px_rgba(234,56,76,0.5)]",
+        "bg-gradient-to-br from-toca-card to-black border-toca-border group",
+        "hover:shadow-[0_0_20px_rgba(234,56,76,0.6)] hover:border-toca-accent",
+        isHovered && "scale-[1.02]",
         className
       )}
       onClick={onClick}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
+      {/* Cyberpunk neon borders */}
       <div className={cn(
-        "absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-transparent via-toca-accent to-transparent",
-        "opacity-0 transition-opacity duration-500",
-        isHovered && "opacity-100 animate-pulse"
+        "absolute inset-x-0 top-0 h-[2px] bg-gradient-to-r from-transparent via-toca-accent to-transparent",
+        "opacity-0 transition-opacity duration-300",
+        isHovered ? "opacity-100 animate-pulse" : ""
+      )} />
+      
+      <div className={cn(
+        "absolute inset-y-0 left-0 w-[2px] bg-gradient-to-b from-transparent via-toca-accent to-transparent",
+        "opacity-0 transition-opacity duration-300",
+        isHovered ? "opacity-100 animate-pulse" : ""
+      )} />
+      
+      <div className={cn(
+        "absolute inset-y-0 right-0 w-[2px] bg-gradient-to-b from-transparent via-toca-accent to-transparent",
+        "opacity-0 transition-opacity duration-300",
+        isHovered ? "opacity-100 animate-pulse" : ""
+      )} />
+      
+      <div className={cn(
+        "absolute inset-x-0 bottom-0 h-[2px] bg-gradient-to-r from-transparent via-toca-accent to-transparent",
+        "opacity-0 transition-opacity duration-300",
+        isHovered ? "opacity-100 animate-pulse" : ""
       )} />
       
       <div className="p-4 flex flex-col">
         <div className="flex flex-col items-center mb-4">
+          {/* Larger avatar with better framing and cyberpunk glow effects */}
           <Avatar className={cn(
-            "h-24 w-24 mb-4 transition-all duration-300",
-            "border-2 border-toca-accent shadow-md",
-            isHovered && "scale-105 border-3 shadow-[0_0_10px_rgba(234,56,76,0.5)]"
+            "w-32 h-32 mb-4 transition-all duration-300 rounded-lg",
+            "border-2 shadow-lg",
+            isHovered 
+              ? "border-toca-accent shadow-[0_0_15px_rgba(234,56,76,0.5)] scale-105" 
+              : "border-toca-accent/50"
           )}>
-            <AvatarImage src={imageUrl || ""} alt={professional.artisticName || professional.name} />
-            <AvatarFallback className="bg-toca-accent/20 text-toca-accent text-xl font-bold">
+            <AvatarImage 
+              src={imageUrl || ""} 
+              alt={professional.artisticName || professional.name}
+              className="object-cover"
+            />
+            <AvatarFallback className="bg-black text-toca-accent text-2xl font-bold">
               {initials}
             </AvatarFallback>
           </Avatar>
           
           <h3 className={cn(
-            "font-bold text-white text-lg text-center transition-colors duration-300",
-            isHovered && "text-toca-accent"
+            "font-bold text-white text-lg text-center transition-all duration-300",
+            isHovered ? "text-toca-accent drop-shadow-[0_0_5px_rgba(234,56,76,0.5)]" : ""
           )}>
             {professional.artisticName || professional.name}
           </h3>
@@ -151,7 +177,7 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
             variant="outline"
             className={cn(
               "border-toca-accent text-toca-accent flex items-center gap-1 mt-1 transition-all duration-300",
-              isHovered && "bg-toca-accent/10"
+              isHovered ? "bg-toca-accent/10 shadow-[0_0_5px_rgba(234,56,76,0.3)]" : ""
             )}
           >
             {getTypeIcon(professional.type)}
@@ -162,9 +188,9 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
         <CardContent className="px-0 pt-0 pb-4">
           {professional.bio && (
             <div className={cn(
-              "mb-3 text-sm text-white/90 bg-black/20 p-3 rounded-md border-l-2 border-toca-accent line-clamp-2",
+              "mb-3 text-sm text-white/90 bg-black/40 p-3 rounded-md border-l-2 border-toca-accent line-clamp-2",
               "transition-all duration-300",
-              isHovered && "border-l-4 bg-black/30"
+              isHovered ? "border-l-4 bg-black/50" : ""
             )}>
               "{professional.bio}"
             </div>
@@ -173,7 +199,7 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
           <div className="flex items-center gap-1 text-sm text-toca-text-secondary mb-3">
             <span className={cn(
               "inline-block bg-toca-accent/20 p-1 rounded-full transition-all duration-300",
-              isHovered && "bg-toca-accent/40"
+              isHovered ? "bg-toca-accent/40" : ""
             )}>
               <MapPin size={14} className="text-toca-accent" />
             </span>
@@ -188,8 +214,8 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
                 key={i} 
                 variant="secondary" 
                 className={cn(
-                  "bg-toca-background/80 text-white text-xs transition-all duration-300",
-                  isHovered && "bg-toca-background/50 border-toca-accent/30"
+                  "bg-black/60 text-white text-xs transition-all duration-300 border border-transparent",
+                  isHovered ? "border-toca-accent/30" : ""
                 )}
               >
                 {item}
@@ -199,8 +225,8 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
               <Badge 
                 variant="secondary" 
                 className={cn(
-                  "bg-toca-background/80 text-white text-xs transition-all duration-300",
-                  isHovered && "bg-toca-accent/20 text-toca-accent"
+                  "bg-black/60 text-white text-xs transition-all duration-300",
+                  isHovered ? "bg-toca-accent/20 text-toca-accent" : ""
                 )}
               >
                 +{(professional.instruments || professional.services || []).length - 3}
@@ -218,7 +244,7 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
                     variant="outline" 
                     className={cn(
                       "bg-transparent text-white text-xs border-toca-text-secondary transition-colors duration-300",
-                      isHovered && "border-toca-accent/50 text-toca-accent/90"
+                      isHovered ? "border-toca-accent/50 text-toca-accent/90" : ""
                     )}
                   >
                     {genre}
@@ -229,7 +255,7 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
                     variant="outline" 
                     className={cn(
                       "bg-transparent text-white text-xs border-toca-text-secondary transition-colors duration-300",
-                      isHovered && "border-toca-accent/50 text-toca-accent/90"
+                      isHovered ? "border-toca-accent/50 text-toca-accent/90" : ""
                     )}
                   >
                     +{professional.genres.length - 2}
@@ -242,17 +268,17 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
           <div className={cn(
             "grid grid-cols-2 gap-2 pt-2 border-t border-toca-border",
             "transition-colors duration-300",
-            isHovered && "border-toca-accent/30"
+            isHovered ? "border-toca-accent/30" : ""
           )}>
             {professional.hourlyRate ? (
               <div className={cn(
-                "bg-toca-background/50 p-2 rounded-md text-center transition-all duration-300",
-                isHovered && "bg-toca-background/70 shadow-inner"
+                "bg-black/50 p-2 rounded-md text-center transition-all duration-300",
+                isHovered && "bg-black/70 shadow-inner"
               )}>
                 <span className="text-xs text-toca-text-secondary block">Por hora</span>
                 <div className={cn(
                   "text-toca-accent font-semibold transition-all duration-300",
-                  isHovered && "scale-105"
+                  isHovered && "scale-105 drop-shadow-[0_0_5px_rgba(234,56,76,0.5)]"
                 )}>
                   R${professional.hourlyRate}
                 </div>
@@ -263,13 +289,13 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
             
             {professional.eventRate ? (
               <div className={cn(
-                "bg-toca-background/50 p-2 rounded-md text-center transition-all duration-300",
-                isHovered && "bg-toca-background/70 shadow-inner"
+                "bg-black/50 p-2 rounded-md text-center transition-all duration-300",
+                isHovered && "bg-black/70 shadow-inner"
               )}>
                 <span className="text-xs text-toca-text-secondary block">Por evento</span>
                 <div className={cn(
                   "text-toca-accent font-semibold transition-all duration-300",
-                  isHovered && "scale-105"
+                  isHovered && "scale-105 drop-shadow-[0_0_5px_rgba(234,56,76,0.5)]"
                 )}>
                   R${professional.eventRate}
                 </div>
@@ -280,12 +306,6 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
           </div>
         </CardContent>
       </div>
-      
-      <div className={cn(
-        "absolute inset-x-0 bottom-0 h-1 bg-gradient-to-r from-transparent via-toca-accent to-transparent",
-        "opacity-0 transition-opacity duration-500",
-        isHovered && "opacity-100 animate-pulse"
-      )} />
     </Card>
   );
 };
