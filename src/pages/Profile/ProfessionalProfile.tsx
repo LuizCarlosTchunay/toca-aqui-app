@@ -15,9 +15,9 @@ import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious
 // Portfolio item type
 interface PortfolioItem {
   id: string;
-  profissional_id: string | null;
-  tipo: string | null;
-  url: string | null;
+  profissional_id: string;
+  tipo: string;
+  url: string;
   descricao?: string | null;
 }
 

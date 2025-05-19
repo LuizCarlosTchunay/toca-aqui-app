@@ -262,18 +262,21 @@ export type Database = {
       }
       portfolio: {
         Row: {
+          descricao: string | null
           id: string
           profissional_id: string | null
           tipo: string | null
           url: string | null
         }
         Insert: {
+          descricao?: string | null
           id?: string
           profissional_id?: string | null
           tipo?: string | null
           url?: string | null
         }
         Update: {
+          descricao?: string | null
           id?: string
           profissional_id?: string | null
           tipo?: string | null
