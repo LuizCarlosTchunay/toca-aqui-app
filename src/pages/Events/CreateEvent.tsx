@@ -22,23 +22,15 @@ const CreateEvent = () => {
     description: "",
     date: new Date(),
     location: "",
-    requiredServices: [],
+    requiredServices: "",
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    if (e.target.name === "requiredServices") {
-      // Split comma-separated values into array
-      setFormData({
-        ...formData,
-        requiredServices: e.target.value.split(",").map(item => item.trim()),
-      });
-    } else {
-      setFormData({
-        ...formData,
-        [e.target.name]: e.target.value,
-      });
-    }
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value,
+    });
   };
 
   const handleDateChange = (date: Date | undefined) => {
@@ -57,7 +49,7 @@ const CreateEvent = () => {
     }
     
     // Validation
-    if (!formData.title || !formData.description || !formData.location || formData.requiredServices.length === 0) {
+    if (!formData.title || !formData.description || !formData.location || !formData.requiredServices) {
       toast.error("Por favor, preencha todos os campos obrigatórios");
       return;
     }
@@ -67,6 +59,9 @@ const CreateEvent = () => {
       
       // Format date as ISO string for database compatibility
       const formattedDate = format(formData.date, "yyyy-MM-dd");
+
+      // Convert comma-separated services to array
+      const servicesArray = formData.requiredServices.split(",").map(item => item.trim()).filter(item => item);
       
       const { data, error } = await supabase
         .from("eventos")
@@ -76,7 +71,7 @@ const CreateEvent = () => {
           descricao: formData.description,
           data: formattedDate,
           local: formData.location,
-          servicos_requeridos: formData.requiredServices,
+          servicos_requeridos: servicesArray,
           status: "aberto"
         })
         .select("*")
@@ -98,7 +93,7 @@ const CreateEvent = () => {
 
   return (
     <div className="min-h-screen flex flex-col bg-toca-background">
-      <Navbar isAuthenticated={true} />
+      <Navbar isAuthenticated={!!user} />
       
       <div className="container mx-auto px-4 py-8">
         <h1 className="text-2xl font-bold mb-6 text-white">Criar Novo Evento</h1>
@@ -145,11 +140,9 @@ const CreateEvent = () => {
                 <Label htmlFor="date">Data do Evento</Label>
                 <DatePicker
                   id="date"
-                  name="date"
                   onSelect={handleDateChange}
                   defaultDate={formData.date}
                   required
-                  className="bg-toca-background border-toca-border text-white"
                 />
               </div>
 
@@ -172,7 +165,7 @@ const CreateEvent = () => {
                   id="requiredServices"
                   name="requiredServices"
                   placeholder="Quais serviços você precisa? (separados por vírgula)"
-                  value={formData.requiredServices.join(", ")}
+                  value={formData.requiredServices}
                   onChange={handleChange}
                   required
                   className="bg-toca-background border-toca-border text-white"

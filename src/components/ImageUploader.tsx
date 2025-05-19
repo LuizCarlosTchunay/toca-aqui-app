@@ -5,10 +5,11 @@ import { Camera, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { toast } from "sonner";
 
 interface ImageUploaderProps {
   currentImage?: string;
-  onImageChange: (imageFile: File) => void;
+  onImageChange: (imageFile: File, imageUrl?: string) => void;
   className?: string;
   size?: "sm" | "md" | "lg";
   bucketName?: string;
@@ -25,6 +26,7 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
 }) => {
   const { user } = useAuth();
   const [previewUrl, setPreviewUrl] = useState<string | undefined>(currentImage);
+  const [isLoading, setIsLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const sizeClasses = {
@@ -54,19 +56,59 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
     
     if (bucketName && objectPath) {
       fetchImage();
+    } else if (currentImage) {
+      setPreviewUrl(currentImage);
     }
-  }, [bucketName, objectPath]);
+  }, [bucketName, objectPath, currentImage]);
 
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
-
-    // Create a preview URL
-    const fileUrl = URL.createObjectURL(file);
-    setPreviewUrl(fileUrl);
     
-    // Pass the file to parent component
-    onImageChange(file);
+    setIsLoading(true);
+
+    try {
+      // Create a preview URL
+      const fileUrl = URL.createObjectURL(file);
+      setPreviewUrl(fileUrl);
+      
+      // If we have a user, try to upload the file immediately
+      if (user) {
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${user.id}-${Date.now()}.${fileExt}`;
+        
+        const { data, error } = await supabase.storage
+          .from(bucketName)
+          .upload(fileName, file, {
+            upsert: true,
+            contentType: file.type
+          });
+          
+        if (error) {
+          throw error;
+        }
+        
+        // Get the public URL of the uploaded file
+        const { data: publicUrlData } = supabase.storage
+          .from(bucketName)
+          .getPublicUrl(fileName);
+          
+        if (publicUrlData) {
+          // Pass both the file and the public URL to the parent component
+          onImageChange(file, publicUrlData.publicUrl);
+        } else {
+          onImageChange(file);
+        }
+      } else {
+        // If no user, just pass the file
+        onImageChange(file);
+      }
+    } catch (error: any) {
+      console.error("Error handling image:", error);
+      toast.error("Erro ao processar imagem: " + (error.message || "Tente novamente"));
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleButtonClick = () => {
@@ -95,7 +137,11 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
         )}
         
         <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-          <Camera size={24} className="text-white" />
+          {isLoading ? (
+            <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+          ) : (
+            <Camera size={24} className="text-white" />
+          )}
         </div>
       </div>
       
@@ -105,6 +151,7 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
         onChange={handleFileChange}
         accept="image/*"
         className="hidden"
+        disabled={isLoading}
       />
       
       <Button 
@@ -113,9 +160,10 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
         size="sm"
         className="text-toca-accent border-toca-accent hover:bg-toca-accent hover:text-white"
         onClick={handleButtonClick}
+        disabled={isLoading}
       >
         <Camera size={16} className="mr-2" />
-        {previewUrl ? "Alterar foto" : "Adicionar foto"}
+        {isLoading ? "Carregando..." : previewUrl ? "Alterar foto" : "Adicionar foto"}
       </Button>
     </div>
   );

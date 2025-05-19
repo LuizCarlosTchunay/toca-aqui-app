@@ -18,8 +18,9 @@ const MyProfile = () => {
   const [isProfessional, setIsProfessional] = useState(false);
   const [showPhotoDialog, setShowPhotoDialog] = useState(false);
   const [profileImage, setProfileImage] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState<string | undefined>(undefined);
+  const [profileImageUrl, setProfileImageUrl] = useState<string | undefined>(undefined);
   const [isLoading, setIsLoading] = useState(false);
+  const [professionalId, setProfessionalId] = useState<string | null>(null);
   const [userData, setUserData] = useState({
     name: "Usuário",
     email: "",
@@ -33,7 +34,10 @@ const MyProfile = () => {
 
   useEffect(() => {
     const fetchUserData = async () => {
-      if (!user) return;
+      if (!user) {
+        navigate("/");
+        return;
+      }
       
       setIsLoading(true);
       
@@ -74,6 +78,8 @@ const MyProfile = () => {
             if (profError) throw profError;
             
             if (profData) {
+              setProfessionalId(profData.id);
+              
               setUserData(prev => ({
                 ...prev,
                 city: profData.cidade || "",
@@ -92,6 +98,7 @@ const MyProfile = () => {
                     ...prev,
                     image: data.publicUrl
                   }));
+                  setProfileImageUrl(data.publicUrl);
                 }
               } catch (imgError) {
                 console.error("Error fetching profile image:", imgError);
@@ -99,16 +106,16 @@ const MyProfile = () => {
             }
           }
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error("Error fetching user data:", error);
-        toast.error("Erro ao carregar dados do usuário");
+        toast.error("Erro ao carregar dados do usuário: " + (error.message || "Tente novamente"));
       } finally {
         setIsLoading(false);
       }
     };
     
     fetchUserData();
-  }, [user]);
+  }, [user, navigate]);
   
   const handleBecomeProfessional = async () => {
     if (!user) {
@@ -130,44 +137,33 @@ const MyProfile = () => {
       setIsProfessional(true);
       toast.success("Parabéns! Agora você é um profissional. Complete seu perfil para aparecer na aba Explorar.");
       navigate("/editar-perfil");
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error updating professional status:", error);
-      toast.error("Erro ao atualizar status de profissional");
+      toast.error("Erro ao atualizar status de profissional: " + (error.message || "Tente novamente"));
     } finally {
       setIsLoading(false);
     }
   };
   
-  const handleImageChange = (imageFile: File) => {
+  const handleImageChange = (imageFile: File, imageUrl?: string) => {
     setProfileImage(imageFile);
-    setImagePreview(URL.createObjectURL(imageFile));
+    if (imageUrl) {
+      setProfileImageUrl(imageUrl);
+    }
   };
   
   const handleSavePhoto = async () => {
-    if (!profileImage || !user) {
-      toast.error("Selecione uma imagem para continuar");
+    if (!profileImage || !professionalId) {
+      toast.error("Selecione uma imagem para continuar ou crie seu perfil profissional primeiro");
       return;
     }
     
     setIsLoading(true);
     
     try {
-      // Get professional id
-      const { data: profData, error: profError } = await supabase
-        .from('profissionais')
-        .select('id')
-        .eq('user_id', user.id)
-        .maybeSingle();
-      
-      if (profError) throw profError;
-      
-      if (!profData) {
-        throw new Error("Perfil profissional não encontrado");
-      }
-      
-      // Upload image
+      // Upload image with professional id as filename
       const fileExt = profileImage.name.split('.').pop();
-      const fileName = `${profData.id}.${fileExt}`;
+      const fileName = `${professionalId}.${fileExt}`;
       
       const { error: uploadError } = await supabase.storage
         .from('profile_images')
@@ -192,9 +188,9 @@ const MyProfile = () => {
           image: data.publicUrl
         }));
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error uploading profile image:", error);
-      toast.error("Erro ao atualizar foto de perfil");
+      toast.error("Erro ao atualizar foto de perfil: " + (error.message || "Tente novamente"));
     } finally {
       setIsLoading(false);
     }
@@ -202,7 +198,7 @@ const MyProfile = () => {
 
   return (
     <div className="min-h-screen flex flex-col bg-toca-background">
-      <Navbar isAuthenticated={true} />
+      <Navbar isAuthenticated={!!user} />
       
       <div className="container mx-auto px-4 py-8">
         <Button 
@@ -220,7 +216,7 @@ const MyProfile = () => {
                 <div className="flex flex-col items-center">
                   <div className="relative group mb-4">
                     <Avatar className="w-32 h-32 border-2 border-toca-accent">
-                      <AvatarImage src={imagePreview || userData.image} />
+                      <AvatarImage src={profileImageUrl || userData.image} />
                       <AvatarFallback className="text-4xl bg-toca-accent/20 text-toca-accent">
                         {userData.name.charAt(0)}
                       </AvatarFallback>
@@ -394,9 +390,10 @@ const MyProfile = () => {
           </DialogHeader>
           <div className="flex justify-center py-6">
             <ImageUploader
-              currentImage={userData.image}
+              currentImage={profileImageUrl}
               onImageChange={handleImageChange}
               size="lg"
+              objectPath={professionalId ? professionalId : undefined}
             />
           </div>
           <DialogFooter>

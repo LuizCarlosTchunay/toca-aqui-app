@@ -17,20 +17,26 @@ const EditProfile = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [profileImage, setProfileImage] = useState<File | null>(null);
+  const [profileImageUrl, setProfileImageUrl] = useState<string | undefined>(undefined);
   const [isLoading, setIsLoading] = useState(false);
+  const [existingProfessionalId, setExistingProfessionalId] = useState<string | null>(null);
   const [profileData, setProfileData] = useState({
-    artisticName: "DJ Pulse",
+    artisticName: "",
     profileType: "dj",
-    bio: "DJ com experiência em eventos corporativos e casamentos. Especialista em música eletrônica e house.",
-    city: "São Paulo",
-    state: "SP",
-    hourlyRate: "150",
-    eventRate: "1200",
+    bio: "",
+    city: "",
+    state: "",
+    hourlyRate: "",
+    eventRate: "",
   });
   
   useEffect(() => {
     const fetchProfileData = async () => {
-      if (!user) return;
+      if (!user) {
+        toast.error("Você precisa estar logado para editar seu perfil");
+        navigate("/");
+        return;
+      }
       
       setIsLoading(true);
       
@@ -47,27 +53,42 @@ const EditProfile = () => {
         }
         
         if (data) {
+          setExistingProfessionalId(data.id);
+          
           // Update state with existing data
           setProfileData({
-            artisticName: data.nome_artistico || "DJ Pulse",
+            artisticName: data.nome_artistico || "",
             profileType: data.tipo_profissional || "dj",
-            bio: data.bio || "DJ com experiência em eventos corporativos e casamentos. Especialista em música eletrônica e house.",
-            city: data.cidade || "São Paulo",
-            state: data.estado || "SP",
-            hourlyRate: data.cache_hora?.toString() || "150",
-            eventRate: data.cache_evento?.toString() || "1200",
+            bio: data.bio || "",
+            city: data.cidade || "",
+            state: data.estado || "",
+            hourlyRate: data.cache_hora?.toString() || "",
+            eventRate: data.cache_evento?.toString() || "",
           });
+          
+          // Try to get profile image
+          try {
+            const { data: imageData } = supabase.storage
+              .from('profile_images')
+              .getPublicUrl(`${data.id}`);
+            
+            if (imageData?.publicUrl) {
+              setProfileImageUrl(imageData.publicUrl);
+            }
+          } catch (imgError) {
+            console.error("Error fetching profile image:", imgError);
+          }
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error("Error fetching profile data:", error);
-        toast.error("Erro ao carregar dados do perfil");
+        toast.error("Erro ao carregar dados do perfil: " + (error.message || "Tente novamente"));
       } finally {
         setIsLoading(false);
       }
     };
     
     fetchProfileData();
-  }, [user]);
+  }, [user, navigate]);
 
   const handleChange = (field: string, value: string) => {
     setProfileData({
@@ -84,75 +105,62 @@ const EditProfile = () => {
       return;
     }
     
+    // Validation
+    if (!profileData.artisticName) {
+      toast.error("Nome artístico é obrigatório");
+      return;
+    }
+    
     setIsLoading(true);
     
     try {
-      // Check if user already has a professional profile
-      const { data: existingProfile, error: checkError } = await supabase
-        .from('profissionais')
-        .select('id')
-        .eq('user_id', user.id)
-        .maybeSingle();
+      let professionalId = existingProfessionalId;
       
-      if (checkError) {
-        throw checkError;
-      }
+      const profileDataToSave = {
+        nome_artistico: profileData.artisticName,
+        tipo_profissional: profileData.profileType,
+        bio: profileData.bio,
+        cidade: profileData.city,
+        estado: profileData.state,
+        cache_hora: profileData.hourlyRate ? parseFloat(profileData.hourlyRate) : null,
+        cache_evento: profileData.eventRate ? parseFloat(profileData.eventRate) : null
+      };
       
-      let profileId;
-      
-      if (existingProfile) {
+      if (existingProfessionalId) {
         // Update existing profile
         const { error: updateError } = await supabase
           .from('profissionais')
-          .update({
-            nome_artistico: profileData.artisticName,
-            tipo_profissional: profileData.profileType,
-            bio: profileData.bio,
-            cidade: profileData.city,
-            estado: profileData.state,
-            cache_hora: parseFloat(profileData.hourlyRate),
-            cache_evento: parseFloat(profileData.eventRate)
-          })
-          .eq('id', existingProfile.id);
+          .update(profileDataToSave)
+          .eq('id', existingProfessionalId);
         
         if (updateError) throw updateError;
-        profileId = existingProfile.id;
-        
-        // Also update user to have professional profile
-        await supabase
-          .from('users')
-          .update({ tem_perfil_profissional: true })
-          .eq('id', user.id);
       } else {
         // Create new profile
         const { data: newProfile, error: insertError } = await supabase
           .from('profissionais')
           .insert({
             user_id: user.id,
-            nome_artistico: profileData.artisticName,
-            tipo_profissional: profileData.profileType,
-            bio: profileData.bio,
-            cidade: profileData.city,
-            estado: profileData.state,
-            cache_hora: parseFloat(profileData.hourlyRate),
-            cache_evento: parseFloat(profileData.eventRate)
+            ...profileDataToSave
           })
-          .select();
+          .select('id')
+          .single();
         
         if (insertError) throw insertError;
-        if (newProfile && newProfile[0]) profileId = newProfile[0].id;
+        professionalId = newProfile?.id || null;
         
-        // Also update user to have professional profile
-        await supabase
+        // Update user to have professional profile
+        const { error: userUpdateError } = await supabase
           .from('users')
           .update({ tem_perfil_profissional: true })
           .eq('id', user.id);
+        
+        if (userUpdateError) throw userUpdateError;
       }
       
       // Upload profile image if provided
-      if (profileImage && profileId) {
+      if (profileImage && professionalId) {
         const fileExt = profileImage.name.split('.').pop();
-        const fileName = `${profileId}.${fileExt}`;
+        const fileName = `${professionalId}.${fileExt}`;
         
         const { error: uploadError } = await supabase.storage
           .from('profile_images')
@@ -166,21 +174,24 @@ const EditProfile = () => {
       
       toast.success("Perfil atualizado com sucesso!");
       navigate("/dashboard");
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error saving profile:", error);
-      toast.error("Erro ao salvar o perfil");
+      toast.error("Erro ao salvar o perfil: " + (error.message || "Tente novamente"));
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleImageChange = (imageFile: File) => {
+  const handleImageChange = (imageFile: File, imageUrl?: string) => {
     setProfileImage(imageFile);
+    if (imageUrl) {
+      setProfileImageUrl(imageUrl);
+    }
   };
 
   return (
     <div className="min-h-screen flex flex-col bg-toca-background">
-      <Navbar isAuthenticated={true} currentRole="profissional" />
+      <Navbar isAuthenticated={!!user} currentRole="profissional" />
       
       <div className="container mx-auto px-4 py-8">
         <h1 className="text-2xl font-bold mb-6 text-white">Editar Perfil Profissional</h1>
@@ -193,9 +204,10 @@ const EditProfile = () => {
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="flex flex-col items-center mb-6">
                 <ImageUploader 
-                  currentImage=""
+                  currentImage={profileImageUrl}
                   onImageChange={handleImageChange}
                   size="lg"
+                  objectPath={existingProfessionalId ? existingProfessionalId : undefined}
                 />
               </div>
               
@@ -206,6 +218,7 @@ const EditProfile = () => {
                   value={profileData.artisticName}
                   onChange={(e) => handleChange('artisticName', e.target.value)}
                   className="bg-toca-background border-toca-border text-white"
+                  required
                 />
               </div>
               
