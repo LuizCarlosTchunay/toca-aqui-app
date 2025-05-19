@@ -41,13 +41,21 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
       if (!objectPath) return;
       
       try {
-        // Try to get public URL first
+        // Try to get public URL
         const { data } = supabase.storage
           .from(bucketName)
           .getPublicUrl(objectPath);
         
         if (data && data.publicUrl) {
-          setPreviewUrl(data.publicUrl);
+          // Check if the image exists by making a HEAD request
+          try {
+            const response = await fetch(data.publicUrl, { method: 'HEAD' });
+            if (response.ok) {
+              setPreviewUrl(data.publicUrl + '?t=' + new Date().getTime());
+            }
+          } catch (error) {
+            console.log('Image may not exist yet', error);
+          }
         }
       } catch (error) {
         console.error("Error fetching image:", error);
@@ -72,8 +80,34 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
       const fileUrl = URL.createObjectURL(file);
       setPreviewUrl(fileUrl);
       
-      // If we have a user, try to upload the file immediately
-      if (user) {
+      // If we have a user and objectPath, try to upload the file immediately
+      if (user && objectPath) {
+        // Upload to the specified path directly
+        const { error } = await supabase.storage
+          .from(bucketName)
+          .upload(objectPath, file, {
+            upsert: true,
+            contentType: file.type
+          });
+          
+        if (error) {
+          throw error;
+        }
+        
+        // Get the public URL of the uploaded file
+        const { data: publicUrlData } = supabase.storage
+          .from(bucketName)
+          .getPublicUrl(objectPath);
+          
+        if (publicUrlData) {
+          // Pass both the file and the public URL to the parent component
+          onImageChange(file, publicUrlData.publicUrl);
+          toast.success("Imagem atualizada com sucesso!");
+        } else {
+          onImageChange(file);
+        }
+      } else if (user) {
+        // Generate a path based on the user ID if objectPath wasn't provided
         const fileExt = file.name.split('.').pop();
         const fileName = `${user.id}-${Date.now()}.${fileExt}`;
         
@@ -96,6 +130,7 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
         if (publicUrlData) {
           // Pass both the file and the public URL to the parent component
           onImageChange(file, publicUrlData.publicUrl);
+          toast.success("Imagem atualizada com sucesso!");
         } else {
           onImageChange(file);
         }

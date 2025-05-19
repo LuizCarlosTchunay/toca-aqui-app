@@ -1,156 +1,105 @@
-import React, { useEffect, useState } from "react";
+
+import React, { useState } from "react";
 import Navbar from "@/components/Navbar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useNavigate, useParams } from "react-router-dom";
 import { ChevronLeft, Calendar, MapPin, Star, Clock } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
 import { formatCurrency } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
-
-interface ProfessionalData {
-  id: string;
-  name: string;
-  artisticName?: string;
-  type: string;
-  rating?: number;
-  reviewCount?: number;
-  services?: string[];
-  genres?: string[];
-  hourlyRate?: number;
-  eventRate?: number;
-  image?: string;
-  city?: string;
-  state?: string;
-  bio?: string;
-  portfolio?: string[];
-}
-
-interface Review {
-  id: string;
-  reviewerName: string;
-  rating: number;
-  comment: string;
-  eventType: string;
-}
+import { useAuth } from "@/hooks/useAuth";
 
 const ProfessionalProfile = () => {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
-  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
-
-  useEffect(() => {
-    const checkAuth = async () => {
-      const { data } = await supabase.auth.getSession();
-      if (data.session) {
-        setCurrentUserId(data.session.user.id);
-      }
-    };
-    checkAuth();
-  }, []);
-
+  const { user } = useAuth();
+  
+  // Fetch professional data
   const { data: professional, isLoading, isError } = useQuery({
     queryKey: ['professional', id],
     queryFn: async () => {
       if (!id) throw new Error("ID do profissional não fornecido");
 
-      const { data, error } = await supabase
-        .from("profissionais")
-        .select(`
-          id,
-          user_id,
-          nome_artistico,
-          tipo_profissional,
-          instrumentos,
-          subgeneros,
-          bio,
-          cidade,
-          estado,
-          cache_hora,
-          cache_evento
-        `)
-        .eq("id", id)
-        .single();
+      try {
+        // Get professional details
+        const { data: professionalData, error } = await supabase
+          .from("profissionais")
+          .select(`
+            id,
+            user_id,
+            nome_artistico,
+            tipo_profissional,
+            instrumentos,
+            subgeneros,
+            bio,
+            cidade,
+            estado,
+            cache_hora,
+            cache_evento
+          `)
+          .eq("id", id)
+          .single();
 
-      if (error) {
-        console.error("Erro ao buscar profissional:", error);
+        if (error) {
+          console.error("Erro ao buscar profissional:", error);
+          throw error;
+        }
+        
+        // Try to get the profile image URL from storage
+        const { data: imageData } = await supabase.storage
+          .from('profile_images')
+          .getPublicUrl(`professionals/${id}`);
+          
+        const imageUrl = imageData?.publicUrl;
+
+        return {
+          id: professionalData.id,
+          name: professionalData.nome_artistico || "Sem nome",
+          artisticName: professionalData.nome_artistico || "Sem nome artístico",
+          type: professionalData.tipo_profissional || "Músico",
+          rating: 4.5, // Default rating until we implement a rating system
+          reviewCount: 0, // Default count until we implement reviews
+          services: professionalData.instrumentos || [],
+          genres: professionalData.subgeneros || [],
+          hourlyRate: professionalData.cache_hora || 0,
+          eventRate: professionalData.cache_evento || 0,
+          image: imageUrl || "https://images.unsplash.com/photo-1618160702438-9b02ab6515c9", // Default image
+          city: professionalData.cidade || "",
+          state: professionalData.estado || "",
+          bio: professionalData.bio || ""
+        };
+      } catch (error) {
+        console.error("Error fetching professional:", error);
         throw error;
       }
-
-      // Buscar avaliações
-      const { data: avaliacoes, error: avaliacoesError } = await supabase
-        .from("avaliacoes")
-        .select("*")
-        .eq("profissional_id", id);
-
-      if (avaliacoesError) {
-        console.error("Erro ao buscar avaliações:", avaliacoesError);
-      }
-
-      const reviewCount = avaliacoes ? avaliacoes.length : 0;
-      
-      // Buscar portfolio
-      const { data: portfolioItems, error: portfolioError } = await supabase
-        .from("portfolio")
-        .select("*")
-        .eq("profissional_id", id);
-        
-      if (portfolioError) {
-        console.error("Erro ao buscar portfólio:", portfolioError);
-      }
-
-      const portfolioList = portfolioItems ? portfolioItems.map(item => item.tipo || 'Item de portfólio') : [];
-
-      return {
-        id: data.id,
-        name: data.nome_artistico || "Sem nome",
-        artisticName: data.nome_artistico || "Sem nome artístico",
-        type: data.tipo_profissional || "Músico",
-        rating: 4.5, // Valor padrão até implementarmos avaliações reais
-        reviewCount: reviewCount,
-        services: data.instrumentos || [],
-        genres: data.subgeneros || [],
-        hourlyRate: data.cache_hora || 0,
-        eventRate: data.cache_evento || 0,
-        image: "https://images.unsplash.com/photo-1618160702438-9b02ab6515c9", // Imagem padrão
-        city: data.cidade || "",
-        state: data.estado || "",
-        bio: data.bio || "",
-        portfolio: portfolioList.length > 0 ? portfolioList : ["Evento Corporativo XYZ", "Casamento Silva", "Festival de Verão 2024"] // Mock se não houver dados reais
-      };
     },
     enabled: !!id
   });
 
-  // Corrigir a consulta de avaliações para não fazer join com users
-  const { data: reviews = [] } = useQuery({
-    queryKey: ['reviews', id],
+  // Fetch portfolio items
+  const { data: portfolio = [] } = useQuery({
+    queryKey: ['portfolio', id],
     queryFn: async () => {
       if (!id) return [];
-
-      const { data, error } = await supabase
-        .from("avaliacoes")
-        .select("*")
-        .eq("profissional_id", id)
-        .limit(2);
-
-      if (error) {
-        console.error("Erro ao buscar avaliações:", error);
+      
+      try {
+        const { data, error } = await supabase
+          .from("portfolio")
+          .select("*")
+          .eq("profissional_id", id);
+          
+        if (error) {
+          console.error("Erro ao buscar portfólio:", error);
+          return [];
+        }
+        
+        return data.map(item => item.tipo || "Item de portfólio");
+      } catch (error) {
+        console.error("Error fetching portfolio:", error);
         return [];
       }
-
-      if (!data) return [];
-
-      // Usamos dados mock para o nome do usuário já que não podemos fazer join
-      return data.map(review => ({
-        id: review.id,
-        reviewerName: "Usuário", // Anteriormente tentava acessar review.users?.nome
-        rating: review.nota || 5,
-        comment: review.comentario || "Ótimo profissional!",
-        eventType: "Evento"
-      }));
     },
     enabled: !!id
   });
@@ -158,8 +107,11 @@ const ProfessionalProfile = () => {
   if (isLoading) {
     return (
       <div className="min-h-screen flex flex-col bg-toca-background">
-        <Navbar isAuthenticated={!!currentUserId} />
+        <Navbar isAuthenticated={!!user} />
         <div className="container mx-auto px-4 py-8">
+          <div className="flex justify-center py-16">
+            <div className="w-8 h-8 border-2 border-toca-accent border-t-transparent rounded-full animate-spin"></div>
+          </div>
           <p className="text-center text-toca-text-secondary">Carregando perfil...</p>
         </div>
       </div>
@@ -169,7 +121,7 @@ const ProfessionalProfile = () => {
   if (isError || !professional) {
     return (
       <div className="min-h-screen flex flex-col bg-toca-background">
-        <Navbar isAuthenticated={!!currentUserId} />
+        <Navbar isAuthenticated={!!user} />
         <div className="container mx-auto px-4 py-8">
           <p className="text-center text-toca-text-secondary">Erro ao carregar perfil. Tente novamente mais tarde.</p>
           <Button 
@@ -185,7 +137,7 @@ const ProfessionalProfile = () => {
 
   return (
     <div className="min-h-screen flex flex-col bg-toca-background">
-      <Navbar isAuthenticated={!!currentUserId} />
+      <Navbar isAuthenticated={!!user} />
       
       <div className="container mx-auto px-4 py-8">
         <Button 
@@ -201,8 +153,16 @@ const ProfessionalProfile = () => {
             <Card className="bg-toca-card border-toca-border mb-6">
               <CardContent className="pt-6">
                 <div className="flex flex-col items-center">
-                  <div className="w-32 h-32 rounded-full bg-toca-accent/20 flex items-center justify-center mb-4">
-                    <span className="text-4xl font-bold text-toca-accent">{professional.type.substring(0, 2)}</span>
+                  <div className="w-32 h-32 rounded-full overflow-hidden bg-toca-accent/20 flex items-center justify-center mb-4">
+                    {professional.image ? (
+                      <img 
+                        src={professional.image} 
+                        alt={professional.name}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <span className="text-4xl font-bold text-toca-accent">{professional.type.substring(0, 2)}</span>
+                    )}
                   </div>
                   
                   <h1 className="text-2xl font-bold text-white mb-1">{professional.artisticName}</h1>
@@ -257,6 +217,9 @@ const ProfessionalProfile = () => {
                       {service}
                     </Badge>
                   ))}
+                  {(!professional.services || professional.services.length === 0) && (
+                    <p className="text-toca-text-secondary">Nenhum serviço cadastrado</p>
+                  )}
                 </div>
                 
                 {professional.genres && professional.genres.length > 0 && (
@@ -281,7 +244,9 @@ const ProfessionalProfile = () => {
                 <CardTitle>Sobre</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-toca-text-primary">{professional.bio || `${professional.artisticName} ainda não adicionou uma descrição ao perfil.`}</p>
+                <p className="text-toca-text-primary">
+                  {professional.bio || `${professional.artisticName} ainda não adicionou uma descrição ao perfil.`}
+                </p>
               </CardContent>
             </Card>
             
@@ -290,9 +255,9 @@ const ProfessionalProfile = () => {
                 <CardTitle>Portfólio</CardTitle>
               </CardHeader>
               <CardContent>
-                {professional.portfolio && professional.portfolio.length > 0 ? (
+                {portfolio.length > 0 ? (
                   <ul className="space-y-2">
-                    {professional.portfolio.map((item, index) => (
+                    {portfolio.map((item, index) => (
                       <li key={index} className="p-3 bg-toca-background rounded-md text-white">
                         {item}
                       </li>
@@ -311,32 +276,9 @@ const ProfessionalProfile = () => {
                 <CardTitle>Avaliações</CardTitle>
               </CardHeader>
               <CardContent>
-                {professional.reviewCount && professional.reviewCount > 0 ? (
-                  <div className="space-y-4">
-                    {reviews.map(review => (
-                      <div key={review.id} className="p-4 bg-toca-background rounded-md">
-                        <div className="flex justify-between mb-2">
-                          <div className="font-semibold text-white">{review.reviewerName}</div>
-                          <div className="flex items-center">
-                            <Star className="text-yellow-500 mr-1" size={14} />
-                            <span>{review.rating}</span>
-                          </div>
-                        </div>
-                        <p className="text-toca-text-secondary text-sm">{review.comment}</p>
-                      </div>
-                    ))}
-                    <Button 
-                      variant="outline" 
-                      className="w-full border-toca-border text-toca-text-secondary"
-                    >
-                      Ver todas as avaliações
-                    </Button>
-                  </div>
-                ) : (
-                  <p className="text-center text-toca-text-secondary py-6">
-                    Este profissional ainda não possui avaliações.
-                  </p>
-                )}
+                <p className="text-center text-toca-text-secondary py-6">
+                  Este profissional ainda não possui avaliações.
+                </p>
               </CardContent>
             </Card>
           </div>

@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import ProfileCard from "@/components/ProfileCard";
 import { Button } from "@/components/ui/button";
@@ -5,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Search, Filter, Music, Film, Camera, Disc, Users, ChevronLeft, MapPin } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 
@@ -25,52 +26,14 @@ interface Professional {
   state?: string;
 }
 
-const fetchProfessionals = async () => {
-  const { data, error } = await supabase
-    .from("profissionais")
-    .select(`
-      id,
-      user_id,
-      nome_artistico,
-      tipo_profissional,
-      instrumentos,
-      subgeneros,
-      bio,
-      cidade,
-      estado,
-      cache_hora,
-      cache_evento
-    `);
-
-  if (error) {
-    console.error("Erro ao buscar profissionais:", error);
-    throw error;
-  }
-
-  return data.map((item) => {
-    return {
-      id: item.id,
-      name: item.nome_artistico || "Sem nome",
-      artisticName: item.nome_artistico,
-      type: item.tipo_profissional || "",
-      rating: 4.5, // Valor padrão até implementarmos avaliações
-      instruments: item.instrumentos || [],
-      services: item.instrumentos || [], // Temporariamente usando instrumentos como serviços
-      genres: item.subgeneros || [],
-      hourlyRate: item.cache_hora || 0,
-      eventRate: item.cache_evento || 0,
-      image: "https://images.unsplash.com/photo-1618160702438-9b02ab6515c9", // Imagem padrão
-      city: item.cidade || "",
-      state: item.estado || "",
-    };
-  });
-};
-
 const ExploreProfessionals = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const initialType = searchParams.get('tipo') || "";
+  
   const [showFilters, setShowFilters] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
-  const [activeType, setActiveType] = useState("");
+  const [activeType, setActiveType] = useState(initialType);
   const [filters, setFilters] = useState({
     city: "",
     state: "",
@@ -80,15 +43,61 @@ const ExploreProfessionals = () => {
   });
 
   const { data: professionals = [], isLoading, isError } = useQuery({
-    queryKey: ['professionals'],
-    queryFn: fetchProfessionals
+    queryKey: ['professionals', activeType],
+    queryFn: async () => {
+      let query = supabase
+        .from("profissionais")
+        .select(`
+          id,
+          user_id,
+          nome_artistico,
+          tipo_profissional,
+          instrumentos,
+          subgeneros,
+          bio,
+          cidade,
+          estado,
+          cache_hora,
+          cache_evento
+        `);
+      
+      // Apply type filter if active
+      if (activeType) {
+        query = query.eq('tipo_profissional', activeType);
+      }
+      
+      const { data, error } = await query;
+
+      if (error) {
+        console.error("Erro ao buscar profissionais:", error);
+        throw error;
+      }
+
+      return data.map((item) => {
+        return {
+          id: item.id,
+          name: item.nome_artistico || "Sem nome",
+          artisticName: item.nome_artistico,
+          type: item.tipo_profissional || "",
+          rating: 4.5, // Default rating until we implement a rating system
+          instruments: item.instrumentos || [],
+          services: item.instrumentos || [], // Using instruments as services for now
+          genres: item.subgeneros || [],
+          hourlyRate: item.cache_hora || 0,
+          eventRate: item.cache_evento || 0,
+          image: "", // Will be handled by the ProfileCard component
+          city: item.cidade || "",
+          state: item.estado || "",
+        };
+      });
+    }
   });
 
   const toggleFilters = () => {
     setShowFilters(!showFilters);
   };
 
-  // Filter professionals based on search term, active type, and filters
+  // Filter professionals based on search term and filters
   const filteredProfessionals = professionals.filter(professional => {
     let matches = true;
     
@@ -100,13 +109,10 @@ const ExploreProfessionals = () => {
         (professional.artisticName?.toLowerCase().includes(searchLower) || false) ||
         professional.type.toLowerCase().includes(searchLower) ||
         (professional.services?.some(service => service.toLowerCase().includes(searchLower)) || false) ||
-        (professional.genres?.some(genre => genre.toLowerCase().includes(searchLower)) || false)
+        (professional.genres?.some(genre => genre.toLowerCase().includes(searchLower)) || false) ||
+        (professional.city?.toLowerCase().includes(searchLower) || false) ||
+        (professional.state?.toLowerCase().includes(searchLower) || false)
       );
-    }
-    
-    // Active type filter
-    if (activeType && matches) {
-      matches = matches && professional.type.toLowerCase() === activeType.toLowerCase();
     }
     
     // City filter
@@ -129,12 +135,6 @@ const ExploreProfessionals = () => {
     if (filters.maxPrice && matches) {
       const maxPrice = parseInt(filters.maxPrice);
       matches = matches && !isNaN(maxPrice) && ((professional.hourlyRate && professional.hourlyRate <= maxPrice) || (professional.eventRate && professional.eventRate <= maxPrice));
-    }
-    
-    // Rating filter
-    if (filters.rating && filters.rating !== "any" && matches) {
-      const rating = parseInt(filters.rating);
-      matches = matches && !isNaN(rating) && (professional.rating !== undefined && professional.rating >= rating);
     }
     
     return matches;
@@ -190,20 +190,6 @@ const ExploreProfessionals = () => {
             onClick={() => setActiveType(activeType === "Filmmaker" ? "" : "Filmmaker")}
           >
             <Film size={18} className="mr-2" /> Filmmakers
-          </Button>
-          <Button
-            variant={activeType === "Técnico de Som" ? "default" : "outline"}
-            className={activeType === "Técnico de Som" ? "bg-toca-accent hover:bg-toca-accent-hover" : "bg-black text-white hover:bg-gray-800"}
-            onClick={() => setActiveType(activeType === "Técnico de Som" ? "" : "Técnico de Som")}
-          >
-            Técnicos de Som
-          </Button>
-          <Button
-            variant={activeType === "Técnico de Luz" ? "default" : "outline"}
-            className={activeType === "Técnico de Luz" ? "bg-toca-accent hover:bg-toca-accent-hover" : "bg-black text-white hover:bg-gray-800"}
-            onClick={() => setActiveType(activeType === "Técnico de Luz" ? "" : "Técnico de Luz")}
-          >
-            Técnicos de Luz
           </Button>
         </div>
 
@@ -318,14 +304,17 @@ const ExploreProfessionals = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         {isLoading ? (
           <div className="col-span-full text-center py-16">
-            <p className="text-toca-text-secondary">Carregando profissionais...</p>
+            <div className="flex justify-center">
+              <div className="w-8 h-8 border-2 border-toca-accent border-t-transparent rounded-full animate-spin"></div>
+            </div>
+            <p className="text-toca-text-secondary mt-4">Carregando profissionais...</p>
           </div>
         ) : isError ? (
           <div className="col-span-full text-center py-16">
             <p className="text-toca-text-secondary">Erro ao carregar profissionais. Tente novamente mais tarde.</p>
           </div>
-        ) : professionals.length > 0 ? (
-          professionals.map((professional) => (
+        ) : filteredProfessionals.length > 0 ? (
+          filteredProfessionals.map((professional) => (
             <ProfileCard
               key={professional.id}
               professional={{

@@ -1,9 +1,10 @@
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Star, Music, Disc, Camera, Film, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/integrations/supabase/client";
 
 interface ProfileCardProps {
   professional: {
@@ -45,6 +46,38 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
   className = "",
   onClick,
 }) => {
+  const [imageUrl, setImageUrl] = useState<string | undefined>(professional.image);
+
+  // Try to fetch the professional's image from storage if not provided
+  useEffect(() => {
+    const fetchImage = async () => {
+      if (!professional.id) return;
+      
+      try {
+        const { data } = supabase.storage
+          .from("profile_images")
+          .getPublicUrl(`professionals/${professional.id}`);
+        
+        if (data?.publicUrl) {
+          // Check if the image exists
+          const checkExistence = await fetch(data.publicUrl, { method: 'HEAD' })
+            .then(res => res.ok)
+            .catch(() => false);
+            
+          if (checkExistence) {
+            setImageUrl(data.publicUrl);
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching professional image:", error);
+      }
+    };
+    
+    if (!professional.image) {
+      fetchImage();
+    }
+  }, [professional.id, professional.image]);
+
   return (
     <Card 
       className={cn(
@@ -55,7 +88,7 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
     >
       <div className="aspect-[4/3] relative overflow-hidden">
         <img
-          src={professional.image || "https://images.unsplash.com/photo-1618160702438-9b02ab6515c9"}
+          src={imageUrl || "https://images.unsplash.com/photo-1618160702438-9b02ab6515c9"}
           alt={professional.artisticName || professional.name}
           className="w-full h-full object-cover"
         />
@@ -81,7 +114,9 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
         </div>
         
         <div className="text-sm text-toca-text-secondary mb-3">
-          {professional.city}, {professional.state}
+          {professional.city && professional.state 
+            ? `${professional.city}, ${professional.state}`
+            : "Local não informado"}
         </div>
         
         <div className="flex flex-wrap gap-1 mb-3">
@@ -98,22 +133,26 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
         </div>
         
         <div className="flex justify-between items-center pt-2 border-t border-toca-border">
-          {professional.hourlyRate && (
+          {professional.hourlyRate ? (
             <div className="text-right">
               <span className="text-xs text-toca-text-secondary">Por hora</span>
               <div className="text-toca-accent font-semibold">
                 R${professional.hourlyRate}
               </div>
             </div>
+          ) : (
+            <div></div>
           )}
           
-          {professional.eventRate && (
+          {professional.eventRate ? (
             <div className="text-right">
               <span className="text-xs text-toca-text-secondary">Por evento</span>
               <div className="text-toca-accent font-semibold">
                 R${professional.eventRate}
               </div>
             </div>
+          ) : (
+            <div></div>
           )}
         </div>
       </CardContent>

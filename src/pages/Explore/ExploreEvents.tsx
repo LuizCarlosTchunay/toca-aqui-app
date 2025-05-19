@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from "react";
+
+import React, { useState } from "react";
 import EventCard from "@/components/EventCard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,6 +10,7 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
+import { useAuth } from "@/hooks/useAuth";
 
 interface Event {
   id: string;
@@ -20,38 +22,12 @@ interface Event {
   city: string;
   state: string;
   required_services: string[];
-  is_public: boolean;
   image?: string;
 }
 
-const fetchEvents = async () => {
-  const { data, error } = await supabase
-    .from("eventos")
-    .select("*")
-    .eq("status", "aberto");
-
-  if (error) {
-    console.error("Erro ao buscar eventos:", error);
-    throw error;
-  }
-
-  return data.map((event) => ({
-    id: event.id,
-    name: event.titulo || "",
-    description: event.descricao || "",
-    date: event.data || "",
-    time: "", // O novo schema não tem campo para hora específica
-    location: event.local || "",
-    city: event.local?.split(",").pop()?.trim() || "", // Extraindo cidade do campo local temporariamente
-    state: "", // O novo schema não tem campo específico para estado
-    required_services: event.servicos_requeridos || [],
-    is_public: true, // Assumindo que todos os eventos listados são públicos
-    image: "https://images.unsplash.com/photo-1527576539890-dfa815648363", // Imagem padrão
-  }));
-};
-
 const ExploreEvents = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [showFilters, setShowFilters] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [filters, setFilters] = useState({
@@ -63,53 +39,102 @@ const ExploreEvents = () => {
 
   const { data: events = [], isLoading, isError } = useQuery({
     queryKey: ['events'],
-    queryFn: fetchEvents
+    queryFn: async () => {
+      try {
+        const { data, error } = await supabase
+          .from("eventos")
+          .select("*")
+          .eq("status", "aberto");
+
+        if (error) {
+          console.error("Erro ao buscar eventos:", error);
+          throw error;
+        }
+
+        return data.map((event) => ({
+          id: event.id,
+          name: event.titulo || "",
+          description: event.descricao || "",
+          date: event.data || "",
+          time: "", // Time is not stored separately in our schema
+          location: event.local || "",
+          city: event.local?.split(",")[0]?.trim() || "", 
+          state: event.local?.split(",")[1]?.trim() || "", 
+          required_services: event.servicos_requeridos || [],
+          image: "" // Will be handled by the EventCard component
+        }));
+      } catch (error) {
+        console.error("Error fetching events:", error);
+        throw error;
+      }
+    },
   });
 
   const toggleFilters = () => {
     setShowFilters(!showFilters);
   };
 
+  const { data: professionalProfile } = useQuery({
+    queryKey: ['userProfessionalProfile', user?.id],
+    queryFn: async () => {
+      if (!user) return null;
+      
+      const { data, error } = await supabase
+        .from('profissionais')
+        .select('id')
+        .eq('user_id', user.id)
+        .single();
+        
+      if (error) {
+        if (error.code !== 'PGRST116') { // PGRST116 is the "no rows returned" error
+          console.error('Error fetching professional profile:', error);
+        }
+        return null;
+      }
+      
+      return data;
+    },
+    enabled: !!user
+  });
+
   const handleApply = async (eventId: string) => {
-    const { data: session } = await supabase.auth.getSession();
-    
-    if (!session?.session) {
+    if (!user) {
       toast.error("Você precisa estar logado para se candidatar a um evento");
       navigate("/login");
       return;
     }
 
-    const userId = session.session.user.id;
-    
-    // Verificar se o usuário é um profissional
-    const { data: professional } = await supabase
-      .from("profissionais")
-      .select("*")
-      .eq("user_id", userId)
-      .single();
-
-    if (!professional) {
+    if (!professionalProfile) {
       toast.error("Você precisa ter um perfil profissional para se candidatar");
       navigate("/editar-perfil");
       return;
     }
 
     try {
+      // Check if user already applied to this event
+      const { data: existingApplication, error: checkError } = await supabase
+        .from("candidaturas")
+        .select("id")
+        .eq("evento_id", eventId)
+        .eq("profissional_id", professionalProfile.id)
+        .single();
+        
+      if (!checkError && existingApplication) {
+        toast.error("Você já se candidatou para este evento");
+        return;
+      }
+
       const { error } = await supabase
         .from("candidaturas")
         .insert({
           evento_id: eventId,
-          profissional_id: professional.id,
-          mensagem: "Estou interessado em trabalhar neste evento.",
+          profissional_id: professionalProfile.id,
+          mensagem: "Estou interessado em trabalhar neste evento."
         });
 
       if (error) {
-        if (error.code === "23505") {  // Código para violação de uniqueness
-          toast.error("Você já se candidatou para este evento");
-        } else {
-          console.error("Erro ao candidatar-se:", error);
-          toast.error("Erro ao enviar candidatura");
-        }
+        console.error("Erro ao candidatar-se:", error);
+        toast.error("Erro ao enviar candidatura");
       } else {
         toast.success("Candidatura enviada com sucesso!");
       }
@@ -129,7 +154,9 @@ const ExploreEvents = () => {
       matches = matches && (
         event.name.toLowerCase().includes(searchLower) ||
         event.description.toLowerCase().includes(searchLower) ||
-        event.city.toLowerCase().includes(searchLower)
+        event.city.toLowerCase().includes(searchLower) ||
+        event.state.toLowerCase().includes(searchLower) ||
+        event.location.toLowerCase().includes(searchLower)
       );
     }
     
@@ -277,7 +304,10 @@ const ExploreEvents = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {isLoading ? (
           <div className="col-span-full text-center py-16">
-            <p className="text-toca-text-secondary">Carregando eventos...</p>
+            <div className="flex justify-center">
+              <div className="w-8 h-8 border-2 border-toca-accent border-t-transparent rounded-full animate-spin"></div>
+            </div>
+            <p className="text-toca-text-secondary mt-4">Carregando eventos...</p>
           </div>
         ) : isError ? (
           <div className="col-span-full text-center py-16">
@@ -297,7 +327,7 @@ const ExploreEvents = () => {
                 city: event.city,
                 state: event.state,
                 services: event.required_services,
-                image: event.image
+                image: event.image || "https://images.unsplash.com/photo-1527576539890-dfa815648363" // Default image
               }}
               onClick={() => navigate(`/eventos/${event.id}`)}
               onApply={() => handleApply(event.id)}

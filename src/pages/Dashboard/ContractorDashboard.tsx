@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import ProfileCard from "@/components/ProfileCard";
 import EventCard from "@/components/EventCard";
@@ -7,54 +7,85 @@ import { Button } from "@/components/ui/button";
 import { Plus, ChevronRight, Music, Film, Camera, Disc } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-
-// Mock data
-const recommendedProfessionals = [
-  {
-    id: "1",
-    name: "João Silva",
-    artisticName: "DJ Pulse",
-    type: "DJ",
-    rating: 4.8,
-    services: ["DJ", "Produção Musical", "Mixagem"],
-    genres: ["Eletrônica", "House", "EDM"],
-    hourlyRate: 150,
-    eventRate: 1200,
-    image: "https://images.unsplash.com/photo-1618160702438-9b02ab6515c9",
-    city: "São Paulo",
-    state: "SP",
-  },
-  {
-    id: "2",
-    name: "Maria Santos",
-    artisticName: "Maria Santos",
-    type: "Fotógrafo",
-    rating: 4.9,
-    services: ["Fotografia", "Edição", "Cobertura de Eventos"],
-    hourlyRate: 200,
-    eventRate: 1500,
-    city: "Rio de Janeiro",
-    state: "RJ",
-  },
-];
-
-const upcomingEvents = [
-  {
-    id: "1",
-    name: "Festival de Verão",
-    description: "Um grande festival de música e artes para celebrar o verão.",
-    date: "2025-01-15",
-    time: "14:00",
-    location: "Parque Municipal",
-    city: "São Paulo",
-    state: "SP",
-    services: ["Músico", "DJ", "Técnico de Som"],
-    image: "https://images.unsplash.com/photo-1527576539890-dfa815648363",
-  },
-];
+import { supabase } from "@/integrations/supabase/client";
+import { useQuery } from "@tanstack/react-query";
+import { useAuth } from "@/hooks/useAuth";
 
 const ContractorDashboard = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
+
+  // Fetch upcoming events
+  const { data: upcomingEvents = [], isLoading: eventsLoading } = useQuery({
+    queryKey: ['userEvents', user?.id],
+    queryFn: async () => {
+      if (!user) return [];
+      
+      const { data, error } = await supabase
+        .from("eventos")
+        .select("*")
+        .eq("contratante_id", user.id)
+        .order("data", { ascending: true })
+        .limit(3);
+      
+      if (error) {
+        console.error("Error fetching events:", error);
+        return [];
+      }
+      
+      return data.map(event => ({
+        id: event.id,
+        name: event.titulo || "",
+        description: event.descricao || "",
+        date: event.data || "",
+        time: "", // Time is not stored separately in our schema
+        location: event.local || "",
+        city: event.local?.split(",")[0] || "",
+        state: event.local?.split(",")[1] || "",
+        services: event.servicos_requeridos || []
+      }));
+    },
+    enabled: !!user
+  });
+
+  // Fetch recommended professionals
+  const { data: recommendedProfessionals = [], isLoading: professionalsLoading } = useQuery({
+    queryKey: ['recommendedProfessionals'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("profissionais")
+        .select(`
+          id,
+          nome_artistico,
+          tipo_profissional,
+          instrumentos,
+          cidade,
+          estado,
+          cache_hora,
+          cache_evento
+        `)
+        .order("id", { ascending: false })
+        .limit(2);
+      
+      if (error) {
+        console.error("Error fetching professionals:", error);
+        return [];
+      }
+      
+      return data.map(pro => ({
+        id: pro.id,
+        name: pro.nome_artistico || "Profissional",
+        artisticName: pro.nome_artistico || "Profissional",
+        type: pro.tipo_profissional || "Músico",
+        rating: 4.7, // Default rating until we implement a rating system
+        services: pro.instrumentos || [],
+        hourlyRate: pro.cache_hora,
+        eventRate: pro.cache_evento,
+        city: pro.cidade || "",
+        state: pro.estado || "",
+      }));
+    }
+  });
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -77,7 +108,11 @@ const ContractorDashboard = () => {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              {upcomingEvents.length > 0 ? (
+              {eventsLoading ? (
+                <div className="flex justify-center py-8">
+                  <div className="w-6 h-6 border-2 border-toca-accent border-t-transparent rounded-full animate-spin"></div>
+                </div>
+              ) : upcomingEvents.length > 0 ? (
                 <div className="space-y-4">
                   {upcomingEvents.map((event) => (
                     <div key={event.id} className="p-4 border border-toca-border rounded-md">
@@ -127,15 +162,31 @@ const ContractorDashboard = () => {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {recommendedProfessionals.map((professional) => (
-                  <ProfileCard
-                    key={professional.id}
-                    professional={professional}
-                    onClick={() => navigate(`/profissional/${professional.id}`)}
-                  />
-                ))}
-              </div>
+              {professionalsLoading ? (
+                <div className="flex justify-center py-8">
+                  <div className="w-6 h-6 border-2 border-toca-accent border-t-transparent rounded-full animate-spin"></div>
+                </div>
+              ) : recommendedProfessionals.length > 0 ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {recommendedProfessionals.map((professional) => (
+                    <ProfileCard
+                      key={professional.id}
+                      professional={professional}
+                      onClick={() => navigate(`/profissional/${professional.id}`)}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-10">
+                  <p className="text-toca-text-secondary mb-4">Nenhum profissional encontrado.</p>
+                  <Button 
+                    className="bg-toca-accent hover:bg-toca-accent-hover"
+                    onClick={() => navigate("/explorar")}
+                  >
+                    Explorar profissionais
+                  </Button>
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>
@@ -188,7 +239,11 @@ const ContractorDashboard = () => {
               <CardTitle>Eventos Públicos</CardTitle>
             </CardHeader>
             <CardContent>
-              {upcomingEvents.length > 0 ? (
+              {eventsLoading ? (
+                <div className="flex justify-center py-8">
+                  <div className="w-6 h-6 border-2 border-toca-accent border-t-transparent rounded-full animate-spin"></div>
+                </div>
+              ) : upcomingEvents.length > 0 ? (
                 <>
                   <EventCard 
                     event={upcomingEvents[0]} 

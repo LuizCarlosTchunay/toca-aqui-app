@@ -30,6 +30,9 @@ const EventCard: React.FC<EventCardProps> = ({
   onClick,
   onApply,
 }) => {
+  // Default image if not provided
+  const imageUrl = event.image || "https://images.unsplash.com/photo-1527576539890-dfa815648363";
+
   return (
     <Card 
       className={`bg-toca-card border-toca-border hover:border-toca-accent transition-all overflow-hidden ${className}`}
@@ -39,7 +42,7 @@ const EventCard: React.FC<EventCardProps> = ({
         onClick={onClick}
       >
         <img
-          src={event.image || "https://images.unsplash.com/photo-1527576539890-dfa815648363"}
+          src={imageUrl}
           alt={event.name}
           className="w-full h-full object-cover"
         />
@@ -60,44 +63,50 @@ const EventCard: React.FC<EventCardProps> = ({
             <Calendar size={14} />
             <span>{formatDate(event.date)}</span>
           </div>
-          <div className="w-1 h-1 rounded-full bg-toca-border"></div>
-          <div className="flex items-center gap-1">
-            <Clock size={14} />
-            <span>{event.time}</span>
-          </div>
+          {event.time && (
+            <>
+              <div className="w-1 h-1 rounded-full bg-toca-border"></div>
+              <div className="flex items-center gap-1">
+                <Clock size={14} />
+                <span>{event.time}</span>
+              </div>
+            </>
+          )}
         </div>
         
         <div className="flex items-center gap-1 text-sm text-toca-text-secondary mb-3">
           <MapPin size={14} />
-          <span>{event.city}, {event.state}</span>
+          <span>{event.city && event.state ? `${event.city}, ${event.state}` : event.location}</span>
         </div>
         
         <p className="text-sm text-toca-text-secondary mb-3 line-clamp-2">
-          {event.description}
+          {event.description || "Sem descrição disponível"}
         </p>
         
         <div className="flex flex-wrap gap-1 mb-4">
-          {event.services.slice(0, 3).map((service, i) => (
+          {event.services && event.services.slice(0, 3).map((service, i) => (
             <Badge key={i} variant="outline" className="border-toca-border text-white text-xs">
               {service}
             </Badge>
           ))}
-          {event.services.length > 3 && (
+          {event.services && event.services.length > 3 && (
             <Badge variant="outline" className="border-toca-border text-white text-xs">
               +{event.services.length - 3}
             </Badge>
           )}
         </div>
         
-        <Button 
-          className="w-full bg-toca-accent hover:bg-toca-accent-hover"
-          onClick={(e) => {
-            e.stopPropagation();
-            onApply?.();
-          }}
-        >
-          Me candidatar
-        </Button>
+        {onApply && (
+          <Button 
+            className="w-full bg-toca-accent hover:bg-toca-accent-hover"
+            onClick={(e) => {
+              e.stopPropagation();
+              onApply();
+            }}
+          >
+            Me candidatar
+          </Button>
+        )}
       </CardContent>
     </Card>
   );
