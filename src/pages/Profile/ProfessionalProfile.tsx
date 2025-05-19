@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import Navbar from "@/components/Navbar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -116,7 +115,14 @@ const ProfessionalProfile = () => {
           return [];
         }
         
-        return data;
+        // Make sure to include descricao property in returned data
+        return (data || []).map(item => ({
+          id: item.id,
+          profissional_id: item.profissional_id,
+          tipo: item.tipo,
+          url: item.url,
+          descricao: item.descricao
+        })) as PortfolioItem[];
       } catch (error) {
         console.error("Error fetching portfolio:", error);
         return [];
@@ -282,10 +288,10 @@ const ProfessionalProfile = () => {
                 <CardTitle>Portfólio</CardTitle>
               </CardHeader>
               <CardContent>
-                {portfolioItems.length > 0 ? (
+                {portfolioItems && portfolioItems.length > 0 ? (
                   <Carousel className="w-full">
                     <CarouselContent>
-                      {portfolioItems.map((item, index) => (
+                      {portfolioItems && portfolioItems.map((item, index) => (
                         <CarouselItem key={item.id} className="md:basis-1/2 lg:basis-1/3">
                           <div className="p-1">
                             <Card className="bg-toca-background border-toca-border overflow-hidden">

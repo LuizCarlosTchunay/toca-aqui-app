@@ -14,6 +14,7 @@ interface ImageUploaderProps {
   size?: "sm" | "md" | "lg";
   bucketName?: string;
   objectPath?: string;
+  children?: React.ReactNode;
 }
 
 const ImageUploader: React.FC<ImageUploaderProps> = ({

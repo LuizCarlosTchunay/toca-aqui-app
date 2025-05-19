@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import Navbar from "@/components/Navbar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -109,11 +108,12 @@ const Settings = () => {
         }
         
         if (settingsData && settingsData.settings) {
+          const settings = settingsData.settings as Record<string, boolean>;
           setNotificationSettings({
-            emailNotifications: settingsData.settings.emailNotifications ?? true,
-            bookingNotifications: settingsData.settings.bookingNotifications ?? true,
-            paymentNotifications: settingsData.settings.paymentNotifications ?? true,
-            marketingNotifications: settingsData.settings.marketingNotifications ?? false,
+            emailNotifications: settings.emailNotifications ?? true,
+            bookingNotifications: settings.bookingNotifications ?? true,
+            paymentNotifications: settings.paymentNotifications ?? true,
+            marketingNotifications: settings.marketingNotifications ?? false,
           });
         }
       } catch (error: any) {
