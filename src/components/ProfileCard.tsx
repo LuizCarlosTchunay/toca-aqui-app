@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Star, Music, Disc, Camera, Film, Users, UserRound, MicVocal, Drum, Guitar, Headphones, MapPin } from "lucide-react";
+import { Star, Music, Disc, Camera, Film, Users, UserRound, MicVocal, Drum, Guitar, Headphones, MapPin, Instagram, Youtube } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -23,6 +23,8 @@ interface ProfileCardProps {
     city: string;
     state: string;
     bio?: string;
+    instagram?: string;
+    youtube?: string;
   };
   className?: string;
   onClick?: () => void;
@@ -195,6 +197,34 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
               {getTypeIcon(professional.type)}
               {professional.type}
             </Badge>
+            
+            {/* Social Media links */}
+            {(professional.instagram || professional.youtube) && (
+              <div className="flex gap-3 mt-2">
+                {professional.instagram && (
+                  <a 
+                    href={professional.instagram}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-pink-400 hover:text-pink-300 transition-colors"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <Instagram size={16} />
+                  </a>
+                )}
+                {professional.youtube && (
+                  <a 
+                    href={professional.youtube}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-red-500 hover:text-red-400 transition-colors"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <Youtube size={16} />
+                  </a>
+                )}
+              </div>
+            )}
           </div>
 
           <CardContent className="px-0 pt-0 pb-4">
