@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { 
   Card, 
@@ -61,7 +60,14 @@ const PortfolioManager: React.FC<PortfolioManagerProps> = ({ professionalId }) =
           
         if (error) throw error;
         
-        setPortfolioItems(data || []);
+        // Map the data to ensure it matches our interface
+        setPortfolioItems((data || []).map(item => ({
+          id: item.id,
+          profissional_id: item.profissional_id || professionalId,
+          tipo: item.tipo || '',
+          url: item.url || '',
+          descricao: item.descricao || ''
+        })));
       } catch (error: any) {
         console.error("Error fetching portfolio:", error);
         toast({
@@ -96,14 +102,14 @@ const PortfolioManager: React.FC<PortfolioManagerProps> = ({ professionalId }) =
           profissional_id: professionalId,
           tipo: newItem.tipo,
           url: newItem.url,
-          descricao: newItem.descricao
+          descricao: newItem.descricao || null
         })
         .select('*')
         .single();
         
       if (error) throw error;
       
-      setPortfolioItems([...portfolioItems, data]);
+      setPortfolioItems([...portfolioItems, data as PortfolioItem]);
       setNewItem({
         profissional_id: professionalId,
         tipo: '',

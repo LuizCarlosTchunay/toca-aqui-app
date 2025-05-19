@@ -15,9 +15,10 @@ import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious
 // Portfolio item type
 interface PortfolioItem {
   id: string;
+  profissional_id: string | null;
   tipo: string | null;
   url: string | null;
-  descricao: string | null;
+  descricao?: string | null;  // Make descricao optional since it might not exist in the database yet
 }
 
 const ProfessionalProfile = () => {
@@ -115,13 +116,13 @@ const ProfessionalProfile = () => {
           return [];
         }
         
-        // Make sure to include descricao property in returned data
+        // Map the portfolio items and make sure descricao exists (even if null)
         return (data || []).map(item => ({
           id: item.id,
           profissional_id: item.profissional_id,
           tipo: item.tipo,
           url: item.url,
-          descricao: item.descricao
+          descricao: item.descricao || null  // Ensure descricao is included, even if null
         })) as PortfolioItem[];
       } catch (error) {
         console.error("Error fetching portfolio:", error);

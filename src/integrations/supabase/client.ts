@@ -16,7 +16,7 @@ export const supabase = createClient<DatabaseType>(SUPABASE_URL, SUPABASE_PUBLIS
   }
 });
 
-// Define our database schema
+// Update the Database type for portfolio to include descricao
 export type Database = {
   public: {
     Tables: {
@@ -180,21 +180,21 @@ export type Database = {
       portfolio: {
         Row: {
           id: string;
-          profissional_id: string;
+          profissional_id: string | null;
           tipo: string | null;
           url: string | null;
           descricao: string | null;
         };
         Insert: {
           id?: string;
-          profissional_id: string;
+          profissional_id?: string | null;
           tipo?: string | null;
           url?: string | null;
           descricao?: string | null;
         };
         Update: {
           id?: string;
-          profissional_id?: string;
+          profissional_id?: string | null;
           tipo?: string | null;
           url?: string | null;
           descricao?: string | null;
@@ -333,3 +333,11 @@ export type Database = {
     Enums: {};
   };
 };
+
+// Create a Supabase client
+export const supabase = createClient<Database>(
+  'https://oyaddcvpllgppxeyyqqu.supabase.co',
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im95YWRkY3ZwbGxncHB4ZXl5cXF1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc0MTM4ODksImV4cCI6MjA2Mjk4OTg4OX0.QSMxd81BNWfW-Wd-x9zHt-Cs6B8o0bWn0qb6E-k5GXM'
+);
+
+export default supabase;

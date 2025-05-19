@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "@/components/Navbar";
@@ -176,7 +175,7 @@ const MyProfile = () => {
                     </Avatar>
                     
                     <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/50 rounded-full">
-                      <ImageUploader onImageUpload={handleImageUpload}>
+                      <ImageUploader onImageChange={handleImageUpload}>
                         <Button variant="ghost" size="icon" className="rounded-full bg-black/50 hover:bg-black/70">
                           <Edit className="h-5 w-5 text-white" />
                         </Button>

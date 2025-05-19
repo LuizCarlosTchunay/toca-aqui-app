@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Camera, User } from "lucide-react";
@@ -15,26 +14,27 @@ interface ImageUploaderProps {
   bucketName?: string;
   objectPath?: string;
   children?: React.ReactNode;
+  // Add onImageUpload as an alias for onImageChange for backward compatibility
+  onImageUpload?: (imageFile: File, imageUrl?: string) => void;
 }
 
 const ImageUploader: React.FC<ImageUploaderProps> = ({
   currentImage,
   onImageChange,
+  onImageUpload,
   className,
   size = "md",
   bucketName = "profile_images",
   objectPath,
+  children
 }) => {
   const { user } = useAuth();
   const [previewUrl, setPreviewUrl] = useState<string | undefined>(currentImage);
   const [isLoading, setIsLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const sizeClasses = {
-    sm: "w-24 h-24",
-    md: "w-32 h-32",
-    lg: "w-40 h-40",
-  };
+  // Use the onImageUpload prop as a fallback if onImageChange is not provided
+  const handleImageChange = onImageChange || onImageUpload;
 
   // Fetch image from Supabase storage if objectPath is provided
   useEffect(() => {
@@ -70,6 +70,12 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
     }
   }, [bucketName, objectPath, currentImage]);
 
+  const sizeClasses = {
+    sm: "w-24 h-24",
+    md: "w-32 h-32",
+    lg: "w-40 h-40",
+  };
+
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
@@ -104,10 +110,10 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
           
         if (publicUrlData) {
           // Pass both the file and the public URL to the parent component
-          onImageChange(file, publicUrlData.publicUrl);
+          handleImageChange(file, publicUrlData.publicUrl);
           toast.success("Imagem atualizada com sucesso!");
         } else {
-          onImageChange(file);
+          handleImageChange(file);
         }
       } else if (user) {
         // Generate a path based on the user ID if objectPath wasn't provided
@@ -132,14 +138,14 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
           
         if (publicUrlData) {
           // Pass both the file and the public URL to the parent component
-          onImageChange(file, publicUrlData.publicUrl);
+          handleImageChange(file, publicUrlData.publicUrl);
           toast.success("Imagem atualizada com sucesso!");
         } else {
-          onImageChange(file);
+          handleImageChange(file);
         }
       } else {
         // If no user, just pass the file
-        onImageChange(file);
+        handleImageChange(file);
       }
     } catch (error: any) {
       console.error("Error handling image:", error);
@@ -183,6 +189,8 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
         </div>
       </div>
       
+      {children}
+      
       <input
         type="file"
         ref={fileInputRef}
@@ -192,17 +200,19 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
         disabled={isLoading}
       />
       
-      <Button 
-        type="button" 
-        variant="outline" 
-        size="sm"
-        className="text-toca-accent border-toca-accent hover:bg-toca-accent hover:text-white"
-        onClick={handleButtonClick}
-        disabled={isLoading}
-      >
-        <Camera size={16} className="mr-2" />
-        {isLoading ? "Carregando..." : previewUrl ? "Alterar foto" : "Adicionar foto"}
-      </Button>
+      {!children && (
+        <Button 
+          type="button" 
+          variant="outline" 
+          size="sm"
+          className="text-toca-accent border-toca-accent hover:bg-toca-accent hover:text-white"
+          onClick={handleButtonClick}
+          disabled={isLoading}
+        >
+          <Camera size={16} className="mr-2" />
+          {isLoading ? "Carregando..." : previewUrl ? "Alterar foto" : "Adicionar foto"}
+        </Button>
+      )}
     </div>
   );
 };
