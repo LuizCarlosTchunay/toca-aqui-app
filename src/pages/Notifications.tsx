@@ -6,23 +6,11 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Bell, Calendar, CheckCheck, UserCheck, DollarSign } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "@/components/ui/use-toast";
 import { Spinner } from "@/components/Spinner";
 import { AlertCircle } from "lucide-react";
-
-// Type definition for a notification
-type Notification = {
-  id: string;
-  type: "booking" | "application" | "payment" | "review" | "system";
-  title: string;
-  message: string;
-  time: string;
-  read: boolean;
-  actionUrl: string;
-  created_at: string;
-};
+import { Notification, getMockNotifications, formatTimeAgo } from "@/utils/notifications";
 
 const Notifications = () => {
   const navigate = useNavigate();
@@ -31,7 +19,7 @@ const Notifications = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
-  // Fetch notifications from Supabase
+  // Fetch notifications
   useEffect(() => {
     const fetchNotifications = async () => {
       if (!user) {
@@ -42,7 +30,11 @@ const Notifications = () => {
       try {
         setIsLoading(true);
         
-        // Try to get real notifications from the database
+        // For now, we'll just use the mock data since we don't have a notifications table
+        setNotifications(getMockNotifications(user.id));
+        
+        // In the future, once you create a notifications table, you can uncomment this:
+        /*
         const { data, error } = await supabase
           .from('notifications')
           .select('*')
@@ -52,61 +44,13 @@ const Notifications = () => {
         if (error) throw error;
         
         if (data && data.length > 0) {
-          setNotifications(data.map(notification => ({
-            id: notification.id,
-            type: notification.type || "system",
-            title: notification.title,
-            message: notification.message,
-            time: formatTimeAgo(notification.created_at),
-            read: notification.read,
-            actionUrl: notification.action_url || "#",
-            created_at: notification.created_at
-          })));
+          setNotifications(data as Notification[]);
         } else {
           // If no notifications found, use mock data
-          setNotifications([
-            {
-              id: "1",
-              type: "booking",
-              title: "Nova reserva confirmada",
-              message: "Sua reserva para o evento 'Casamento Silva' foi confirmada.",
-              time: "há 2 horas",
-              read: false,
-              actionUrl: "/reservas/1",
-              created_at: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString()
-            },
-            {
-              id: "2",
-              type: "application",
-              title: "Candidatura aprovada",
-              message: "Sua candidatura para o evento 'Festival de Verão' foi aprovada.",
-              time: "há 1 dia",
-              read: true,
-              actionUrl: "/eventos/1",
-              created_at: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
-            },
-            {
-              id: "3",
-              type: "payment",
-              title: "Pagamento recebido",
-              message: "Você recebeu um pagamento de R$1.500,00 referente ao evento 'Aniversário Empresarial'.",
-              time: "há 2 dias",
-              read: true,
-              actionUrl: "/pagamentos/3",
-              created_at: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString()
-            },
-            {
-              id: "4",
-              type: "review",
-              title: "Nova avaliação recebida",
-              message: "Maria Oliveira deixou uma avaliação de 5 estrelas para você.",
-              time: "há 3 dias",
-              read: true,
-              actionUrl: "/perfil-profissional",
-              created_at: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString()
-            }
-          ]);
+          setNotifications(getMockNotifications(user.id));
         }
+        */
+        
       } catch (err) {
         console.error("Erro ao buscar notificações:", err);
         setError("Não foi possível carregar suas notificações.");
@@ -117,25 +61,6 @@ const Notifications = () => {
     
     fetchNotifications();
   }, [user]);
-  
-  // Format relative time (e.g. "2 hours ago")
-  const formatTimeAgo = (dateString: string) => {
-    const date = new Date(dateString);
-    const now = new Date();
-    
-    const diffMs = now.getTime() - date.getTime();
-    const diffMins = Math.round(diffMs / 60000);
-    const diffHours = Math.round(diffMs / 3600000);
-    const diffDays = Math.round(diffMs / 86400000);
-    
-    if (diffMins < 60) {
-      return `há ${diffMins} ${diffMins === 1 ? 'minuto' : 'minutos'}`;
-    } else if (diffHours < 24) {
-      return `há ${diffHours} ${diffHours === 1 ? 'hora' : 'horas'}`;
-    } else {
-      return `há ${diffDays} ${diffDays === 1 ? 'dia' : 'dias'}`;
-    }
-  };
   
   // Mark a notification as read
   const markAsRead = async (notificationId: string) => {
@@ -150,14 +75,14 @@ const Notifications = () => {
       
       setNotifications(updatedNotifications);
       
-      // Update in database if real data
-      const { error } = await supabase
+      // When you have a notifications table, you can uncomment this:
+      /*
+      await supabase
         .from('notifications')
         .update({ read: true })
         .eq('id', notificationId)
         .eq('user_id', user.id);
-        
-      if (error) throw error;
+      */
       
     } catch (err) {
       console.error("Erro ao marcar notificação como lida:", err);
@@ -181,14 +106,14 @@ const Notifications = () => {
       
       setNotifications(updatedNotifications);
       
-      // Update in database if real data
-      const { error } = await supabase
+      // When you have a notifications table, you can uncomment this:
+      /*
+      await supabase
         .from('notifications')
         .update({ read: true })
         .eq('user_id', user.id)
         .is('read', false);
-        
-      if (error) throw error;
+      */
       
       toast({
         title: "Sucesso",
