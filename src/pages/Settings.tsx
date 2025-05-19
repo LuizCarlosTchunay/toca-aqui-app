@@ -33,11 +33,19 @@ const passwordSchema = z.object({
   path: ["confirmPassword"],
 });
 
+// Type definition for notification settings
+type NotificationSettings = {
+  emailNotifications: boolean;
+  bookingNotifications: boolean;
+  paymentNotifications: boolean;
+  marketingNotifications: boolean;
+};
+
 const Settings = () => {
   const navigate = useNavigate();
   const { user, loading } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
-  const [notificationSettings, setNotificationSettings] = useState({
+  const [notificationSettings, setNotificationSettings] = useState<NotificationSettings>({
     emailNotifications: true,
     bookingNotifications: true,
     paymentNotifications: true,
@@ -73,39 +81,39 @@ const Settings = () => {
         setIsLoading(true);
         
         // Fetch user details
-        const { data, error } = await supabase
+        const { data: userData, error: userError } = await supabase
           .from('users')
           .select('nome, email, telefone')
           .eq('id', user.id)
           .maybeSingle();
         
-        if (error) throw error;
+        if (userError) throw userError;
         
-        if (data) {
+        if (userData) {
           profileForm.reset({
-            name: data.nome || "",
-            email: data.email || "",
-            phone: data.telefone || "",
+            name: userData.nome || "",
+            email: userData.email || "",
+            phone: userData.telefone || "",
           });
         }
 
         // Fetch notification settings if they exist
-        const { data: notifData, error: notifError } = await supabase
+        const { data: settingsData, error: settingsError } = await supabase
           .from('user_settings')
           .select('settings')
           .eq('user_id', user.id)
           .maybeSingle();
         
-        if (notifError && notifError.code !== 'PGRST116') {
-          throw notifError;
+        if (settingsError && settingsError.code !== 'PGRST116') {
+          throw settingsError;
         }
         
-        if (notifData && notifData.settings) {
+        if (settingsData && settingsData.settings) {
           setNotificationSettings({
-            emailNotifications: notifData.settings.emailNotifications ?? true,
-            bookingNotifications: notifData.settings.bookingNotifications ?? true,
-            paymentNotifications: notifData.settings.paymentNotifications ?? true,
-            marketingNotifications: notifData.settings.marketingNotifications ?? false,
+            emailNotifications: settingsData.settings.emailNotifications ?? true,
+            bookingNotifications: settingsData.settings.bookingNotifications ?? true,
+            paymentNotifications: settingsData.settings.paymentNotifications ?? true,
+            marketingNotifications: settingsData.settings.marketingNotifications ?? false,
           });
         }
       } catch (error: any) {
