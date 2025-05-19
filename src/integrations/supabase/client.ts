@@ -184,18 +184,21 @@ export type Database = {
           profissional_id: string;
           tipo: string | null;
           url: string | null;
+          descricao: string | null;
         };
         Insert: {
           id?: string;
           profissional_id: string;
           tipo?: string | null;
           url?: string | null;
+          descricao?: string | null;
         };
         Update: {
           id?: string;
           profissional_id?: string;
           tipo?: string | null;
           url?: string | null;
+          descricao?: string | null;
         };
       };
       avaliacoes: {

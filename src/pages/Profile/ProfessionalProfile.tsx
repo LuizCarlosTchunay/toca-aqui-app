@@ -1,15 +1,25 @@
-import React, { useState } from "react";
+
+import React, { useState, useEffect } from "react";
 import Navbar from "@/components/Navbar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useNavigate, useParams } from "react-router-dom";
-import { ChevronLeft, Calendar, MapPin, Star, Clock } from "lucide-react";
+import { ChevronLeft, Calendar, MapPin, Star, Clock, Link as LinkIcon, ExternalLink } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { formatCurrency } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
+
+// Portfolio item type
+interface PortfolioItem {
+  id: string;
+  tipo: string | null;
+  url: string | null;
+  descricao: string | null;
+}
 
 const ProfessionalProfile = () => {
   const navigate = useNavigate();
@@ -90,7 +100,7 @@ const ProfessionalProfile = () => {
   });
 
   // Fetch portfolio items
-  const { data: portfolio = [] } = useQuery({
+  const { data: portfolioItems = [] } = useQuery<PortfolioItem[]>({
     queryKey: ['portfolio', id],
     queryFn: async () => {
       if (!id) return [];
@@ -106,7 +116,7 @@ const ProfessionalProfile = () => {
           return [];
         }
         
-        return data.map(item => item.tipo || "Item de portfólio");
+        return data;
       } catch (error) {
         console.error("Error fetching portfolio:", error);
         return [];
@@ -272,14 +282,56 @@ const ProfessionalProfile = () => {
                 <CardTitle>Portfólio</CardTitle>
               </CardHeader>
               <CardContent>
-                {portfolio.length > 0 ? (
-                  <ul className="space-y-2">
-                    {portfolio.map((item, index) => (
-                      <li key={index} className="p-3 bg-toca-background rounded-md text-white">
-                        {item}
-                      </li>
-                    ))}
-                  </ul>
+                {portfolioItems.length > 0 ? (
+                  <Carousel className="w-full">
+                    <CarouselContent>
+                      {portfolioItems.map((item, index) => (
+                        <CarouselItem key={item.id} className="md:basis-1/2 lg:basis-1/3">
+                          <div className="p-1">
+                            <Card className="bg-toca-background border-toca-border overflow-hidden">
+                              <CardContent className="p-4">
+                                <div className="flex flex-col gap-2">
+                                  <div className="flex items-center justify-between">
+                                    <h3 className="text-white font-medium truncate">
+                                      {item.tipo || "Item de portfólio"}
+                                    </h3>
+                                    <a 
+                                      href={item.url || "#"} 
+                                      target="_blank" 
+                                      rel="noopener noreferrer"
+                                      className="text-toca-accent hover:text-toca-accent-hover"
+                                    >
+                                      <ExternalLink size={16} />
+                                    </a>
+                                  </div>
+                                  
+                                  {item.url && (
+                                    <a 
+                                      href={item.url} 
+                                      target="_blank" 
+                                      rel="noopener noreferrer" 
+                                      className="text-sm text-toca-accent hover:underline flex items-center"
+                                    >
+                                      <LinkIcon size={12} className="mr-1" />
+                                      {item.url.length > 30 ? `${item.url.substring(0, 30)}...` : item.url}
+                                    </a>
+                                  )}
+                                  
+                                  {item.descricao && (
+                                    <p className="text-sm text-toca-text-secondary mt-2">
+                                      {item.descricao}
+                                    </p>
+                                  )}
+                                </div>
+                              </CardContent>
+                            </Card>
+                          </div>
+                        </CarouselItem>
+                      ))}
+                    </CarouselContent>
+                    <CarouselPrevious className="-left-4 lg:-left-5 bg-toca-accent text-white hover:bg-toca-accent-hover border-none" />
+                    <CarouselNext className="-right-4 lg:-right-5 bg-toca-accent text-white hover:bg-toca-accent-hover border-none" />
+                  </Carousel>
                 ) : (
                   <p className="text-center text-toca-text-secondary py-6">
                     Este profissional ainda não adicionou itens ao portfólio.

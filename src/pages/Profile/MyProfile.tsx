@@ -1,420 +1,350 @@
 
 import React, { useState, useEffect } from "react";
-import Navbar from "@/components/Navbar";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { ChevronLeft, MapPin, Mail, Phone, Calendar, UserPlus, Camera } from "lucide-react";
+import Navbar from "@/components/Navbar";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { toast } from "sonner";
-import ImageUploader from "@/components/ImageUploader";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { MapPin, Edit, Star, Calendar, Clock } from "lucide-react";
+import { formatCurrency } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
+import { useQuery } from "@tanstack/react-query";
+import ImageUploader from "@/components/ImageUploader";
+import { useToast } from "@/hooks/use-toast";
+import PortfolioManager from "@/components/PortfolioManager";
 
 const MyProfile = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { toast } = useToast();
+  const [activeTab, setActiveTab] = useState("profile");
   const [isProfessional, setIsProfessional] = useState(false);
-  const [showPhotoDialog, setShowPhotoDialog] = useState(false);
-  const [profileImage, setProfileImage] = useState<File | null>(null);
-  const [profileImageUrl, setProfileImageUrl] = useState<string | undefined>(undefined);
-  const [isLoading, setIsLoading] = useState(false);
-  const [professionalId, setProfessionalId] = useState<string | null>(null);
-  const [userData, setUserData] = useState({
-    name: "Usuário",
-    email: "",
-    phone: "",
-    createdAt: "",
-    city: "",
-    state: "",
-    bio: "",
-    image: ""
-  });
+  const [profileImage, setProfileImage] = useState<string | null>(null);
 
-  useEffect(() => {
-    const fetchUserData = async () => {
-      if (!user) {
-        navigate("/");
-        return;
+  // Fetch professional data if the user is a professional
+  const { data: professional, isLoading } = useQuery({
+    queryKey: ['my-professional-profile', user?.id],
+    queryFn: async () => {
+      if (!user?.id) return null;
+
+      // First check if user has a professional profile
+      const { data: userData, error: userError } = await supabase
+        .from('users')
+        .select('tem_perfil_profissional')
+        .eq('id', user.id)
+        .maybeSingle();
+
+      if (userError) throw userError;
+      
+      if (!userData?.tem_perfil_profissional) {
+        setIsProfessional(false);
+        return null;
       }
-      
-      setIsLoading(true);
-      
+
+      setIsProfessional(true);
+
+      // Fetch professional profile
+      const { data: profData, error: profError } = await supabase
+        .from('profissionais')
+        .select('*')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (profError) throw profError;
+      if (!profData) return null;
+
+      // Try to get the profile image
       try {
-        // Get user data
-        const { data: userData, error: userError } = await supabase
-          .from('users')
-          .select('*')
-          .eq('id', user.id)
-          .maybeSingle();
-        
-        if (userError) throw userError;
-        
-        if (userData) {
-          setIsProfessional(userData.tem_perfil_profissional || false);
+        const { data: imageData } = await supabase.storage
+          .from('profile_images')
+          .getPublicUrl(`professionals/${profData.id}`);
           
-          // Format created date
-          const createdDate = new Date(userData.data_cadastro || Date.now());
-          const month = createdDate.toLocaleString('pt-BR', { month: 'long' });
-          const year = createdDate.getFullYear();
-          
-          setUserData(prev => ({
-            ...prev,
-            name: userData.nome || "Usuário",
-            email: userData.email || "",
-            phone: userData.telefone || "",
-            createdAt: `${month} ${year}`,
-          }));
-          
-          // Check if user has a professional profile
-          if (userData.tem_perfil_profissional) {
-            const { data: profData, error: profError } = await supabase
-              .from('profissionais')
-              .select('*')
-              .eq('user_id', user.id)
-              .maybeSingle();
+        if (imageData?.publicUrl) {
+          // Check if image exists by making a head request
+          const imgExists = await fetch(imageData.publicUrl, { method: 'HEAD' })
+            .then(res => res.ok)
+            .catch(() => false);
             
-            if (profError) throw profError;
-            
-            if (profData) {
-              setProfessionalId(profData.id);
-              
-              setUserData(prev => ({
-                ...prev,
-                city: profData.cidade || "",
-                state: profData.estado || "",
-                bio: profData.bio || "Sem biografia",
-              }));
-              
-              // Try to get profile image
-              try {
-                const { data } = supabase.storage
-                  .from('profile_images')
-                  .getPublicUrl(`${profData.id}`);
-                
-                if (data?.publicUrl) {
-                  setUserData(prev => ({
-                    ...prev,
-                    image: data.publicUrl
-                  }));
-                  setProfileImageUrl(data.publicUrl);
-                }
-              } catch (imgError) {
-                console.error("Error fetching profile image:", imgError);
-              }
-            }
+          if (imgExists) {
+            setProfileImage(imageData.publicUrl);
           }
         }
-      } catch (error: any) {
-        console.error("Error fetching user data:", error);
-        toast.error("Erro ao carregar dados do usuário: " + (error.message || "Tente novamente"));
-      } finally {
-        setIsLoading(false);
+      } catch (error) {
+        console.error("Error fetching profile image:", error);
       }
-    };
-    
-    fetchUserData();
-  }, [user, navigate]);
-  
-  const handleBecomeProfessional = async () => {
-    if (!user) {
-      toast.error("Você precisa estar logado para se tornar um profissional");
+
+      return profData;
+    },
+    enabled: !!user?.id,
+  });
+
+  // Redirect to create professional profile if user is not a professional
+  useEffect(() => {
+    if (user && !isLoading && !professional && !isProfessional) {
+      navigate('/editar-perfil');
+    }
+  }, [user, professional, isLoading, navigate, isProfessional]);
+
+  // Handle image upload
+  const handleImageUpload = async (file: File) => {
+    if (!professional?.id) {
+      toast({
+        title: "Erro",
+        description: "Você precisa ter um perfil profissional para fazer upload de imagem.",
+        variant: "destructive"
+      });
       return;
     }
-    
-    setIsLoading(true);
-    
+
     try {
-      // Update user status
-      const { error } = await supabase
-        .from('users')
-        .update({ tem_perfil_profissional: true })
-        .eq('id', user.id);
-      
-      if (error) throw error;
-      
-      setIsProfessional(true);
-      toast.success("Parabéns! Agora você é um profissional. Complete seu perfil para aparecer na aba Explorar.");
-      navigate("/editar-perfil");
-    } catch (error: any) {
-      console.error("Error updating professional status:", error);
-      toast.error("Erro ao atualizar status de profissional: " + (error.message || "Tente novamente"));
-    } finally {
-      setIsLoading(false);
-    }
-  };
-  
-  const handleImageChange = (imageFile: File, imageUrl?: string) => {
-    setProfileImage(imageFile);
-    if (imageUrl) {
-      setProfileImageUrl(imageUrl);
-    }
-  };
-  
-  const handleSavePhoto = async () => {
-    if (!profileImage || !professionalId) {
-      toast.error("Selecione uma imagem para continuar ou crie seu perfil profissional primeiro");
-      return;
-    }
-    
-    setIsLoading(true);
-    
-    try {
-      // Upload image with professional id as filename
-      const fileExt = profileImage.name.split('.').pop();
-      const fileName = `${professionalId}.${fileExt}`;
-      
-      const { error: uploadError } = await supabase.storage
+      const { error } = await supabase.storage
         .from('profile_images')
-        .upload(fileName, profileImage, {
+        .upload(`professionals/${professional.id}`, file, {
           upsert: true,
-          contentType: profileImage.type
+          contentType: file.type
         });
-      
-      if (uploadError) throw uploadError;
-      
-      toast.success("Foto de perfil atualizada com sucesso!");
-      setShowPhotoDialog(false);
-      
-      // Update local state with new image
-      const { data } = supabase.storage
+
+      if (error) throw error;
+
+      // Update the profile image URL
+      const { data } = await supabase.storage
         .from('profile_images')
-        .getPublicUrl(fileName);
-      
+        .getPublicUrl(`professionals/${professional.id}`);
+
       if (data?.publicUrl) {
-        setUserData(prev => ({
-          ...prev,
-          image: data.publicUrl
-        }));
+        setProfileImage(data.publicUrl);
+        
+        toast({
+          title: "Sucesso",
+          description: "Imagem de perfil atualizada com sucesso!",
+        });
       }
     } catch (error: any) {
-      console.error("Error uploading profile image:", error);
-      toast.error("Erro ao atualizar foto de perfil: " + (error.message || "Tente novamente"));
-    } finally {
-      setIsLoading(false);
+      console.error("Error uploading image:", error);
+      toast({
+        title: "Erro ao fazer upload",
+        description: error.message || "Ocorreu um erro ao fazer upload da imagem.",
+        variant: "destructive"
+      });
     }
   };
+
+  if (isLoading || !user) {
+    return (
+      <div className="min-h-screen flex flex-col bg-toca-background">
+        <Navbar isAuthenticated={!!user} />
+        <div className="container mx-auto px-4 py-8">
+          <div className="flex justify-center py-16">
+            <div className="w-8 h-8 border-2 border-toca-accent border-t-transparent rounded-full animate-spin"></div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Generate initials for avatar fallback
+  const initials = (professional?.nome_artistico || "")
+    .split(" ")
+    .map((n) => n[0])
+    .join("")
+    .toUpperCase()
+    .substring(0, 2);
 
   return (
     <div className="min-h-screen flex flex-col bg-toca-background">
       <Navbar isAuthenticated={!!user} />
       
       <div className="container mx-auto px-4 py-8">
-        <Button 
-          variant="outline" 
-          className="mb-6 bg-black text-toca-accent hover:bg-gray-800"
-          onClick={() => navigate(-1)}
-        >
-          <ChevronLeft size={18} className="mr-1" /> Voltar
-        </Button>
-        
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div>
-            <Card className="bg-toca-card border-toca-border mb-6">
+        <div className="flex flex-col lg:flex-row gap-6">
+          {/* Profile sidebar */}
+          <div className="w-full lg:w-1/3">
+            <Card className="bg-toca-card border-toca-border shadow-md mb-6">
               <CardContent className="pt-6">
                 <div className="flex flex-col items-center">
                   <div className="relative group mb-4">
-                    <Avatar className="w-32 h-32 border-2 border-toca-accent">
-                      <AvatarImage src={profileImageUrl || userData.image} />
-                      <AvatarFallback className="text-4xl bg-toca-accent/20 text-toca-accent">
-                        {userData.name.charAt(0)}
+                    <Avatar className="w-32 h-32 border-4 border-toca-accent">
+                      <AvatarImage 
+                        src={profileImage || ""}
+                        alt={professional?.nome_artistico || "Profile"}
+                      />
+                      <AvatarFallback className="text-4xl font-bold text-toca-accent bg-toca-accent/20">
+                        {initials || "MP"}
                       </AvatarFallback>
                     </Avatar>
-                    <Button 
-                      variant="outline" 
-                      size="icon"
-                      className="absolute bottom-0 right-0 rounded-full border-toca-accent bg-toca-card text-toca-accent hover:bg-toca-accent hover:text-white"
-                      onClick={() => setShowPhotoDialog(true)}
-                    >
-                      <Camera size={16} />
-                    </Button>
+                    
+                    <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/50 rounded-full">
+                      <ImageUploader onImageUpload={handleImageUpload}>
+                        <Button variant="ghost" size="icon" className="rounded-full bg-black/50 hover:bg-black/70">
+                          <Edit className="h-5 w-5 text-white" />
+                        </Button>
+                      </ImageUploader>
+                    </div>
                   </div>
                   
-                  <h1 className="text-2xl font-bold text-white mb-1">{userData.name}</h1>
-                  {(userData.city || userData.state) && (
+                  <h1 className="text-2xl font-bold text-white mb-1">
+                    {professional?.nome_artistico || "Meu Perfil"}
+                  </h1>
+                  
+                  {professional?.tipo_profissional && (
+                    <Badge className="mb-3 bg-toca-accent text-white border-none">
+                      {professional.tipo_profissional}
+                    </Badge>
+                  )}
+                  
+                  <div className="flex items-center mb-2">
+                    <Star className="text-yellow-500 mr-1" size={16} />
+                    <span className="text-white font-medium mr-1">4.5</span>
+                    <span className="text-toca-text-secondary">(0 avaliações)</span>
+                  </div>
+                  
+                  {(professional?.cidade || professional?.estado) && (
                     <div className="flex items-center text-toca-text-secondary mb-4">
                       <MapPin size={16} className="mr-1" />
-                      <span>{userData.city}, {userData.state}</span>
+                      <span>
+                        {[professional.cidade, professional.estado]
+                          .filter(Boolean)
+                          .join(", ")}
+                      </span>
                     </div>
                   )}
                   
+                  <div className="grid grid-cols-2 gap-3 w-full mb-6">
+                    <div className="text-center p-3 bg-toca-background rounded-md">
+                      <div className="text-xs text-toca-text-secondary mb-1">
+                        <Clock size={14} className="inline mr-1" /> Por hora
+                      </div>
+                      <div className="font-semibold text-toca-accent">
+                        {formatCurrency(professional?.cache_hora || 0)}
+                      </div>
+                    </div>
+                    <div className="text-center p-3 bg-toca-background rounded-md">
+                      <div className="text-xs text-toca-text-secondary mb-1">
+                        <Calendar size={14} className="inline mr-1" /> Por evento
+                      </div>
+                      <div className="font-semibold text-toca-accent">
+                        {formatCurrency(professional?.cache_evento || 0)}
+                      </div>
+                    </div>
+                  </div>
+                  
                   <Button 
-                    className="w-full bg-toca-accent hover:bg-toca-accent-hover mb-3"
-                    onClick={() => navigate("/editar-perfil")}
-                    disabled={isLoading}
+                    variant="outline" 
+                    className="w-full border-toca-accent text-toca-accent hover:bg-toca-accent hover:text-white"
+                    onClick={() => navigate('/editar-perfil')}
                   >
+                    <Edit className="mr-2 h-4 w-4" />
                     Editar Perfil
                   </Button>
-                  
-                  <Button 
-                    variant="outline"
-                    className="w-full bg-black text-white hover:bg-gray-800 mb-3"
-                    onClick={() => navigate("/configuracoes")}
-                    disabled={isLoading}
-                  >
-                    Configurações
-                  </Button>
-
-                  {!isProfessional && (
-                    <Dialog>
-                      <DialogTrigger asChild>
-                        <Button 
-                          variant="outline" 
-                          className="w-full bg-toca-background border-toca-accent text-toca-accent hover:bg-toca-accent hover:text-white"
-                          disabled={isLoading}
-                        >
-                          <UserPlus size={16} className="mr-2" /> Tornar-se Profissional
-                        </Button>
-                      </DialogTrigger>
-                      <DialogContent className="bg-toca-card border-toca-border text-white">
-                        <DialogHeader>
-                          <DialogTitle className="text-toca-accent">Tornar-se um Profissional</DialogTitle>
-                          <DialogDescription className="text-toca-text-secondary">
-                            Como profissional, você poderá oferecer seus serviços, candidatar-se a eventos e aparecer na aba Explorar.
-                          </DialogDescription>
-                        </DialogHeader>
-                        <div className="py-4 text-toca-text-primary">
-                          <p className="mb-2">Ao se tornar um profissional, você precisará:</p>
-                          <ul className="list-disc pl-5 space-y-1 text-toca-text-secondary">
-                            <li>Completar seu perfil profissional</li>
-                            <li>Adicionar seus serviços e preços</li>
-                            <li>Enviar documentos para verificação</li>
-                          </ul>
-                        </div>
-                        <DialogFooter>
-                          <Button 
-                            onClick={handleBecomeProfessional} 
-                            className="bg-toca-accent hover:bg-toca-accent-hover"
-                            disabled={isLoading}
-                          >
-                            {isLoading ? "Processando..." : "Continuar"}
-                          </Button>
-                        </DialogFooter>
-                      </DialogContent>
-                    </Dialog>
-                  )}
-                  
-                  {isProfessional && (
-                    <Button 
-                      variant="outline" 
-                      className="w-full bg-toca-background border-toca-accent text-toca-accent hover:bg-toca-accent hover:text-white"
-                      onClick={() => navigate("/perfil-profissional")}
-                      disabled={isLoading}
-                    >
-                      Ver Perfil Profissional
-                    </Button>
-                  )}
                 </div>
               </CardContent>
             </Card>
             
-            <Card className="bg-toca-card border-toca-border">
-              <CardHeader>
-                <CardTitle className="text-lg">Informações de Contato</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <div>
-                  <div className="text-xs text-toca-text-secondary mb-1">Email</div>
-                  <div className="flex items-center text-white">
-                    <Mail size={16} className="mr-2 text-toca-text-secondary" />
-                    {userData.email || "Não informado"}
+            {professional?.instrumentos?.length > 0 && (
+              <Card className="bg-toca-card border-toca-border shadow-md mb-6">
+                <CardHeader>
+                  <CardTitle className="text-lg">Especialidades</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex flex-wrap gap-2">
+                    {professional.instrumentos.map((instrumento, index) => (
+                      <Badge key={index} className="bg-toca-background border-toca-border text-white">
+                        {instrumento}
+                      </Badge>
+                    ))}
                   </div>
-                </div>
-                
-                <div>
-                  <div className="text-xs text-toca-text-secondary mb-1">Telefone</div>
-                  <div className="flex items-center text-white">
-                    <Phone size={16} className="mr-2 text-toca-text-secondary" />
-                    {userData.phone || "Não informado"}
+                </CardContent>
+              </Card>
+            )}
+            
+            {professional?.subgeneros?.length > 0 && (
+              <Card className="bg-toca-card border-toca-border shadow-md">
+                <CardHeader>
+                  <CardTitle className="text-lg">Gêneros</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex flex-wrap gap-2">
+                    {professional.subgeneros.map((genero, index) => (
+                      <Badge key={index} className="bg-toca-background border-toca-border text-white">
+                        {genero}
+                      </Badge>
+                    ))}
                   </div>
-                </div>
-                
-                <div>
-                  <div className="text-xs text-toca-text-secondary mb-1">Membro desde</div>
-                  <div className="flex items-center text-white">
-                    <Calendar size={16} className="mr-2 text-toca-text-secondary" />
-                    {userData.createdAt || "Recentemente"}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+            )}
           </div>
           
-          <div className="lg:col-span-2">
-            <Card className="bg-toca-card border-toca-border mb-6">
-              <CardHeader>
-                <CardTitle>Sobre</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-toca-text-primary">{userData.bio || "Adicione uma biografia ao editar seu perfil profissional."}</p>
-              </CardContent>
-            </Card>
-            
-            <Card className="bg-toca-card border-toca-border">
-              <CardHeader>
-                <CardTitle>Atividade Recente</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {isLoading ? (
-                  <div className="p-3 text-center text-toca-text-secondary">Carregando atividades...</div>
+          {/* Main content */}
+          <div className="w-full lg:w-2/3">
+            <Tabs defaultValue={activeTab} onValueChange={setActiveTab} className="w-full">
+              <TabsList className="bg-toca-card border-toca-border mb-6 w-full">
+                <TabsTrigger 
+                  value="profile" 
+                  className="flex-1 data-[state=active]:bg-toca-accent data-[state=active]:text-white"
+                >
+                  Perfil
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="portfolio" 
+                  className="flex-1 data-[state=active]:bg-toca-accent data-[state=active]:text-white"
+                >
+                  Portfólio
+                </TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="profile">
+                <Card className="bg-toca-card border-toca-border shadow-md">
+                  <CardHeader>
+                    <CardTitle>Sobre</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {professional?.bio ? (
+                      <p className="text-toca-text-primary whitespace-pre-line">
+                        {professional.bio}
+                      </p>
+                    ) : (
+                      <div className="text-center py-8 text-toca-text-secondary">
+                        <p>Você ainda não adicionou uma descrição ao seu perfil.</p>
+                        <Button 
+                          variant="link" 
+                          className="text-toca-accent mt-2"
+                          onClick={() => navigate('/editar-perfil')}
+                        >
+                          Adicionar Bio
+                        </Button>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </TabsContent>
+              
+              <TabsContent value="portfolio">
+                {professional?.id ? (
+                  <PortfolioManager professionalId={professional.id} />
                 ) : (
-                  <div className="space-y-4">
-                    <div className="p-3 border border-toca-border rounded-md">
-                      <h4 className="font-medium text-white">Evento criado</h4>
-                      <div className="text-xs text-toca-text-secondary mb-1">Festival de Verão</div>
-                      <div className="text-sm text-toca-text-primary">15/01/2025</div>
-                    </div>
-                    
-                    <div className="p-3 border border-toca-border rounded-md">
-                      <h4 className="font-medium text-white">Profissional contratado</h4>
-                      <div className="text-xs text-toca-text-secondary mb-1">DJ Pulse</div>
-                      <div className="text-sm text-toca-text-primary">10/01/2025</div>
-                    </div>
-                  </div>
+                  <Card className="bg-toca-card border-toca-border shadow-md">
+                    <CardContent className="py-12">
+                      <div className="text-center text-toca-text-secondary">
+                        <p>Você precisa completar seu perfil profissional antes de adicionar itens ao portfólio.</p>
+                        <Button 
+                          variant="default" 
+                          className="mt-4 bg-toca-accent hover:bg-toca-accent-hover"
+                          onClick={() => navigate('/editar-perfil')}
+                        >
+                          Completar Perfil
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
                 )}
-              </CardContent>
-            </Card>
+              </TabsContent>
+            </Tabs>
           </div>
         </div>
       </div>
-
-      {/* Photo Change Dialog */}
-      <Dialog open={showPhotoDialog} onOpenChange={setShowPhotoDialog}>
-        <DialogContent className="bg-toca-card border-toca-border text-white">
-          <DialogHeader>
-            <DialogTitle className="text-toca-accent">Alterar Foto de Perfil</DialogTitle>
-            <DialogDescription className="text-toca-text-secondary">
-              Selecione uma nova foto para o seu perfil.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="flex justify-center py-6">
-            <ImageUploader
-              currentImage={profileImageUrl}
-              onImageChange={handleImageChange}
-              size="lg"
-              objectPath={professionalId ? professionalId : undefined}
-            />
-          </div>
-          <DialogFooter>
-            <Button 
-              variant="outline"
-              className="border-toca-border text-white"
-              onClick={() => setShowPhotoDialog(false)}
-              disabled={isLoading}
-            >
-              Cancelar
-            </Button>
-            <Button 
-              className="bg-toca-accent hover:bg-toca-accent-hover"
-              onClick={handleSavePhoto}
-              disabled={isLoading || !profileImage}
-            >
-              {isLoading ? "Salvando..." : "Salvar"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 };
