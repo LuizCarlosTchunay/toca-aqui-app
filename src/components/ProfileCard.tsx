@@ -63,6 +63,7 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
   onClick,
 }) => {
   const [imageUrl, setImageUrl] = useState<string | undefined>(professional.image);
+  const [isHovered, setIsHovered] = useState(false);
 
   // Try to fetch the professional's image from storage if not provided
   useEffect(() => {
@@ -105,46 +106,75 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
   return (
     <Card 
       className={cn(
-        "bg-gradient-to-br from-toca-card to-toca-background border-toca-border hover:border-toca-accent transition-all cursor-pointer shadow-lg hover:shadow-xl overflow-hidden",
+        "relative overflow-hidden transition-all duration-300 cursor-pointer",
+        "bg-gradient-to-br from-toca-card to-toca-background border-toca-border",
+        "hover:border-toca-accent hover:shadow-lg",
+        isHovered && "shadow-[0_0_15px_rgba(234,56,76,0.5)]",
         className
       )}
       onClick={onClick}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
     >
-      <div className="pt-4 px-4 flex flex-col">
-        <div className="flex items-center gap-4 mb-3">
-          <Avatar className="h-16 w-16 border-2 border-toca-accent ring-2 ring-toca-accent/20 shadow-md">
+      <div className={cn(
+        "absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-transparent via-toca-accent to-transparent",
+        "opacity-0 transition-opacity duration-500",
+        isHovered && "opacity-100 animate-pulse"
+      )} />
+      
+      <div className="p-4 flex flex-col">
+        <div className="flex flex-col items-center mb-4">
+          <Avatar className={cn(
+            "h-24 w-24 mb-4 transition-all duration-300",
+            "border-2 border-toca-accent shadow-md",
+            isHovered && "scale-105 border-3 shadow-[0_0_10px_rgba(234,56,76,0.5)]"
+          )}>
             <AvatarImage src={imageUrl || ""} alt={professional.artisticName || professional.name} />
-            <AvatarFallback className="bg-toca-accent/20 text-toca-accent font-bold">
+            <AvatarFallback className="bg-toca-accent/20 text-toca-accent text-xl font-bold">
               {initials}
             </AvatarFallback>
           </Avatar>
-          <div>
-            <h3 className="font-bold text-white text-lg">
-              {professional.artisticName || professional.name}
-            </h3>
-            <div className="flex items-center gap-1 text-white">
-              <Star className="fill-yellow-500 text-yellow-500" size={14} />
-              <span className="text-sm font-medium">{professional.rating}</span>
-            </div>
-            <Badge 
-              variant="outline"
-              className="border-toca-accent text-toca-accent flex items-center gap-1 mt-1"
-            >
-              {getTypeIcon(professional.type)}
-              {professional.type}
-            </Badge>
+          
+          <h3 className={cn(
+            "font-bold text-white text-lg text-center transition-colors duration-300",
+            isHovered && "text-toca-accent"
+          )}>
+            {professional.artisticName || professional.name}
+          </h3>
+          
+          <div className="flex items-center gap-1 text-white">
+            <Star className="fill-yellow-500 text-yellow-500" size={14} />
+            <span className="text-sm font-medium">{professional.rating}</span>
           </div>
+          
+          <Badge 
+            variant="outline"
+            className={cn(
+              "border-toca-accent text-toca-accent flex items-center gap-1 mt-1 transition-all duration-300",
+              isHovered && "bg-toca-accent/10"
+            )}
+          >
+            {getTypeIcon(professional.type)}
+            {professional.type}
+          </Badge>
         </div>
 
-        <CardContent className="px-0 pt-0 pb-4">        
+        <CardContent className="px-0 pt-0 pb-4">
           {professional.bio && (
-            <div className="mb-3 text-sm text-white/90 bg-black/20 p-3 rounded-md border-l-2 border-toca-accent line-clamp-2">
+            <div className={cn(
+              "mb-3 text-sm text-white/90 bg-black/20 p-3 rounded-md border-l-2 border-toca-accent line-clamp-2",
+              "transition-all duration-300",
+              isHovered && "border-l-4 bg-black/30"
+            )}>
               "{professional.bio}"
             </div>
           )}
           
           <div className="flex items-center gap-1 text-sm text-toca-text-secondary mb-3">
-            <span className="inline-block bg-toca-accent/20 p-1 rounded-full">
+            <span className={cn(
+              "inline-block bg-toca-accent/20 p-1 rounded-full transition-all duration-300",
+              isHovered && "bg-toca-accent/40"
+            )}>
               <MapPin size={14} className="text-toca-accent" />
             </span>
             {professional.city && professional.state 
@@ -154,12 +184,25 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
           
           <div className="flex flex-wrap gap-1 mb-3">
             {(professional.instruments || professional.services || []).slice(0, 3).map((item, i) => (
-              <Badge key={i} variant="secondary" className="bg-toca-background/80 text-white text-xs">
+              <Badge 
+                key={i} 
+                variant="secondary" 
+                className={cn(
+                  "bg-toca-background/80 text-white text-xs transition-all duration-300",
+                  isHovered && "bg-toca-background/50 border-toca-accent/30"
+                )}
+              >
                 {item}
               </Badge>
             ))}
             {(professional.instruments || professional.services || []).length > 3 && (
-              <Badge variant="secondary" className="bg-toca-background/80 text-white text-xs">
+              <Badge 
+                variant="secondary" 
+                className={cn(
+                  "bg-toca-background/80 text-white text-xs transition-all duration-300",
+                  isHovered && "bg-toca-accent/20 text-toca-accent"
+                )}
+              >
                 +{(professional.instruments || professional.services || []).length - 3}
               </Badge>
             )}
@@ -170,12 +213,25 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
               <p className="text-xs text-toca-text-secondary mb-1">Gêneros:</p>
               <div className="flex flex-wrap gap-1">
                 {professional.genres.slice(0, 2).map((genre, i) => (
-                  <Badge key={i} variant="outline" className="bg-transparent text-white text-xs border-toca-text-secondary">
+                  <Badge 
+                    key={i} 
+                    variant="outline" 
+                    className={cn(
+                      "bg-transparent text-white text-xs border-toca-text-secondary transition-colors duration-300",
+                      isHovered && "border-toca-accent/50 text-toca-accent/90"
+                    )}
+                  >
                     {genre}
                   </Badge>
                 ))}
                 {professional.genres.length > 2 && (
-                  <Badge variant="outline" className="bg-transparent text-white text-xs border-toca-text-secondary">
+                  <Badge 
+                    variant="outline" 
+                    className={cn(
+                      "bg-transparent text-white text-xs border-toca-text-secondary transition-colors duration-300",
+                      isHovered && "border-toca-accent/50 text-toca-accent/90"
+                    )}
+                  >
                     +{professional.genres.length - 2}
                   </Badge>
                 )}
@@ -183,11 +239,21 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
             </div>
           )}
           
-          <div className="grid grid-cols-2 gap-2 pt-2 border-t border-toca-border">
+          <div className={cn(
+            "grid grid-cols-2 gap-2 pt-2 border-t border-toca-border",
+            "transition-colors duration-300",
+            isHovered && "border-toca-accent/30"
+          )}>
             {professional.hourlyRate ? (
-              <div className="bg-toca-background/50 p-2 rounded-md text-center">
+              <div className={cn(
+                "bg-toca-background/50 p-2 rounded-md text-center transition-all duration-300",
+                isHovered && "bg-toca-background/70 shadow-inner"
+              )}>
                 <span className="text-xs text-toca-text-secondary block">Por hora</span>
-                <div className="text-toca-accent font-semibold">
+                <div className={cn(
+                  "text-toca-accent font-semibold transition-all duration-300",
+                  isHovered && "scale-105"
+                )}>
                   R${professional.hourlyRate}
                 </div>
               </div>
@@ -196,9 +262,15 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
             )}
             
             {professional.eventRate ? (
-              <div className="bg-toca-background/50 p-2 rounded-md text-center">
+              <div className={cn(
+                "bg-toca-background/50 p-2 rounded-md text-center transition-all duration-300",
+                isHovered && "bg-toca-background/70 shadow-inner"
+              )}>
                 <span className="text-xs text-toca-text-secondary block">Por evento</span>
-                <div className="text-toca-accent font-semibold">
+                <div className={cn(
+                  "text-toca-accent font-semibold transition-all duration-300",
+                  isHovered && "scale-105"
+                )}>
                   R${professional.eventRate}
                 </div>
               </div>
@@ -208,6 +280,12 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
           </div>
         </CardContent>
       </div>
+      
+      <div className={cn(
+        "absolute inset-x-0 bottom-0 h-1 bg-gradient-to-r from-transparent via-toca-accent to-transparent",
+        "opacity-0 transition-opacity duration-500",
+        isHovered && "opacity-100 animate-pulse"
+      )} />
     </Card>
   );
 };
