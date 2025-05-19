@@ -20,6 +20,7 @@ const EditProfile = () => {
   const [profileImageUrl, setProfileImageUrl] = useState<string | undefined>(undefined);
   const [isLoading, setIsLoading] = useState(false);
   const [existingProfessionalId, setExistingProfessionalId] = useState<string | null>(null);
+  const [otherType, setOtherType] = useState<string>("");
   const [profileData, setProfileData] = useState({
     artisticName: "",
     profileType: "dj",
@@ -55,10 +56,14 @@ const EditProfile = () => {
         if (data) {
           setExistingProfessionalId(data.id);
           
+          // Check if the profile type is one of the predefined ones or custom
+          const predefinedTypes = ["dj", "musico", "baterista", "guitarrista", "baixista", "voz e violão", "duo", "trio", "banda", "fotografo", "filmmaker", "tecnico_som", "tecnico_luz"];
+          const isPredefined = predefinedTypes.includes(data.tipo_profissional?.toLowerCase() || "");
+          
           // Update state with existing data
           setProfileData({
             artisticName: data.nome_artistico || "",
-            profileType: data.tipo_profissional || "dj",
+            profileType: isPredefined ? data.tipo_profissional || "dj" : "outro",
             bio: data.bio || "",
             city: data.cidade || "",
             state: data.estado || "",
@@ -66,14 +71,24 @@ const EditProfile = () => {
             eventRate: data.cache_evento?.toString() || "",
           });
           
+          if (!isPredefined && data.tipo_profissional) {
+            setOtherType(data.tipo_profissional);
+          }
+          
           // Try to get profile image
           try {
             const { data: imageData } = supabase.storage
               .from('profile_images')
-              .getPublicUrl(`${data.id}`);
+              .getPublicUrl(`professionals/${data.id}`);
             
             if (imageData?.publicUrl) {
-              setProfileImageUrl(imageData.publicUrl);
+              const checkImage = await fetch(imageData.publicUrl, { method: 'HEAD' })
+                .then(res => res.ok)
+                .catch(() => false);
+                
+              if (checkImage) {
+                setProfileImageUrl(imageData.publicUrl);
+              }
             }
           } catch (imgError) {
             console.error("Error fetching profile image:", imgError);
@@ -115,10 +130,11 @@ const EditProfile = () => {
     
     try {
       let professionalId = existingProfessionalId;
+      let finalProfileType = profileData.profileType === "outro" ? otherType : profileData.profileType;
       
       const profileDataToSave = {
         nome_artistico: profileData.artisticName,
-        tipo_profissional: profileData.profileType,
+        tipo_profissional: finalProfileType,
         bio: profileData.bio,
         cidade: profileData.city,
         estado: profileData.state,
@@ -160,7 +176,7 @@ const EditProfile = () => {
       // Upload profile image if provided
       if (profileImage && professionalId) {
         const fileExt = profileImage.name.split('.').pop();
-        const fileName = `${professionalId}.${fileExt}`;
+        const fileName = `professionals/${professionalId}.${fileExt}`;
         
         const { error: uploadError } = await supabase.storage
           .from('profile_images')
@@ -207,7 +223,8 @@ const EditProfile = () => {
                   currentImage={profileImageUrl}
                   onImageChange={handleImageChange}
                   size="lg"
-                  objectPath={existingProfessionalId ? existingProfessionalId : undefined}
+                  bucketName="profile_images"
+                  objectPath={existingProfessionalId ? `professionals/${existingProfessionalId}` : undefined}
                 />
               </div>
               
@@ -234,13 +251,35 @@ const EditProfile = () => {
                   <SelectContent>
                     <SelectItem value="dj">DJ</SelectItem>
                     <SelectItem value="musico">Músico</SelectItem>
+                    <SelectItem value="baterista">Baterista</SelectItem>
+                    <SelectItem value="guitarrista">Guitarrista</SelectItem>
+                    <SelectItem value="baixista">Baixista</SelectItem>
+                    <SelectItem value="voz e violão">Voz e Violão</SelectItem>
+                    <SelectItem value="duo">Duo</SelectItem>
+                    <SelectItem value="trio">Trio</SelectItem>
+                    <SelectItem value="banda">Banda</SelectItem>
                     <SelectItem value="fotografo">Fotógrafo</SelectItem>
                     <SelectItem value="filmmaker">Filmmaker</SelectItem>
                     <SelectItem value="tecnico_som">Técnico de Som</SelectItem>
                     <SelectItem value="tecnico_luz">Técnico de Luz</SelectItem>
+                    <SelectItem value="outro">Outro (especifique)</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
+              
+              {profileData.profileType === "outro" && (
+                <div className="space-y-2">
+                  <Label htmlFor="otherType" className="text-white">Especifique o tipo</Label>
+                  <Input 
+                    id="otherType" 
+                    value={otherType}
+                    onChange={(e) => setOtherType(e.target.value)}
+                    className="bg-toca-background border-toca-border text-white"
+                    placeholder="Insira seu tipo de profissão"
+                    required={profileData.profileType === "outro"}
+                  />
+                </div>
+              )}
               
               <div className="space-y-2">
                 <Label htmlFor="bio" className="text-white">Biografia</Label>

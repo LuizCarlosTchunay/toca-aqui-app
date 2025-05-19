@@ -38,7 +38,7 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
   // Fetch image from Supabase storage if objectPath is provided
   useEffect(() => {
     const fetchImage = async () => {
-      if (!objectPath) return;
+      if (!objectPath || !bucketName) return;
       
       try {
         // Try to get public URL
@@ -81,7 +81,9 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
       setPreviewUrl(fileUrl);
       
       // If we have a user and objectPath, try to upload the file immediately
-      if (user && objectPath) {
+      if (user && objectPath && bucketName) {
+        console.log("Uploading image to", bucketName, objectPath);
+        
         // Upload to the specified path directly
         const { error } = await supabase.storage
           .from(bucketName)

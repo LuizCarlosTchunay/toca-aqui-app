@@ -52,7 +52,18 @@ const ProfessionalProfile = () => {
           .from('profile_images')
           .getPublicUrl(`professionals/${id}`);
           
-        const imageUrl = imageData?.publicUrl;
+        // Check if image exists
+        let imageUrl: string | undefined;
+        if (imageData?.publicUrl) {
+          try {
+            const response = await fetch(imageData.publicUrl, { method: 'HEAD' });
+            if (response.ok) {
+              imageUrl = imageData.publicUrl;
+            }
+          } catch (err) {
+            console.log("Image may not exist");
+          }
+        }
 
         return {
           id: professionalData.id,

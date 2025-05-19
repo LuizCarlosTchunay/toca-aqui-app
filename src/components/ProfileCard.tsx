@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Star, Music, Disc, Camera, Film, Users } from "lucide-react";
+import { Star, Music, Disc, Camera, Film, Users, Mic, Guitar, Headphones, UserRound, MicVocal, Drum } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -29,15 +29,29 @@ interface ProfileCardProps {
 const getTypeIcon = (type: string) => {
   switch (type.toLowerCase()) {
     case "músico":
+    case "musico":
+      return <Music size={16} />;
+    case "voz e violão":
+      return <MicVocal size={16} />;
+    case "baterista":
+      return <Drum size={16} />;
+    case "guitarrista":
+      return <Guitar size={16} />;
+    case "baixista":
       return <Music size={16} />;
     case "dj":
       return <Disc size={16} />;
     case "fotógrafo":
+    case "fotografo":
       return <Camera size={16} />;
     case "filmmaker":
       return <Film size={16} />;
-    default:
+    case "duo":
+    case "trio":
+    case "banda":
       return <Users size={16} />;
+    default:
+      return <UserRound size={16} />;
   }
 };
 
