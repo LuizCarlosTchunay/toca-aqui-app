@@ -82,3 +82,99 @@ export const formatTimeAgo = (dateString: string) => {
     return `há ${diffDays} ${diffDays === 1 ? 'dia' : 'dias'}`;
   }
 };
+
+// Fetch real notifications from the Supabase database
+export const fetchRealNotifications = async (userId: string): Promise<Notification[]> => {
+  try {
+    const { data, error } = await supabase
+      .from('notifications')
+      .select('*')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false });
+      
+    if (error) {
+      console.error("Erro ao buscar notificações:", error);
+      return [];
+    }
+    
+    if (!data || data.length === 0) {
+      // Return mock notifications if no real notifications found
+      return getMockNotifications(userId);
+    }
+    
+    // Transform database notifications to our app's notification format
+    return data.map(notification => ({
+      id: notification.id,
+      type: notification.type as "booking" | "application" | "payment" | "review" | "system",
+      title: notification.title,
+      message: notification.message,
+      time: formatTimeAgo(notification.created_at),
+      read: notification.read,
+      actionUrl: notification.action_url || '#',
+      created_at: notification.created_at,
+      user_id: notification.user_id
+    }));
+  } catch (err) {
+    console.error("Erro ao buscar notificações:", err);
+    return getMockNotifications(userId);
+  }
+};
+
+// Mark notification as read
+export const markNotificationAsRead = async (notificationId: string, userId: string): Promise<boolean> => {
+  try {
+    const { error } = await supabase
+      .from('notifications')
+      .update({ read: true })
+      .eq('id', notificationId)
+      .eq('user_id', userId);
+      
+    return !error;
+  } catch (err) {
+    console.error("Erro ao marcar notificação como lida:", err);
+    return false;
+  }
+};
+
+// Mark all notifications as read
+export const markAllNotificationsAsRead = async (userId: string): Promise<boolean> => {
+  try {
+    const { error } = await supabase
+      .from('notifications')
+      .update({ read: true })
+      .eq('user_id', userId)
+      .eq('read', false);
+      
+    return !error;
+  } catch (err) {
+    console.error("Erro ao marcar todas notificações como lidas:", err);
+    return false;
+  }
+};
+
+// Create a new notification
+export const createNotification = async (
+  userId: string, 
+  type: "booking" | "application" | "payment" | "review" | "system",
+  title: string,
+  message: string,
+  actionUrl?: string
+): Promise<boolean> => {
+  try {
+    const { error } = await supabase
+      .from('notifications')
+      .insert([{ 
+        user_id: userId,
+        type,
+        title,
+        message,
+        action_url: actionUrl || null,
+        read: false
+      }]);
+      
+    return !error;
+  } catch (err) {
+    console.error("Erro ao criar notificação:", err);
+    return false;
+  }
+};

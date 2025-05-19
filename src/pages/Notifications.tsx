@@ -10,7 +10,12 @@ import { useAuth } from "@/hooks/useAuth";
 import { toast } from "@/components/ui/use-toast";
 import { Spinner } from "@/components/Spinner";
 import { AlertCircle } from "lucide-react";
-import { Notification, getMockNotifications, formatTimeAgo } from "@/utils/notifications";
+import { 
+  Notification, 
+  fetchRealNotifications, 
+  markNotificationAsRead, 
+  markAllNotificationsAsRead 
+} from "@/utils/notifications";
 
 const Notifications = () => {
   const navigate = useNavigate();
@@ -21,7 +26,7 @@ const Notifications = () => {
   
   // Fetch notifications
   useEffect(() => {
-    const fetchNotifications = async () => {
+    const getNotifications = async () => {
       if (!user) {
         setIsLoading(false);
         return;
@@ -30,26 +35,9 @@ const Notifications = () => {
       try {
         setIsLoading(true);
         
-        // For now, we'll just use the mock data since we don't have a notifications table
-        setNotifications(getMockNotifications(user.id));
-        
-        // In the future, once you create a notifications table, you can uncomment this:
-        /*
-        const { data, error } = await supabase
-          .from('notifications')
-          .select('*')
-          .eq('user_id', user.id)
-          .order('created_at', { ascending: false });
-          
-        if (error) throw error;
-        
-        if (data && data.length > 0) {
-          setNotifications(data as Notification[]);
-        } else {
-          // If no notifications found, use mock data
-          setNotifications(getMockNotifications(user.id));
-        }
-        */
+        // Fetch real notifications from Supabase
+        const fetchedNotifications = await fetchRealNotifications(user.id);
+        setNotifications(fetchedNotifications);
         
       } catch (err) {
         console.error("Erro ao buscar notificações:", err);
@@ -59,31 +47,32 @@ const Notifications = () => {
       }
     };
     
-    fetchNotifications();
+    getNotifications();
   }, [user]);
   
   // Mark a notification as read
-  const markAsRead = async (notificationId: string) => {
+  const handleMarkAsRead = async (notificationId: string) => {
     try {
       if (!user) return;
       
-      const updatedNotifications = notifications.map(notification => 
-        notification.id === notificationId 
-          ? { ...notification, read: true } 
-          : notification
-      );
+      const success = await markNotificationAsRead(notificationId, user.id);
       
-      setNotifications(updatedNotifications);
-      
-      // When you have a notifications table, you can uncomment this:
-      /*
-      await supabase
-        .from('notifications')
-        .update({ read: true })
-        .eq('id', notificationId)
-        .eq('user_id', user.id);
-      */
-      
+      if (success) {
+        // Update local state
+        const updatedNotifications = notifications.map(notification => 
+          notification.id === notificationId 
+            ? { ...notification, read: true } 
+            : notification
+        );
+        
+        setNotifications(updatedNotifications);
+      } else {
+        toast({
+          title: "Erro",
+          description: "Não foi possível atualizar a notificação.",
+          variant: "destructive"
+        });
+      }
     } catch (err) {
       console.error("Erro ao marcar notificação como lida:", err);
       toast({
@@ -95,31 +84,32 @@ const Notifications = () => {
   };
   
   // Mark all notifications as read
-  const markAllAsRead = async () => {
+  const handleMarkAllAsRead = async () => {
     try {
       if (!user) return;
       
-      const updatedNotifications = notifications.map(notification => ({
-        ...notification,
-        read: true
-      }));
+      const success = await markAllNotificationsAsRead(user.id);
       
-      setNotifications(updatedNotifications);
-      
-      // When you have a notifications table, you can uncomment this:
-      /*
-      await supabase
-        .from('notifications')
-        .update({ read: true })
-        .eq('user_id', user.id)
-        .is('read', false);
-      */
-      
-      toast({
-        title: "Sucesso",
-        description: "Todas as notificações foram marcadas como lidas.",
-      });
-      
+      if (success) {
+        // Update local state
+        const updatedNotifications = notifications.map(notification => ({
+          ...notification,
+          read: true
+        }));
+        
+        setNotifications(updatedNotifications);
+        
+        toast({
+          title: "Sucesso",
+          description: "Todas as notificações foram marcadas como lidas.",
+        });
+      } else {
+        toast({
+          title: "Erro",
+          description: "Não foi possível atualizar as notificações.",
+          variant: "destructive"
+        });
+      }
     } catch (err) {
       console.error("Erro ao marcar todas notificações como lidas:", err);
       toast({
@@ -133,7 +123,7 @@ const Notifications = () => {
   // Handle notification click
   const handleNotificationClick = (notification: Notification) => {
     if (!notification.read) {
-      markAsRead(notification.id);
+      handleMarkAsRead(notification.id);
     }
     navigate(notification.actionUrl);
   };
@@ -168,7 +158,7 @@ const Notifications = () => {
               variant="ghost" 
               size="sm" 
               className="text-toca-text-secondary"
-              onClick={markAllAsRead}
+              onClick={handleMarkAllAsRead}
               disabled={isLoading || notifications.every(n => n.read)}
             >
               Marcar todas como lidas
