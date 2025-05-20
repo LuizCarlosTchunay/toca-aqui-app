@@ -1,18 +1,17 @@
-import React, { useState, useEffect } from "react";
+
+import React from "react";
 import Navbar from "@/components/Navbar";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useNavigate, useParams } from "react-router-dom";
-import { ChevronLeft, Calendar, MapPin, Star, Clock, Link as LinkIcon, ExternalLink, Instagram, Youtube, ShoppingCart } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import { formatCurrency } from "@/lib/utils";
+import { ChevronLeft } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
-import ProfileCard from "@/components/ProfileCard";
 import { toast } from "sonner";
+import ProfileSidebar from "@/components/profile/ProfileSidebar";
+import AboutSection from "@/components/profile/AboutSection";
+import PortfolioSection from "@/components/profile/PortfolioSection";
+import ReviewsSection from "@/components/profile/ReviewsSection";
 
 // Portfolio item type
 interface PortfolioItem {
@@ -181,14 +180,6 @@ const ProfessionalProfile = () => {
     );
   }
 
-  // Generate initials for avatar fallback
-  const initials = (professional?.artisticName || professional?.name || "")
-    .split(" ")
-    .map((n) => n[0])
-    .join("")
-    .toUpperCase()
-    .substring(0, 2);
-
   return (
     <div className="min-h-screen flex flex-col bg-toca-background">
       <Navbar isAuthenticated={!!user} />
@@ -205,185 +196,28 @@ const ProfessionalProfile = () => {
         
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Profile sidebar */}
-          <div>
-            <div className="relative">
-              <ProfileCard 
-                professional={professional} 
-                className="mb-6" 
-                expanded={true} // Always show expanded view in profile page
-              />
-              
-              {/* Reservar button */}
-              <div className="mt-4">
-                <Button 
-                  className="w-full bg-toca-accent hover:bg-toca-accent-hover text-lg py-6"
-                  onClick={handleBookProfessional}
-                >
-                  <ShoppingCart className="mr-2" />
-                  Reservar Profissional
-                </Button>
-              </div>
-            </div>
-            
-            {/* Services card */}
-            <Card className="bg-toca-card border-toca-border mt-6">
-              <CardHeader>
-                <CardTitle className="text-lg">Serviços</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {/* Services list */}
-                <div className="flex flex-wrap gap-2">
-                  {(professional.services && professional.services.length > 0) ? (
-                    professional.services.map((service, index) => (
-                      <Badge key={index} className="bg-toca-background border-toca-border text-white">
-                        {service}
-                      </Badge>
-                    ))
-                  ) : professional.instruments && professional.instruments.length > 0 ? (
-                    professional.instruments.map((instrument, index) => (
-                      <Badge key={index} className="bg-toca-background border-toca-border text-white">
-                        {instrument}
-                      </Badge>
-                    ))
-                  ) : (
-                    <p className="text-toca-text-secondary">Nenhum serviço cadastrado</p>
-                  )}
-                </div>
-                
-                {/* Genres list */}
-                {professional.genres && professional.genres.length > 0 && (
-                  <>
-                    <h4 className="text-white font-medium mt-4 mb-2">Gêneros</h4>
-                    <div className="flex flex-wrap gap-2">
-                      {professional.genres.map((genre, index) => (
-                        <Badge key={index} className="bg-toca-background border-toca-border text-white">
-                          {genre}
-                        </Badge>
-                      ))}
-                    </div>
-                  </>
-                )}
-              </CardContent>
-            </Card>
-          </div>
+          <ProfileSidebar 
+            professional={professional}
+            onBookClick={handleBookProfessional}
+          />
           
           {/* Main content */}
           <div className="lg:col-span-2">
             {/* About card */}
-            <Card className="bg-toca-card border-toca-border mb-6">
-              <CardHeader>
-                <CardTitle>Sobre</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-toca-text-primary">
-                  {professional.bio || `${professional.artisticName} ainda não adicionou uma descrição ao perfil.`}
-                </p>
-              </CardContent>
-            </Card>
+            <AboutSection 
+              bio={professional.bio} 
+              name={professional.artisticName || professional.name} 
+            />
             
             {/* Portfolio card */}
-            <Card className="bg-toca-card border-toca-border mb-6">
-              <CardHeader>
-                <CardTitle>Portfólio</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {portfolioItems && portfolioItems.length > 0 ? (
-                  <Carousel className="w-full">
-                    <CarouselContent>
-                      {portfolioItems && portfolioItems.map((item, index) => (
-                        <CarouselItem key={item.id} className="md:basis-1/2 lg:basis-1/3">
-                          <div className="p-1">
-                            <Card className="bg-toca-background border-toca-border overflow-hidden">
-                              <CardContent className="p-4">
-                                <div className="flex flex-col gap-2">
-                                  <div className="flex items-center justify-between">
-                                    <h3 className="text-white font-medium truncate">
-                                      {item.tipo || "Item de portfólio"}
-                                    </h3>
-                                    <a 
-                                      href={item.url || "#"} 
-                                      target="_blank" 
-                                      rel="noopener noreferrer"
-                                      className="text-toca-accent hover:text-toca-accent-hover"
-                                    >
-                                      <ExternalLink size={16} />
-                                    </a>
-                                  </div>
-                                  
-                                  {item.url && (
-                                    <a 
-                                      href={item.url} 
-                                      target="_blank" 
-                                      rel="noopener noreferrer" 
-                                      className="text-sm text-toca-accent hover:underline flex items-center"
-                                    >
-                                      <LinkIcon size={12} className="mr-1" />
-                                      {item.url.length > 30 ? `${item.url.substring(0, 30)}...` : item.url}
-                                    </a>
-                                  )}
-                                  
-                                  {item.descricao && (
-                                    <p className="text-sm text-toca-text-secondary mt-2">
-                                      {item.descricao}
-                                    </p>
-                                  )}
-                                </div>
-                              </CardContent>
-                            </Card>
-                          </div>
-                        </CarouselItem>
-                      ))}
-                    </CarouselContent>
-                    <CarouselPrevious className="-left-4 lg:-left-5 bg-toca-accent text-white hover:bg-toca-accent-hover border-none" />
-                    <CarouselNext className="-right-4 lg:-right-5 bg-toca-accent text-white hover:bg-toca-accent-hover border-none" />
-                  </Carousel>
-                ) : (
-                  <div className="text-center text-toca-text-secondary py-6">
-                    {professional.instagram || professional.youtube ? (
-                      <div>
-                        <p className="mb-3">Este profissional ainda não adicionou itens ao portfólio, mas você pode conferir suas redes sociais:</p>
-                        <div className="flex justify-center gap-4">
-                          {professional.instagram && (
-                            <a 
-                              href={professional.instagram} 
-                              target="_blank" 
-                              rel="noopener noreferrer"
-                              className="text-pink-400 hover:text-pink-300 transition-colors"
-                            >
-                              <Instagram size={24} />
-                            </a>
-                          )}
-                          {professional.youtube && (
-                            <a 
-                              href={professional.youtube} 
-                              target="_blank" 
-                              rel="noopener noreferrer"
-                              className="text-red-500 hover:text-red-400 transition-colors"
-                            >
-                              <Youtube size={24} />
-                            </a>
-                          )}
-                        </div>
-                      </div>
-                    ) : (
-                      <p>Este profissional ainda não adicionou itens ao portfólio.</p>
-                    )}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+            <PortfolioSection 
+              portfolioItems={portfolioItems || []}
+              instagram={professional.instagram}
+              youtube={professional.youtube}
+            />
             
             {/* Reviews card */}
-            <Card className="bg-toca-card border-toca-border">
-              <CardHeader>
-                <CardTitle>Avaliações</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-center text-toca-text-secondary py-6">
-                  Este profissional ainda não possui avaliações.
-                </p>
-              </CardContent>
-            </Card>
+            <ReviewsSection />
           </div>
         </div>
       </div>

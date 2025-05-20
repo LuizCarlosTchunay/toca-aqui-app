@@ -1,11 +1,14 @@
 
 import React, { useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Star, Music, Disc, Camera, Film, Users, UserRound, MicVocal, Drum, Guitar, Headphones, MapPin, Instagram, Youtube } from "lucide-react";
+import { Star, MapPin } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import ProfileCardBadge from "@/components/profile/ProfileCardBadge";
+import ProfileCardRateDisplay from "@/components/profile/ProfileCardRateDisplay";
+import ProfileCardNeonBorder from "@/components/profile/ProfileCardNeonBorder";
+import ProfileCardSocialLinks from "@/components/profile/ProfileCardSocialLinks";
+import ProfessionalTypeIcon from "@/components/profile/ProfessionalTypeIcon";
 
 interface ProfileCardProps {
   professional: {
@@ -28,43 +31,14 @@ interface ProfileCardProps {
   };
   className?: string;
   onClick?: () => void;
-  expanded?: boolean; // New prop to control expanded state
+  expanded?: boolean;
 }
-
-const getTypeIcon = (type: string) => {
-  switch (type.toLowerCase()) {
-    case "músico":
-    case "musico":
-      return <Music size={16} />;
-    case "voz e violão":
-      return <MicVocal size={16} />;
-    case "baterista":
-      return <Drum size={16} />;
-    case "guitarrista":
-      return <Guitar size={16} />;
-    case "baixista":
-      return <Music size={16} />;
-    case "dj":
-      return <Disc size={16} />;
-    case "fotógrafo":
-    case "fotografo":
-      return <Camera size={16} />;
-    case "filmmaker":
-      return <Film size={16} />;
-    case "duo":
-    case "trio":
-    case "banda":
-      return <Users size={16} />;
-    default:
-      return <UserRound size={16} />;
-  }
-};
 
 const ProfileCard: React.FC<ProfileCardProps> = ({
   professional,
   className = "",
   onClick,
-  expanded = false, // Default to collapsed state
+  expanded = false,
 }) => {
   const [imageUrl, setImageUrl] = useState<string | undefined>(professional.image);
   const [isHovered, setIsHovered] = useState(false);
@@ -120,29 +94,10 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
       onMouseLeave={() => setIsHovered(false)}
     >
       {/* Cyberpunk neon borders */}
-      <div className={cn(
-        "absolute inset-x-0 top-0 h-[2px] bg-gradient-to-r from-transparent via-toca-accent to-transparent",
-        "opacity-0 transition-opacity duration-300",
-        isHovered ? "opacity-100 animate-pulse" : ""
-      )} />
-      
-      <div className={cn(
-        "absolute inset-y-0 left-0 w-[2px] bg-gradient-to-b from-transparent via-toca-accent to-transparent",
-        "opacity-0 transition-opacity duration-300",
-        isHovered ? "opacity-100 animate-pulse" : ""
-      )} />
-      
-      <div className={cn(
-        "absolute inset-y-0 right-0 w-[2px] bg-gradient-to-b from-transparent via-toca-accent to-transparent",
-        "opacity-0 transition-opacity duration-300",
-        isHovered ? "opacity-100 animate-pulse" : ""
-      )} />
-      
-      <div className={cn(
-        "absolute inset-x-0 bottom-0 h-[2px] bg-gradient-to-r from-transparent via-toca-accent to-transparent",
-        "opacity-0 transition-opacity duration-300",
-        isHovered ? "opacity-100 animate-pulse" : ""
-      )} />
+      <ProfileCardNeonBorder position="top" isVisible={isHovered} />
+      <ProfileCardNeonBorder position="right" isVisible={isHovered} />
+      <ProfileCardNeonBorder position="bottom" isVisible={isHovered} />
+      <ProfileCardNeonBorder position="left" isVisible={isHovered} />
       
       <div className="flex flex-col">
         {/* Full-width avatar image */}
@@ -189,44 +144,16 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
               <span className="text-sm font-medium">{professional.rating}</span>
             </div>
             
-            <Badge 
-              variant="outline"
-              className={cn(
-                "border-toca-accent text-toca-accent flex items-center gap-1 mt-1 transition-all duration-300",
-                isHovered ? "bg-toca-accent/10 shadow-[0_0_5px_rgba(234,56,76,0.3)]" : ""
-              )}
-            >
-              {getTypeIcon(professional.type)}
+            <ProfileCardBadge isHovered={isHovered}>
+              <ProfessionalTypeIcon type={professional.type} />
               {professional.type}
-            </Badge>
+            </ProfileCardBadge>
             
             {/* Social Media links - Always display if available */}
-            {(professional.instagram || professional.youtube) && (
-              <div className="flex gap-3 mt-2">
-                {professional.instagram && (
-                  <a 
-                    href={professional.instagram}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-pink-400 hover:text-pink-300 transition-colors"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <Instagram size={16} />
-                  </a>
-                )}
-                {professional.youtube && (
-                  <a 
-                    href={professional.youtube}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-red-500 hover:text-red-400 transition-colors"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <Youtube size={16} />
-                  </a>
-                )}
-              </div>
-            )}
+            <ProfileCardSocialLinks 
+              instagram={professional.instagram} 
+              youtube={professional.youtube} 
+            />
           </div>
 
           <CardContent className="px-0 pt-0 pb-4">
@@ -260,33 +187,23 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
                 : professional.instruments || [])
                 .slice(0, expanded ? undefined : 3) // Show all when expanded
                 .map((item, i) => (
-                <Badge 
-                  key={i} 
-                  variant="secondary" 
-                  className={cn(
-                    "bg-black/60 text-white text-xs transition-all duration-300 border border-transparent",
-                    isHovered ? "border-toca-accent/30" : ""
-                  )}
-                >
+                <ProfileCardBadge key={i} variant="secondary" isHovered={isHovered}>
                   {item}
-                </Badge>
+                </ProfileCardBadge>
               ))}
               
               {/* Show count of remaining services/instruments only when not expanded */}
               {!expanded && (professional.services && professional.services.length > 0 
                 ? professional.services.length 
                 : (professional.instruments || []).length) > 3 && (
-                <Badge 
+                <ProfileCardBadge 
                   variant="secondary" 
-                  className={cn(
-                    "bg-black/60 text-white text-xs transition-all duration-300",
-                    isHovered ? "bg-toca-accent/20 text-toca-accent" : ""
-                  )}
+                  isHovered={isHovered}
                 >
                   +{(professional.services && professional.services.length > 0 
                     ? professional.services.length 
                     : (professional.instruments || []).length) - 3}
-                </Badge>
+                </ProfileCardBadge>
               )}
             </div>
             
@@ -298,28 +215,15 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
                   {professional.genres
                     .slice(0, expanded ? undefined : 2) // Show all when expanded
                     .map((genre, i) => (
-                    <Badge 
-                      key={i} 
-                      variant="outline" 
-                      className={cn(
-                        "bg-transparent text-white text-xs border-toca-text-secondary transition-colors duration-300",
-                        isHovered ? "border-toca-accent/50 text-toca-accent/90" : ""
-                      )}
-                    >
+                    <ProfileCardBadge key={i} variant="outline" isHovered={isHovered}>
                       {genre}
-                    </Badge>
+                    </ProfileCardBadge>
                   ))}
                   {/* Show count of remaining genres only when not expanded */}
                   {!expanded && professional.genres.length > 2 && (
-                    <Badge 
-                      variant="outline" 
-                      className={cn(
-                        "bg-transparent text-white text-xs border-toca-text-secondary transition-colors duration-300",
-                        isHovered ? "border-toca-accent/50 text-toca-accent/90" : ""
-                      )}
-                    >
+                    <ProfileCardBadge variant="outline" isHovered={isHovered}>
                       +{professional.genres.length - 2}
-                    </Badge>
+                    </ProfileCardBadge>
                   )}
                 </div>
               </div>
@@ -330,39 +234,17 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
               "transition-colors duration-300",
               isHovered ? "border-toca-accent/30" : ""
             )}>
-              {professional.hourlyRate ? (
-                <div className={cn(
-                  "bg-black/50 p-2 rounded-md text-center transition-all duration-300",
-                  isHovered && "bg-black/70 shadow-inner"
-                )}>
-                  <span className="text-xs text-toca-text-secondary block">Por hora</span>
-                  <div className={cn(
-                    "text-toca-accent font-semibold transition-all duration-300",
-                    isHovered && "scale-105 drop-shadow-[0_0_5px_rgba(234,56,76,0.5)]"
-                  )}>
-                    R${professional.hourlyRate}
-                  </div>
-                </div>
-              ) : (
-                <div></div>
-              )}
+              <ProfileCardRateDisplay 
+                label="Por hora" 
+                value={professional.hourlyRate} 
+                isHovered={isHovered} 
+              />
               
-              {professional.eventRate ? (
-                <div className={cn(
-                  "bg-black/50 p-2 rounded-md text-center transition-all duration-300",
-                  isHovered && "bg-black/70 shadow-inner"
-                )}>
-                  <span className="text-xs text-toca-text-secondary block">Por evento</span>
-                  <div className={cn(
-                    "text-toca-accent font-semibold transition-all duration-300",
-                    isHovered && "scale-105 drop-shadow-[0_0_5px_rgba(234,56,76,0.5)]"
-                  )}>
-                    R${professional.eventRate}
-                  </div>
-                </div>
-              ) : (
-                <div></div>
-              )}
+              <ProfileCardRateDisplay 
+                label="Por evento" 
+                value={professional.eventRate} 
+                isHovered={isHovered} 
+              />
             </div>
             
             {/* Show social links when portfolio is empty */}
