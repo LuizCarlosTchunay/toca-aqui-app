@@ -210,7 +210,7 @@ const EditProfile = () => {
       // Upload profile image if provided
       if (profileImage && professionalId) {
         const fileExt = profileImage.name.split('.').pop();
-        const fileName = `professionals/${professionalId}.${fileExt}`;
+        const fileName = `professionals/${professionalId}`;
         
         const { error: uploadError } = await supabase.storage
           .from('profile_images')
@@ -223,11 +223,14 @@ const EditProfile = () => {
       }
       
       toast.success("Perfil atualizado com sucesso!");
-      navigate("/dashboard");
+      
+      // Add a small delay before navigation to ensure toast is shown
+      setTimeout(() => {
+        navigate("/dashboard");
+      }, 500);
     } catch (error: any) {
       console.error("Error saving profile:", error);
       toast.error("Erro ao salvar o perfil: " + (error.message || "Tente novamente"));
-    } finally {
       setIsLoading(false);
     }
   };
