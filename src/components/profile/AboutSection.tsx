@@ -14,7 +14,7 @@ const AboutSection: React.FC<AboutSectionProps> = ({ bio, name }) => {
         <CardTitle>Sobre</CardTitle>
       </CardHeader>
       <CardContent>
-        <p className="text-toca-text-primary">
+        <p className="text-toca-text-primary whitespace-pre-line">
           {bio || `${name} ainda não adicionou uma descrição ao perfil.`}
         </p>
       </CardContent>
