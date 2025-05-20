@@ -3,7 +3,7 @@ import Navbar from "@/components/Navbar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useNavigate, useParams } from "react-router-dom";
-import { ChevronLeft, Calendar, MapPin, Star, Clock, Link as LinkIcon, ExternalLink, Instagram, Youtube } from "lucide-react";
+import { ChevronLeft, Calendar, MapPin, Star, Clock, Link as LinkIcon, ExternalLink, Instagram, Youtube, ShoppingCart } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { formatCurrency } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
@@ -12,6 +12,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 import ProfileCard from "@/components/ProfileCard";
+import { toast } from "sonner";
 
 // Portfolio item type
 interface PortfolioItem {
@@ -139,6 +140,16 @@ const ProfessionalProfile = () => {
     enabled: !!id
   });
 
+  const handleBookProfessional = () => {
+    if (!user) {
+      toast.error("Você precisa estar logado para reservar um profissional");
+      navigate("/login", { state: { redirectBack: `/profissional/${id}` } });
+      return;
+    }
+    
+    navigate(`/reservar/${id}`);
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex flex-col bg-toca-background">
@@ -193,16 +204,29 @@ const ProfessionalProfile = () => {
         </Button>
         
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Profile sidebar - Use ProfileCard component with expanded=true */}
+          {/* Profile sidebar */}
           <div>
-            <ProfileCard 
-              professional={professional} 
-              className="mb-6" 
-              expanded={true} // Always show expanded view in profile page
-            />
+            <div className="relative">
+              <ProfileCard 
+                professional={professional} 
+                className="mb-6" 
+                expanded={true} // Always show expanded view in profile page
+              />
+              
+              {/* Reservar button */}
+              <div className="mt-4">
+                <Button 
+                  className="w-full bg-toca-accent hover:bg-toca-accent-hover text-lg py-6"
+                  onClick={handleBookProfessional}
+                >
+                  <ShoppingCart className="mr-2" />
+                  Reservar Profissional
+                </Button>
+              </div>
+            </div>
             
             {/* Services card */}
-            <Card className="bg-toca-card border-toca-border">
+            <Card className="bg-toca-card border-toca-border mt-6">
               <CardHeader>
                 <CardTitle className="text-lg">Serviços</CardTitle>
               </CardHeader>
