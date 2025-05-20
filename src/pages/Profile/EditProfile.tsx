@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import Navbar from "@/components/Navbar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -174,6 +173,7 @@ const EditProfile = () => {
         instagram_url: profileData.instagramUrl,
         youtube_url: profileData.youtubeUrl,
         servicos: services, // Save the services array
+        user_id: user.id, // Ensure user_id is always set
       };
       
       if (existingProfessionalId) {
@@ -189,14 +189,18 @@ const EditProfile = () => {
         const { data: newProfile, error: insertError } = await supabase
           .from('profissionais')
           .insert({
-            user_id: user.id,
-            ...profileDataToSave
+            ...profileDataToSave,
+            user_id: user.id
           })
           .select('id')
           .single();
         
         if (insertError) throw insertError;
         professionalId = newProfile?.id || null;
+        
+        if (!professionalId) {
+          throw new Error("Falha ao obter o ID do perfil criado");
+        }
         
         // Update user to have professional profile
         const { error: userUpdateError } = await supabase
@@ -209,7 +213,6 @@ const EditProfile = () => {
       
       // Upload profile image if provided
       if (profileImage && professionalId) {
-        const fileExt = profileImage.name.split('.').pop();
         const fileName = `professionals/${professionalId}`;
         
         const { error: uploadError } = await supabase.storage
@@ -224,10 +227,16 @@ const EditProfile = () => {
       
       toast.success("Perfil atualizado com sucesso!");
       
-      // Add a small delay before navigation to ensure toast is shown
+      // Add a delay before navigation to ensure all operations are complete
       setTimeout(() => {
-        navigate("/dashboard");
-      }, 500);
+        try {
+          navigate("/dashboard");
+        } catch (navError) {
+          console.error("Navigation error:", navError);
+          // If navigation fails, provide an alternative
+          window.location.href = "/dashboard";
+        }
+      }, 1000);
     } catch (error: any) {
       console.error("Error saving profile:", error);
       toast.error("Erro ao salvar o perfil: " + (error.message || "Tente novamente"));
@@ -329,7 +338,7 @@ const EditProfile = () => {
                 </div>
               )}
               
-              {/* New Services Management Section */}
+              {/* Services Management Section */}
               <div className="space-y-4">
                 <Label htmlFor="services" className="text-white text-lg">Serviços Oferecidos</Label>
                 <div className="flex flex-wrap gap-2 p-3 bg-toca-background rounded-md border border-toca-border">
