@@ -28,6 +28,7 @@ interface ProfileCardProps {
   };
   className?: string;
   onClick?: () => void;
+  expanded?: boolean; // New prop to control expanded state
 }
 
 const getTypeIcon = (type: string) => {
@@ -63,6 +64,7 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
   professional,
   className = "",
   onClick,
+  expanded = false, // Default to collapsed state
 }) => {
   const [imageUrl, setImageUrl] = useState<string | undefined>(professional.image);
   const [isHovered, setIsHovered] = useState(false);
@@ -198,7 +200,7 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
               {professional.type}
             </Badge>
             
-            {/* Social Media links */}
+            {/* Social Media links - Always display if available */}
             {(professional.instagram || professional.youtube) && (
               <div className="flex gap-3 mt-2">
                 {professional.instagram && (
@@ -230,9 +232,10 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
           <CardContent className="px-0 pt-0 pb-4">
             {professional.bio && (
               <div className={cn(
-                "mb-3 text-sm text-white/90 bg-black/40 p-3 rounded-md border-l-2 border-toca-accent line-clamp-2",
+                "mb-3 text-sm text-white/90 bg-black/40 p-3 rounded-md border-l-2 border-toca-accent",
                 "transition-all duration-300",
-                isHovered ? "border-l-4 bg-black/50" : ""
+                isHovered ? "border-l-4 bg-black/50" : "",
+                expanded ? "" : "line-clamp-2" // Only truncate when not expanded
               )}>
                 "{professional.bio}"
               </div>
@@ -251,10 +254,12 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
             </div>
             
             <div className="flex flex-wrap gap-1 mb-3">
-              {/* Priority to display services if available, otherwise use instruments */}
+              {/* Display all services/instruments when expanded, otherwise limit to 3 */}
               {(professional.services && professional.services.length > 0 
                 ? professional.services 
-                : professional.instruments || []).slice(0, 3).map((item, i) => (
+                : professional.instruments || [])
+                .slice(0, expanded ? undefined : 3) // Show all when expanded
+                .map((item, i) => (
                 <Badge 
                   key={i} 
                   variant="secondary" 
@@ -267,8 +272,8 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
                 </Badge>
               ))}
               
-              {/* Show count of remaining services/instruments */}
-              {(professional.services && professional.services.length > 0 
+              {/* Show count of remaining services/instruments only when not expanded */}
+              {!expanded && (professional.services && professional.services.length > 0 
                 ? professional.services.length 
                 : (professional.instruments || []).length) > 3 && (
                 <Badge 
@@ -289,7 +294,10 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
               <div className="mb-3">
                 <p className="text-xs text-toca-text-secondary mb-1">Gêneros:</p>
                 <div className="flex flex-wrap gap-1">
-                  {professional.genres.slice(0, 2).map((genre, i) => (
+                  {/* Display all genres when expanded, otherwise limit to 2 */}
+                  {professional.genres
+                    .slice(0, expanded ? undefined : 2) // Show all when expanded
+                    .map((genre, i) => (
                     <Badge 
                       key={i} 
                       variant="outline" 
@@ -301,7 +309,8 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
                       {genre}
                     </Badge>
                   ))}
-                  {professional.genres.length > 2 && (
+                  {/* Show count of remaining genres only when not expanded */}
+                  {!expanded && professional.genres.length > 2 && (
                     <Badge 
                       variant="outline" 
                       className={cn(
@@ -355,6 +364,13 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
                 <div></div>
               )}
             </div>
+            
+            {/* Show social links when portfolio is empty */}
+            {expanded && !((professional.instagram || professional.youtube)) && (
+              <div className="mt-4 text-center">
+                <p className="text-sm text-toca-text-secondary">Este profissional ainda não adicionou links de portfólio.</p>
+              </div>
+            )}
           </CardContent>
         </div>
       </div>

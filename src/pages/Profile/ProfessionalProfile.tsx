@@ -11,6 +11,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
+import ProfileCard from "@/components/ProfileCard";
 
 // Portfolio item type
 interface PortfolioItem {
@@ -192,91 +193,13 @@ const ProfessionalProfile = () => {
         </Button>
         
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Profile sidebar */}
+          {/* Profile sidebar - Use ProfileCard component with expanded=true */}
           <div>
-            <Card className="bg-toca-card border-toca-border mb-6">
-              <CardContent className="pt-6">
-                <div className="flex flex-col items-center">
-                  {/* Avatar */}
-                  <Avatar className="w-32 h-32 border-4 border-toca-accent mb-4">
-                    <AvatarImage 
-                      src={professional.image} 
-                      alt={professional.name}
-                    />
-                    <AvatarFallback className="text-4xl font-bold text-toca-accent bg-toca-accent/20">
-                      {initials}
-                    </AvatarFallback>
-                  </Avatar>
-                  
-                  <h1 className="text-2xl font-bold text-white mb-1">{professional.artisticName}</h1>
-                  <div className="text-toca-text-secondary mb-2">{professional.name}</div>
-                  
-                  <div className="flex items-center mb-4">
-                    <Star className="text-yellow-500 mr-1" size={16} />
-                    <span className="text-white font-medium mr-1">{professional.rating}</span>
-                    <span className="text-toca-text-secondary">({professional.reviewCount} avaliações)</span>
-                  </div>
-                  
-                  {/* Location */}
-                  {(professional.city || professional.state) && (
-                    <div className="flex items-center text-toca-text-secondary mb-4">
-                      <MapPin size={16} className="mr-1" />
-                      <span>{[professional.city, professional.state].filter(Boolean).join(", ")}</span>
-                    </div>
-                  )}
-                  
-                  {/* Rates */}
-                  <div className="grid grid-cols-2 gap-3 w-full mb-6">
-                    <div className="text-center p-3 bg-toca-background rounded-md">
-                      <div className="text-xs text-toca-text-secondary mb-1">
-                        <Clock size={14} className="inline mr-1" /> Por hora
-                      </div>
-                      <div className="font-semibold text-toca-accent">{formatCurrency(professional.hourlyRate || 0)}</div>
-                    </div>
-                    <div className="text-center p-3 bg-toca-background rounded-md">
-                      <div className="text-xs text-toca-text-secondary mb-1">
-                        <Calendar size={14} className="inline mr-1" /> Por evento
-                      </div>
-                      <div className="font-semibold text-toca-accent">{formatCurrency(professional.eventRate || 0)}</div>
-                    </div>
-                  </div>
-                  
-                  {/* Social Media Links (if available) */}
-                  {(professional.instagram || professional.youtube) && (
-                    <div className="flex justify-center gap-4 mb-4">
-                      {professional.instagram && (
-                        <a 
-                          href={professional.instagram} 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          className="text-pink-400 hover:text-pink-300 transition-colors"
-                        >
-                          <Instagram size={20} />
-                        </a>
-                      )}
-                      {professional.youtube && (
-                        <a 
-                          href={professional.youtube} 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          className="text-red-500 hover:text-red-400 transition-colors"
-                        >
-                          <Youtube size={20} />
-                        </a>
-                      )}
-                    </div>
-                  )}
-                  
-                  {/* Book button */}
-                  <Button 
-                    className="w-full bg-toca-accent hover:bg-toca-accent-hover"
-                    onClick={() => navigate(`/reservar/${professional.id}`)}
-                  >
-                    Reservar
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
+            <ProfileCard 
+              professional={professional} 
+              className="mb-6" 
+              expanded={true} // Always show expanded view in profile page
+            />
             
             {/* Services card */}
             <Card className="bg-toca-card border-toca-border">
@@ -391,9 +314,37 @@ const ProfessionalProfile = () => {
                     <CarouselNext className="-right-4 lg:-right-5 bg-toca-accent text-white hover:bg-toca-accent-hover border-none" />
                   </Carousel>
                 ) : (
-                  <p className="text-center text-toca-text-secondary py-6">
-                    Este profissional ainda não adicionou itens ao portfólio.
-                  </p>
+                  <div className="text-center text-toca-text-secondary py-6">
+                    {professional.instagram || professional.youtube ? (
+                      <div>
+                        <p className="mb-3">Este profissional ainda não adicionou itens ao portfólio, mas você pode conferir suas redes sociais:</p>
+                        <div className="flex justify-center gap-4">
+                          {professional.instagram && (
+                            <a 
+                              href={professional.instagram} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className="text-pink-400 hover:text-pink-300 transition-colors"
+                            >
+                              <Instagram size={24} />
+                            </a>
+                          )}
+                          {professional.youtube && (
+                            <a 
+                              href={professional.youtube} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className="text-red-500 hover:text-red-400 transition-colors"
+                            >
+                              <Youtube size={24} />
+                            </a>
+                          )}
+                        </div>
+                      </div>
+                    ) : (
+                      <p>Este profissional ainda não adicionou itens ao portfólio.</p>
+                    )}
+                  </div>
                 )}
               </CardContent>
             </Card>
