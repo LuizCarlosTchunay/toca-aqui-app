@@ -27,6 +27,16 @@ const ProfessionalProfile = () => {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
   const [retryCount, setRetryCount] = useState(0);
+  const [isNavigating, setIsNavigating] = useState(false);
+  
+  // Safety check for ID parameter
+  useEffect(() => {
+    if (!id) {
+      console.error("Missing professional ID parameter");
+      toast.error("ID do profissional não encontrado");
+      navigate("/explorar", { replace: true });
+    }
+  }, [id, navigate]);
   
   // Fetch professional data
   const { data: professional, isLoading, isError, refetch } = useQuery({
@@ -115,12 +125,13 @@ const ProfessionalProfile = () => {
       }
     },
     enabled: !!id,
-    retry: 2,
-    staleTime: 30000 // 30 seconds
+    retry: 1,
+    staleTime: 30000, // 30 seconds
+    gcTime: 300000 // 5 minutes
   });
 
   // Fetch portfolio items
-  const { data: portfolioItems = [] } = useQuery<PortfolioItem[]>({
+  const { data: portfolioItems = [], isLoading: isPortfolioLoading } = useQuery<PortfolioItem[]>({
     queryKey: ['portfolio', id, retryCount],
     queryFn: async () => {
       if (!id) return [];
@@ -150,7 +161,7 @@ const ProfessionalProfile = () => {
       }
     },
     enabled: !!id,
-    retry: 2,
+    retry: 1,
     staleTime: 30000 // 30 seconds
   });
 
@@ -173,8 +184,26 @@ const ProfessionalProfile = () => {
       return;
     }
     
+    setIsNavigating(true);
     navigate(`/reservar/${id}`);
   };
+  
+  const handleGoBack = () => {
+    setIsNavigating(true);
+    navigate(-1);
+  };
+
+  // Show loading state during navigation to prevent black screens
+  if (isNavigating) {
+    return (
+      <div className="min-h-screen flex flex-col bg-toca-background">
+        <Navbar isAuthenticated={!!user} />
+        <div className="flex items-center justify-center min-h-[80vh]">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-toca-accent"></div>
+        </div>
+      </div>
+    );
+  }
 
   if (isLoading) {
     return (
@@ -208,7 +237,7 @@ const ProfessionalProfile = () => {
           <Button 
             className="mx-auto mt-4 block"
             variant="outline"
-            onClick={() => navigate(-1)}
+            onClick={handleGoBack}
           >
             Voltar
           </Button>
@@ -226,7 +255,7 @@ const ProfessionalProfile = () => {
         <Button 
           variant="ghost" 
           className="mb-6 text-toca-text-secondary hover:text-white"
-          onClick={() => navigate(-1)}
+          onClick={handleGoBack}
         >
           <ChevronLeft size={18} className="mr-1" /> Voltar
         </Button>
@@ -249,6 +278,7 @@ const ProfessionalProfile = () => {
             {/* Portfolio card */}
             <PortfolioSection 
               portfolioItems={portfolioItems || []}
+              isLoading={isPortfolioLoading}
               instagram={professional.instagram}
               youtube={professional.youtube}
             />

@@ -29,17 +29,39 @@ import { AuthProvider } from "./hooks/useAuth";
 import PasswordReset from "./pages/PasswordReset";
 import ProtectedRoute from "./components/ProtectedRoute";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      // Prevent auto refetching which can cause issues during navigation
+      refetchOnWindowFocus: false,
+      // Prevent retry loop which can cause black screens
+      retry: 1,
+      // Add proper stale time to prevent unnecessary refetches
+      staleTime: 30000
+    },
+  },
+});
 
 const App = () => {
   const [showSplash, setShowSplash] = useState(true);
+  const [isReady, setIsReady] = useState(false);
 
   const handleSplashComplete = () => {
     setShowSplash(false);
+    // Add a small delay before rendering the app to ensure smooth transition
+    setTimeout(() => setIsReady(true), 100);
   };
 
   if (showSplash) {
     return <SplashScreen onComplete={handleSplashComplete} />;
+  }
+
+  if (!isReady) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-toca-background">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-toca-accent"></div>
+      </div>
+    );
   }
 
   return (
@@ -132,6 +154,14 @@ const App = () => {
               />
               <Route 
                 path="/checkout" 
+                element={
+                  <ProtectedRoute>
+                    <Checkout />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/checkout/:id" 
                 element={
                   <ProtectedRoute>
                     <Checkout />
