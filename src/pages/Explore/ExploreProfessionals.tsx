@@ -65,9 +65,14 @@ const ExploreProfessionals = () => {
           youtube_url
         `);
       
-      // Apply type filter if active
+      // Apply type filter if active, making sure to normalize for "Músico" variations
       if (activeType) {
-        query = query.eq('tipo_profissional', activeType);
+        if (activeType === "Músico") {
+          // Handle both "Músico" and "Musico" when filtering
+          query = query.or('tipo_profissional.eq.Músico,tipo_profissional.eq.Musico');
+        } else {
+          query = query.eq('tipo_profissional', activeType);
+        }
       }
       
       const { data, error } = await query;

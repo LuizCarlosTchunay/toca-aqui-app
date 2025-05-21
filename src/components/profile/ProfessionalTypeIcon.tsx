@@ -21,11 +21,13 @@ const ProfessionalTypeIcon: React.FC<ProfessionalTypeIconProps> = ({
   type,
   size = 16
 }) => {
-  switch (type.toLowerCase()) {
-    case "músico":
+  // First normalize the type by converting to lowercase and removing accents
+  const normalizedType = type?.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '') || '';
+
+  switch (normalizedType) {
     case "musico":
       return <Music size={size} />;
-    case "voz e violão":
+    case "voz e violao":
       return <MicVocal size={size} />;
     case "baterista":
       return <Drum size={size} />;
@@ -35,7 +37,6 @@ const ProfessionalTypeIcon: React.FC<ProfessionalTypeIconProps> = ({
       return <Music size={size} />;
     case "dj":
       return <Disc size={size} />;
-    case "fotógrafo":
     case "fotografo":
       return <Camera size={size} />;
     case "filmmaker":
