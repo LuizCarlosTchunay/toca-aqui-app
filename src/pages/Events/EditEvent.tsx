@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { format, parse } from "date-fns";
@@ -98,7 +99,7 @@ const EditEvent = () => {
     }
   };
 
-  const handleUpdateEvent = () => {
+  const handleUpdateEvent = async () => {
     if (!user) {
       toast.error("Você precisa estar logado para editar um evento");
       return;
@@ -124,7 +125,7 @@ const EditEvent = () => {
       // Convert comma-separated services to array
       const servicesArray = formData.requiredServices.split(",").map(item => item.trim()).filter(item => item);
       
-      supabase
+      const { error } = await supabase
         .from("eventos")
         .update({
           titulo: formData.title,
@@ -134,25 +135,21 @@ const EditEvent = () => {
           servicos_requeridos: servicesArray,
         })
         .eq("id", id)
-        .eq("contratante_id", user.id)
-        .then(({ error }) => {
-          if (error) {
-            throw error;
-          }
-          
-          toast.success("Evento atualizado com sucesso!");
-          navigate(`/eventos/${id}`);
-        })
-        .catch((err) => {
-          console.error("Erro ao atualizar evento:", err);
-          toast.error(err?.message || "Ocorreu um erro ao atualizar o evento. Tente novamente.");
-        })
-        .finally(() => {
-          setIsSubmitting(false);
-        });
+        .eq("contratante_id", user.id);
+
+      if (error) {
+        console.error("Erro ao atualizar evento:", error);
+        toast.error(error.message || "Ocorreu um erro ao atualizar o evento. Tente novamente.");
+        setIsSubmitting(false);
+        return;
+      }
+      
+      toast.success("Evento atualizado com sucesso!");
+      navigate(`/eventos/${id}`);
     } catch (err: any) {
       console.error("Erro ao atualizar evento:", err);
       toast.error(err?.message || "Ocorreu um erro ao atualizar o evento. Tente novamente.");
+    } finally {
       setIsSubmitting(false);
     }
   }
@@ -216,7 +213,7 @@ const EditEvent = () => {
               <div className="space-y-2">
                 <Label htmlFor="date">Data do Evento</Label>
                 <DatePicker
-                  date={formData.date}
+                  defaultDate={formData.date}
                   onSelect={handleDateChange}
                   required
                 />
