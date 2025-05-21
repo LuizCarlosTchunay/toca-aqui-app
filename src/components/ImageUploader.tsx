@@ -116,9 +116,27 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
         if (error) {
           if (error.message.includes('does not exist')) {
             console.log("Bucket does not exist, attempting to create it...");
+            try {
+              // Try creating the bucket again with a different approach
+              await supabase.storage.createBucket(bucketName, {
+                public: true
+              });
+              
+              // Try uploading again
+              const { error: retryError } = await supabase.storage
+                .from(bucketName)
+                .upload(objectPath, file, {
+                  upsert: true,
+                  contentType: file.type
+                });
+                
+              if (retryError) throw retryError;
+            } catch (bucketError) {
+              throw error; // If still failing, throw the original error
+            }
+          } else {
             throw error;
           }
-          throw error;
         }
         
         // Get the public URL of the uploaded file
@@ -128,7 +146,7 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
           
         if (publicUrlData && handleImageChange) {
           // Pass both the file and the public URL to the parent component
-          handleImageChange(file, publicUrlData.publicUrl);
+          handleImageChange(file, publicUrlData.publicUrl + '?t=' + new Date().getTime());
           toast.success("Imagem atualizada com sucesso!");
         } else if (handleImageChange) {
           handleImageChange(file);
@@ -165,7 +183,7 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
           
         if (publicUrlData && handleImageChange) {
           // Pass both the file and the public URL to the parent component
-          handleImageChange(file, publicUrlData.publicUrl);
+          handleImageChange(file, publicUrlData.publicUrl + '?t=' + new Date().getTime());
           toast.success("Imagem atualizada com sucesso!");
         } else if (handleImageChange) {
           handleImageChange(file);

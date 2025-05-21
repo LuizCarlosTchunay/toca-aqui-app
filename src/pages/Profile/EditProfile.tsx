@@ -213,30 +213,49 @@ const EditProfile = () => {
       
       // Upload profile image if provided
       if (profileImage && professionalId) {
-        const fileName = `professionals/${professionalId}`;
-        
-        const { error: uploadError } = await supabase.storage
-          .from('profile_images')
-          .upload(fileName, profileImage, {
-            upsert: true,
-            contentType: profileImage.type
-          });
-        
-        if (uploadError) throw uploadError;
+        try {
+          // Ensure bucket exists
+          try {
+            await supabase.storage.createBucket('profile_images', {
+              public: true
+            });
+          } catch (bucketError) {
+            console.log("Bucket may already exist:", bucketError);
+          }
+          
+          const fileName = `professionals/${professionalId}`;
+          
+          const { error: uploadError } = await supabase.storage
+            .from('profile_images')
+            .upload(fileName, profileImage, {
+              upsert: true,
+              contentType: profileImage.type
+            });
+          
+          if (uploadError) throw uploadError;
+        } catch (imageError) {
+          console.error("Error uploading image:", imageError);
+          // Continue even if image upload fails
+          toast.error("Erro ao fazer upload da imagem, mas o perfil foi salvo");
+        }
       }
       
       toast.success("Perfil atualizado com sucesso!");
       
-      // Add a delay before navigation to ensure all operations are complete
+      // Add a longer delay and wrap navigation in try-catch to prevent black screen issues
       setTimeout(() => {
         try {
-          navigate("/dashboard");
+          // First set loading false to ensure UI is responsive
+          setIsLoading(false);
+          // Then navigate
+          navigate("/dashboard", { replace: true });
         } catch (navError) {
           console.error("Navigation error:", navError);
-          // If navigation fails, provide an alternative
+          // If navigation fails, provide a fallback
           window.location.href = "/dashboard";
         }
-      }, 1000);
+      }, 2000); // Longer delay to ensure all operations complete
+      
     } catch (error: any) {
       console.error("Error saving profile:", error);
       toast.error("Erro ao salvar o perfil: " + (error.message || "Tente novamente"));
@@ -261,6 +280,21 @@ const EditProfile = () => {
       return false;
     }
   };
+
+  // If the user is not logged in, show a message and redirect
+  if (!user) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-toca-background">
+        <p className="text-white mb-4">Você precisa estar logado para acessar esta página.</p>
+        <Button 
+          onClick={() => navigate("/")}
+          className="bg-toca-accent hover:bg-toca-accent-hover"
+        >
+          Voltar para o início
+        </Button>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col bg-toca-background">
