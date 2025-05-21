@@ -17,44 +17,42 @@ import EditEvent from './pages/Events/EditEvent';
 function App() {
   return (
     <Router>
-      <AuthProvider>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-          <Route path="/perfil" element={<ProtectedRoute><Index /></ProtectedRoute>} />
-          <Route path="/editar-perfil" element={<ProtectedRoute><EditProfile /></ProtectedRoute>} />
-          <Route path="/profissional/:id" element={<ProfessionalProfile />} />
-          <Route path="/explorar" element={<Index />} />
-          
-          {/* Events routes */}
-          <Route 
-            path="/eventos/:id" 
-            element={
-              <EventDetail />
-            } 
-          />
-          <Route 
-            path="/eventos/editar/:id" 
-            element={
-              <ProtectedRoute>
-                <EditEvent />
-              </ProtectedRoute>
-            } 
-          />
-          <Route 
-            path="/criar-evento" 
-            element={
-              <ProtectedRoute>
-                <CreateEvent />
-              </ProtectedRoute>
-            } 
-          />
-          
-          {/* Booking route */}
-          <Route path="/reservar/:professionalId" element={<ProtectedRoute><Index /></ProtectedRoute>} />
-        </Routes>
-        <Toaster position="top-center" richColors />
-      </AuthProvider>
+      <Routes>
+        <Route path="/" element={<Index />} />
+        <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+        <Route path="/perfil" element={<ProtectedRoute><Index /></ProtectedRoute>} />
+        <Route path="/editar-perfil" element={<ProtectedRoute><EditProfile /></ProtectedRoute>} />
+        <Route path="/profissional/:id" element={<ProfessionalProfile />} />
+        <Route path="/explorar" element={<Index />} />
+        
+        {/* Events routes */}
+        <Route 
+          path="/eventos/:id" 
+          element={
+            <EventDetail />
+          } 
+        />
+        <Route 
+          path="/eventos/editar/:id" 
+          element={
+            <ProtectedRoute>
+              <EditEvent />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/criar-evento" 
+          element={
+            <ProtectedRoute>
+              <CreateEvent />
+            </ProtectedRoute>
+          } 
+        />
+        
+        {/* Booking route */}
+        <Route path="/reservar/:professionalId" element={<ProtectedRoute><Index /></ProtectedRoute>} />
+      </Routes>
+      <Toaster position="top-center" richColors />
     </Router>
   );
 }
