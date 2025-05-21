@@ -1,36 +1,119 @@
-
 import React, { useState, useEffect } from "react";
 import Navbar from "@/components/Navbar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Separator } from "@/components/ui/separator";
 import { formatCurrency } from "@/lib/utils";
 import { toast } from "@/hooks/use-toast";
-import { ChevronLeft, CreditCard, QrCode, CheckCircle2, Trash2, AlertTriangle } from "lucide-react";
+import { ChevronLeft, CreditCard, QrCode, CheckCircle2, Trash2, AlertTriangle, Loader2 } from "lucide-react";
 import TermsAcceptanceDialog from "@/components/TermsAcceptanceDialog";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 
 const Checkout = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const { user } = useAuth();
   const [paymentMethod, setPaymentMethod] = useState<"credit" | "pix" | "debit">("credit");
   const [isPaymentComplete, setIsPaymentComplete] = useState(false);
   const [showTermsDialog, setShowTermsDialog] = useState(true);
   const [termsAccepted, setTermsAccepted] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   
-  // Mock data for cart items
-  const cartItems = [
-    {
-      id: "1",
-      professional: "DJ Pulse",
-      type: "DJ",
-      event: "Casamento Silva",
-      date: "15/06/2025",
-      price: 1200
-    }
-  ];
+  // Extract professional ID from location state or use default for testing
+  const professionalId = location.state?.professionalId || "";
+  const bookingType = location.state?.bookingType || "event";
+  const hours = location.state?.hours || 4;
+  const bookingDetails = location.state?.bookingDetails || {};
+  
+  // State for cart items with professional data
+  const [cartItems, setCartItems] = useState<Array<{
+    id: string;
+    professional: string;
+    type: string;
+    event: string;
+    date: string;
+    price: number;
+    professionalId: string;
+  }>>([]);
+  
+  // Fetch professional data
+  useEffect(() => {
+    const fetchProfessionalData = async () => {
+      if (!professionalId) {
+        setIsLoading(false);
+        setCartItems([{
+          id: "1",
+          professional: "DJ Pulse",
+          type: "DJ",
+          event: "Casamento Silva",
+          date: "15/06/2025",
+          price: 1200,
+          professionalId: "1"
+        }]);
+        return;
+      }
+      
+      try {
+        setIsLoading(true);
+        setError(null);
+        
+        const { data, error } = await supabase
+          .from("profissionais")
+          .select(`
+            id,
+            nome_artistico,
+            tipo_profissional,
+            cache_hora,
+            cache_evento
+          `)
+          .eq("id", professionalId)
+          .single();
+        
+        if (error) {
+          console.error("Error fetching professional:", error);
+          setError("Não foi possível carregar os dados do profissional.");
+          setIsLoading(false);
+          return;
+        }
+        
+        if (!data) {
+          setError("Profissional não encontrado.");
+          setIsLoading(false);
+          return;
+        }
+        
+        // Calculate price based on booking type
+        const price = bookingType === "event" 
+          ? data.cache_evento 
+          : data.cache_hora * hours;
+        
+        // Create cart item with professional data
+        setCartItems([{
+          id: data.id,
+          professional: data.nome_artistico || "Profissional",
+          type: data.tipo_profissional || "Músico",
+          event: bookingDetails.eventName || "Evento",
+          date: bookingDetails.date || "Data a definir",
+          price: price || 0,
+          professionalId: data.id
+        }]);
+        
+        setIsLoading(false);
+      } catch (err) {
+        console.error("Error fetching data:", err);
+        setError("Ocorreu um erro ao carregar os dados.");
+        setIsLoading(false);
+      }
+    };
+    
+    fetchProfessionalData();
+  }, [professionalId, bookingType, hours, bookingDetails]);
   
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -65,13 +148,25 @@ const Checkout = () => {
     });
   };
   
+  const handleRemoveItem = (id: string) => {
+    setCartItems(prev => prev.filter(item => item.id !== id));
+    
+    if (cartItems.length <= 1) {
+      navigate(-1);
+      toast({
+        title: "Carrinho vazio",
+        description: "Todos os itens foram removidos do carrinho.",
+      });
+    }
+  };
+  
   const subtotal = cartItems.reduce((sum, item) => sum + item.price, 0);
   const fee = subtotal * 0.0998; // 9.98% platform fee
   const total = subtotal + fee;
 
   return (
     <div className="min-h-screen flex flex-col bg-toca-background">
-      <Navbar isAuthenticated={true} />
+      <Navbar isAuthenticated={!!user} />
       
       <TermsAcceptanceDialog 
         open={showTermsDialog} 
@@ -123,30 +218,54 @@ const Checkout = () => {
                   <CardTitle className="text-white">Resumo do Pedido</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-4">
-                    {cartItems.map((item) => (
-                      <div key={item.id} className="flex items-start justify-between border-b border-toca-border pb-4">
-                        <div>
-                          <h3 className="font-semibold text-white">{item.professional}</h3>
-                          <p className="text-sm text-toca-text-secondary mb-1">{item.type}</p>
-                          <div className="text-sm">
-                            <span className="text-toca-text-secondary">Evento: </span>
-                            <span className="text-white">{item.event}</span>
+                  {isLoading ? (
+                    <div className="flex items-center justify-center py-8">
+                      <Loader2 className="h-8 w-8 animate-spin text-toca-accent" />
+                      <span className="ml-2 text-white">Carregando dados do profissional...</span>
+                    </div>
+                  ) : error ? (
+                    <div className="text-center py-8">
+                      <AlertTriangle className="h-8 w-8 text-red-500 mx-auto mb-2" />
+                      <p className="text-white">{error}</p>
+                      <Button 
+                        variant="outline" 
+                        className="mt-4"
+                        onClick={() => navigate(-1)}
+                      >
+                        Voltar para seleção
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {cartItems.map((item) => (
+                        <div key={item.id} className="flex items-start justify-between border-b border-toca-border pb-4">
+                          <div>
+                            <h3 className="font-semibold text-white">{item.professional}</h3>
+                            <p className="text-sm text-toca-text-secondary mb-1">{item.type}</p>
+                            <div className="text-sm">
+                              <span className="text-toca-text-secondary">Evento: </span>
+                              <span className="text-white">{item.event}</span>
+                            </div>
+                            <div className="text-sm">
+                              <span className="text-toca-text-secondary">Data: </span>
+                              <span className="text-white">{item.date}</span>
+                            </div>
                           </div>
-                          <div className="text-sm">
-                            <span className="text-toca-text-secondary">Data: </span>
-                            <span className="text-white">{item.date}</span>
+                          <div className="text-right">
+                            <div className="font-semibold text-white">{formatCurrency(item.price)}</div>
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              className="text-red-400 p-0 h-auto mt-2"
+                              onClick={() => handleRemoveItem(item.id)}
+                            >
+                              <Trash2 size={16} className="mr-1" /> Remover
+                            </Button>
                           </div>
                         </div>
-                        <div className="text-right">
-                          <div className="font-semibold text-white">{formatCurrency(item.price)}</div>
-                          <Button variant="ghost" size="sm" className="text-red-400 p-0 h-auto mt-2">
-                            <Trash2 size={16} className="mr-1" /> Remover
-                          </Button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
+                      ))}
+                    </div>
+                  )}
                 </CardContent>
               </Card>
               
@@ -277,7 +396,7 @@ const Checkout = () => {
                       <Button 
                         type="submit"
                         className="w-full bg-toca-accent hover:bg-toca-accent-hover"
-                        disabled={!termsAccepted}
+                        disabled={!termsAccepted || isLoading || !!error || cartItems.length === 0}
                       >
                         {paymentMethod === "pix" ? "Confirmar Pagamento" : "Pagar"}
                       </Button>
