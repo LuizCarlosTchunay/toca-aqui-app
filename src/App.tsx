@@ -16,8 +16,8 @@ import EditEvent from './pages/Events/EditEvent';
 
 function App() {
   return (
-    <AuthProvider>
-      <Router>
+    <Router>
+      <AuthProvider>
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
@@ -54,8 +54,8 @@ function App() {
           <Route path="/reservar/:professionalId" element={<ProtectedRoute><Index /></ProtectedRoute>} />
         </Routes>
         <Toaster position="top-center" richColors />
-      </Router>
-    </AuthProvider>
+      </AuthProvider>
+    </Router>
   );
 }
 
