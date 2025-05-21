@@ -4,6 +4,7 @@ import { Calendar, CheckCheck, UserCheck, DollarSign, Bell } from "lucide-react"
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Notification } from '@/utils/notifications';
+import { formatTimeAgo } from '@/utils/notifications';
 
 interface NotificationItemProps {
   notification: Notification;
@@ -27,6 +28,9 @@ const NotificationItem: React.FC<NotificationItemProps> = ({ notification, onCli
     }
   };
 
+  // Format the time to show how long ago the notification was created
+  const formattedTime = formatTimeAgo(notification.created_at);
+
   return (
     <div 
       className={`p-4 border ${notification.read ? 'border-toca-border' : 'border-toca-accent'} rounded-md flex cursor-pointer hover:bg-toca-background/30 transition-colors`}
@@ -39,7 +43,7 @@ const NotificationItem: React.FC<NotificationItemProps> = ({ notification, onCli
       <div className="flex-1">
         <div className="flex items-center justify-between mb-1">
           <h3 className="font-medium text-white">{notification.title}</h3>
-          <div className="text-xs text-toca-text-secondary">{notification.time}</div>
+          <div className="text-xs text-toca-text-secondary">{formattedTime}</div>
         </div>
         
         <p className="text-toca-text-secondary mb-3">{notification.message}</p>

@@ -78,14 +78,23 @@ export const formatTimeAgo = (dateString: string) => {
     return `há ${diffMins} ${diffMins === 1 ? 'minuto' : 'minutos'}`;
   } else if (diffHours < 24) {
     return `há ${diffHours} ${diffHours === 1 ? 'hora' : 'horas'}`;
-  } else {
+  } else if (diffDays < 30) {
     return `há ${diffDays} ${diffDays === 1 ? 'dia' : 'dias'}`;
+  } else {
+    // For older notifications, show the date
+    return date.toLocaleDateString('pt-BR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    });
   }
 };
 
 // Fetch real notifications from the Supabase database
 export const fetchRealNotifications = async (userId: string): Promise<Notification[]> => {
   try {
+    console.log("Fetching notifications for user:", userId);
+    
     const { data, error } = await supabase
       .from('notifications')
       .select('*')
@@ -97,7 +106,10 @@ export const fetchRealNotifications = async (userId: string): Promise<Notificati
       return [];
     }
     
+    console.log("Notifications data:", data);
+    
     if (!data || data.length === 0) {
+      console.log("No notifications found, returning mock data");
       // Return mock notifications if no real notifications found
       return getMockNotifications(userId);
     }
@@ -123,13 +135,20 @@ export const fetchRealNotifications = async (userId: string): Promise<Notificati
 // Mark notification as read
 export const markNotificationAsRead = async (notificationId: string, userId: string): Promise<boolean> => {
   try {
+    console.log("Marking notification as read:", notificationId);
+    
     const { error } = await supabase
       .from('notifications')
       .update({ read: true })
       .eq('id', notificationId)
       .eq('user_id', userId);
       
-    return !error;
+    if (error) {
+      console.error("Error marking notification as read:", error);
+      return false;
+    }
+    
+    return true;
   } catch (err) {
     console.error("Erro ao marcar notificação como lida:", err);
     return false;
@@ -139,13 +158,20 @@ export const markNotificationAsRead = async (notificationId: string, userId: str
 // Mark all notifications as read
 export const markAllNotificationsAsRead = async (userId: string): Promise<boolean> => {
   try {
+    console.log("Marking all notifications as read for user:", userId);
+    
     const { error } = await supabase
       .from('notifications')
       .update({ read: true })
       .eq('user_id', userId)
       .eq('read', false);
       
-    return !error;
+    if (error) {
+      console.error("Error marking all notifications as read:", error);
+      return false;
+    }
+    
+    return true;
   } catch (err) {
     console.error("Erro ao marcar todas notificações como lidas:", err);
     return false;
@@ -161,7 +187,9 @@ export const createNotification = async (
   actionUrl?: string
 ): Promise<boolean> => {
   try {
-    const { error } = await supabase
+    console.log("Creating notification for user:", userId, "type:", type);
+    
+    const { data, error } = await supabase
       .from('notifications')
       .insert([{ 
         user_id: userId,
@@ -170,9 +198,16 @@ export const createNotification = async (
         message,
         action_url: actionUrl || null,
         read: false
-      }]);
+      }])
+      .select();
       
-    return !error;
+    if (error) {
+      console.error("Error creating notification:", error);
+      return false;
+    }
+    
+    console.log("Notification created successfully:", data);
+    return true;
   } catch (err) {
     console.error("Erro ao criar notificação:", err);
     return false;

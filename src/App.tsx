@@ -11,6 +11,7 @@ import AuthPage from "./pages/AuthPage";
 import Dashboard from "./pages/Dashboard";
 import ExploreProfessionals from "./pages/Explore/ExploreProfessionals";
 import ExploreEvents from "./pages/Explore/ExploreEvents";
+import EventDetail from "./pages/Events/EventDetail";
 import SplashScreen from "./components/SplashScreen";
 import About from "./pages/About";
 import EditProfile from "./pages/Profile/EditProfile";
@@ -114,6 +115,7 @@ const App = () => {
               {/* Explore Routes */}
               <Route path="/explorar" element={<ExploreProfessionals />} />
               <Route path="/eventos" element={<ExploreEvents />} />
+              <Route path="/eventos/:id" element={<EventDetail />} />
               
               {/* Event Routes */}
               <Route 
