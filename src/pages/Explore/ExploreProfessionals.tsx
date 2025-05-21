@@ -54,12 +54,15 @@ const ExploreProfessionals = () => {
           nome_artistico,
           tipo_profissional,
           instrumentos,
+          servicos,
           subgeneros,
           bio,
           cidade,
           estado,
           cache_hora,
-          cache_evento
+          cache_evento,
+          instagram_url,
+          youtube_url
         `);
       
       // Apply type filter if active
@@ -82,7 +85,7 @@ const ExploreProfessionals = () => {
           type: item.tipo_profissional || "",
           rating: 4.5, // Default rating until we implement a rating system
           instruments: item.instrumentos || [],
-          services: item.instrumentos || [], // Using instruments as services for now
+          services: item.servicos || [], 
           genres: item.subgeneros || [],
           hourlyRate: item.cache_hora || 0,
           eventRate: item.cache_evento || 0,
@@ -90,6 +93,8 @@ const ExploreProfessionals = () => {
           city: item.cidade || "",
           state: item.estado || "",
           bio: item.bio || "",
+          instagram: item.instagram_url,
+          youtube: item.youtube_url,
         };
       });
     }
@@ -103,40 +108,85 @@ const ExploreProfessionals = () => {
   const filteredProfessionals = professionals.filter(professional => {
     let matches = true;
     
-    // Search term filter
+    // Search term filter - improved to search across all relevant fields
     if (searchTerm) {
       const searchLower = searchTerm.toLowerCase();
-      matches = matches && (
-        professional.name.toLowerCase().includes(searchLower) ||
-        (professional.artisticName?.toLowerCase().includes(searchLower) || false) ||
-        professional.type.toLowerCase().includes(searchLower) ||
-        (professional.services?.some(service => service.toLowerCase().includes(searchLower)) || false) ||
-        (professional.genres?.some(genre => genre.toLowerCase().includes(searchLower)) || false) ||
-        (professional.city?.toLowerCase().includes(searchLower) || false) ||
-        (professional.state?.toLowerCase().includes(searchLower) || false)
+      
+      const fieldsToSearch = [
+        professional.name,
+        professional.artisticName,
+        professional.type,
+        professional.city,
+        professional.state,
+        professional.bio
+      ];
+      
+      // Include arrays like instruments, services, genres in search
+      const arrayFields = [
+        ...(professional.instruments || []),
+        ...(professional.services || []),
+        ...(professional.genres || [])
+      ];
+      
+      // Check if any string field contains the search term
+      const stringMatches = fieldsToSearch.some(field => 
+        field ? field.toLowerCase().includes(searchLower) : false
       );
+      
+      // Check if any array item contains the search term
+      const arrayMatches = arrayFields.some(item => 
+        item ? item.toLowerCase().includes(searchLower) : false
+      );
+      
+      matches = matches && (stringMatches || arrayMatches);
     }
     
     // City filter
-    if (filters.city && matches && professional.city) {
-      matches = matches && professional.city.toLowerCase().includes(filters.city.toLowerCase());
+    if (filters.city && matches) {
+      matches = matches && professional.city ? 
+        professional.city.toLowerCase().includes(filters.city.toLowerCase()) : false;
     }
     
     // State filter
-    if (filters.state && matches && professional.state) {
-      matches = matches && professional.state.toLowerCase().includes(filters.state.toLowerCase());
+    if (filters.state && matches) {
+      matches = matches && professional.state ? 
+        professional.state.toLowerCase().includes(filters.state.toLowerCase()) : false;
     }
     
     // Min price filter
     if (filters.minPrice && matches) {
       const minPrice = parseInt(filters.minPrice);
-      matches = matches && !isNaN(minPrice) && ((professional.hourlyRate && professional.hourlyRate >= minPrice) || (professional.eventRate && professional.eventRate >= minPrice));
+      
+      if (!isNaN(minPrice)) {
+        // Check if either hourly rate or event rate matches the criteria
+        const hourlyRateMatch = professional.hourlyRate ? professional.hourlyRate >= minPrice : false;
+        const eventRateMatch = professional.eventRate ? professional.eventRate >= minPrice : false;
+        
+        matches = matches && (hourlyRateMatch || eventRateMatch);
+      }
     }
     
     // Max price filter
     if (filters.maxPrice && matches) {
       const maxPrice = parseInt(filters.maxPrice);
-      matches = matches && !isNaN(maxPrice) && ((professional.hourlyRate && professional.hourlyRate <= maxPrice) || (professional.eventRate && professional.eventRate <= maxPrice));
+      
+      if (!isNaN(maxPrice)) {
+        // Only apply to professionals who have defined rates
+        if (professional.hourlyRate || professional.eventRate) {
+          const hourlyRateMatch = professional.hourlyRate ? 
+            professional.hourlyRate <= maxPrice : true;
+          const eventRateMatch = professional.eventRate ? 
+            professional.eventRate <= maxPrice : true;
+          
+          matches = matches && (hourlyRateMatch || eventRateMatch);
+        }
+      }
+    }
+    
+    // Rating filter
+    if (filters.rating && filters.rating !== "any" && matches) {
+      const minRating = parseInt(filters.rating);
+      matches = matches && professional.rating ? professional.rating >= minRating : false;
     }
     
     return matches;
@@ -334,6 +384,8 @@ const ExploreProfessionals = () => {
                 city: professional.city || "",
                 state: professional.state || "",
                 bio: professional.bio || "",
+                instagram: professional.instagram,
+                youtube: professional.youtube,
               }}
               onClick={() => navigate(`/profissional/${professional.id}`)}
             />

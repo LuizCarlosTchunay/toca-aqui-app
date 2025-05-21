@@ -181,7 +181,7 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
             </div>
             
             <div className="flex flex-wrap gap-1 mb-3">
-              {/* Display all services/instruments when expanded, otherwise limit to 3 */}
+              {/* Display services if available, otherwise display instruments */}
               {(professional.services && professional.services.length > 0 
                 ? professional.services 
                 : professional.instruments || [])

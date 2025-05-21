@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import Navbar from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
@@ -97,7 +98,7 @@ const ProfessionalProfile = () => {
           rating: 4.5, // Default rating until we implement a rating system
           reviewCount: 0, // Default count until we implement reviews
           instruments: professionalData.instrumentos || [],
-          services: professionalData.servicos || [], // Add services
+          services: professionalData.servicos || [], 
           genres: professionalData.subgeneros || [],
           hourlyRate: professionalData.cache_hora || 0,
           eventRate: professionalData.cache_evento || 0,
