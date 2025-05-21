@@ -1,3 +1,4 @@
+
 import type { Config } from "tailwindcss";
 
 export default {
@@ -102,12 +103,21 @@ export default {
 					'50%': {
 						boxShadow: '0 0 20px #ea384c, 0 0 30px #ea384c'
 					}
+				},
+				'glow': {
+					'0%, 100%': { 
+						textShadow: '0 0 4px #fff, 0 0 11px #fff, 0 0 19px #fff, 0 0 40px #ea384c, 0 0 80px #ea384c, 0 0 90px #ea384c, 0 0 100px #ea384c, 0 0 150px #ea384c'
+					},
+					'50%': {
+						textShadow: '0 0 4px #fff, 0 0 10px #fff, 0 0 18px #fff, 0 0 38px #ea384c, 0 0 73px #ea384c, 0 0 80px #ea384c, 0 0 94px #ea384c, 0 0 140px #ea384c'
+					}
 				}
 			},
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
 				'accordion-up': 'accordion-up 0.2s ease-out',
-				'neon-pulse': 'neon-pulse 2s ease-in-out infinite'
+				'neon-pulse': 'neon-pulse 2s ease-in-out infinite',
+				'text-glow': 'glow 2s ease-in-out infinite'
 			}
 		}
 	},

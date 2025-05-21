@@ -35,7 +35,7 @@ const EventCard: React.FC<EventCardProps> = ({
 
   return (
     <Card 
-      className={`bg-toca-card border-toca-border hover:border-toca-accent transition-all overflow-hidden ${className}`}
+      className={`bg-toca-card border-toca-border hover:border-toca-accent transition-all duration-300 overflow-hidden shadow-lg hover:shadow-[0_0_15px_rgba(234,56,76,0.6)] ${className}`}
     >
       <div 
         className="aspect-[3/1] relative overflow-hidden cursor-pointer"
@@ -44,53 +44,53 @@ const EventCard: React.FC<EventCardProps> = ({
         <img
           src={imageUrl}
           alt={event.name}
-          className="w-full h-full object-cover"
+          className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent flex flex-col justify-end p-4">
-          <h3 className="text-xl font-bold text-white">{event.name}</h3>
+          <h3 className="text-xl font-bold text-white drop-shadow-[0_0_3px_rgba(0,0,0,0.8)]">{event.name}</h3>
           
           <div className="flex items-center gap-2 mt-2">
-            <Badge className="bg-toca-accent border-toca-accent text-white">
+            <Badge className="bg-toca-accent border-toca-accent text-white shadow-[0_0_5px_rgba(234,56,76,0.7)]">
               {formatDate(event.date)}
             </Badge>
           </div>
         </div>
       </div>
       
-      <CardContent className="p-4">
-        <div className="flex items-center gap-2 text-sm text-toca-text-secondary mb-3">
+      <CardContent className="p-4 relative">
+        <div className="flex items-center gap-2 text-sm text-white mb-3">
           <div className="flex items-center gap-1">
-            <Calendar size={14} />
+            <Calendar size={14} className="text-toca-accent" />
             <span>{formatDate(event.date)}</span>
           </div>
           {event.time && (
             <>
-              <div className="w-1 h-1 rounded-full bg-toca-border"></div>
+              <div className="w-1 h-1 rounded-full bg-toca-accent"></div>
               <div className="flex items-center gap-1">
-                <Clock size={14} />
+                <Clock size={14} className="text-toca-accent" />
                 <span>{event.time}</span>
               </div>
             </>
           )}
         </div>
         
-        <div className="flex items-center gap-1 text-sm text-toca-text-secondary mb-3">
-          <MapPin size={14} />
+        <div className="flex items-center gap-1 text-sm text-white mb-3">
+          <MapPin size={14} className="text-toca-accent" />
           <span>{event.city && event.state ? `${event.city}, ${event.state}` : event.location}</span>
         </div>
         
-        <p className="text-sm text-toca-text-secondary mb-3 line-clamp-2">
+        <p className="text-sm text-white/90 mb-3 line-clamp-2">
           {event.description || "Sem descrição disponível"}
         </p>
         
         <div className="flex flex-wrap gap-1 mb-4">
           {event.services && event.services.slice(0, 3).map((service, i) => (
-            <Badge key={i} variant="outline" className="border-toca-border text-white text-xs">
+            <Badge key={i} variant="outline" className="border-toca-accent text-white text-xs">
               {service}
             </Badge>
           ))}
           {event.services && event.services.length > 3 && (
-            <Badge variant="outline" className="border-toca-border text-white text-xs">
+            <Badge variant="outline" className="border-toca-accent text-white text-xs">
               +{event.services.length - 3}
             </Badge>
           )}
@@ -98,7 +98,7 @@ const EventCard: React.FC<EventCardProps> = ({
         
         {onApply && (
           <Button 
-            className="w-full bg-toca-accent hover:bg-toca-accent-hover"
+            className="w-full bg-toca-accent hover:bg-toca-accent-hover transition-all duration-300 shadow-[0_0_10px_rgba(234,56,76,0.5)] hover:shadow-[0_0_15px_rgba(234,56,76,0.8)]"
             onClick={(e) => {
               e.stopPropagation();
               onApply();
