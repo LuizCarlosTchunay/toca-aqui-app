@@ -1,188 +1,34 @@
-import React, { useState } from "react";
-import EventCard from "@/components/EventCard";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, Filter, Calendar, ChevronLeft, MapPin } from "lucide-react";
-import { useNavigate } from "react-router-dom";
-import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
-import { useQuery } from "@tanstack/react-query";
-import { useAuth } from "@/hooks/useAuth";
 
-interface Event {
-  id: string;
-  name: string;
-  description: string;
-  date: string;
-  time: string;
-  location: string;
-  city: string;
-  state: string;
-  required_services: string[];
-  image?: string;
-}
+import React, { useState } from "react";
+import { ChevronLeft } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
+import EventFiltersComponent from "./components/EventFilters";
+import EventsList from "./components/EventsList";
+import { useEvents } from "@/hooks/useEvents";
 
 const ExploreEvents = () => {
   const navigate = useNavigate();
-  const { user } = useAuth();
   const [showFilters, setShowFilters] = useState(false);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [filters, setFilters] = useState({
-    city: "",
-    state: "",
-    date: "",
-    service: "",
-  });
-
-  const { data: events = [], isLoading, isError } = useQuery({
-    queryKey: ['events'],
-    queryFn: async () => {
-      try {
-        const { data, error } = await supabase
-          .from("eventos")
-          .select("*")
-          .eq("status", "aberto");
-
-        if (error) {
-          console.error("Erro ao buscar eventos:", error);
-          throw error;
-        }
-
-        return data.map((event) => ({
-          id: event.id,
-          name: event.titulo || "",
-          description: event.descricao || "",
-          date: event.data || "",
-          time: "", // Time is not stored separately in our schema
-          location: event.local || "",
-          city: event.local?.split(",")[0]?.trim() || "", 
-          state: event.local?.split(",")[1]?.trim() || "", 
-          required_services: event.servicos_requeridos || [],
-          image: "" // Will be handled by the EventCard component
-        }));
-      } catch (error) {
-        console.error("Error fetching events:", error);
-        throw error;
-      }
-    },
-  });
+  
+  const {
+    events,
+    isLoading,
+    isError,
+    searchTerm,
+    setSearchTerm,
+    filters,
+    setFilters
+  } = useEvents();
 
   const toggleFilters = () => {
     setShowFilters(!showFilters);
   };
 
-  const { data: professionalProfile } = useQuery({
-    queryKey: ['userProfessionalProfile', user?.id],
-    queryFn: async () => {
-      if (!user) return null;
-      
-      const { data, error } = await supabase
-        .from('profissionais')
-        .select('id')
-        .eq('user_id', user.id)
-        .single();
-        
-      if (error) {
-        if (error.code !== 'PGRST116') { // PGRST116 is the "no rows returned" error
-          console.error('Error fetching professional profile:', error);
-        }
-        return null;
-      }
-      
-      return data;
-    },
-    enabled: !!user
-  });
-
-  const handleApply = async (eventId: string) => {
-    if (!user) {
-      toast.error("Você precisa estar logado para se candidatar a um evento");
-      navigate("/login");
-      return;
-    }
-
-    if (!professionalProfile) {
-      toast.error("Você precisa ter um perfil profissional para se candidatar");
-      navigate("/editar-perfil");
-      return;
-    }
-
-    try {
-      // Check if user already applied to this event
-      const { data: existingApplication, error: checkError } = await supabase
-        .from("candidaturas")
-        .select("id")
-        .eq("evento_id", eventId)
-        .eq("profissional_id", professionalProfile.id)
-        .single();
-        
-      if (!checkError && existingApplication) {
-        toast.error("Você já se candidatou para este evento");
-        return;
-      }
-
-      const { error } = await supabase
-        .from("candidaturas")
-        .insert({
-          evento_id: eventId,
-          profissional_id: professionalProfile.id,
-          mensagem: "Estou interessado em trabalhar neste evento."
-        });
-
-      if (error) {
-        console.error("Erro ao candidatar-se:", error);
-        toast.error("Erro ao enviar candidatura");
-      } else {
-        toast.success("Candidatura enviada com sucesso!");
-      }
-    } catch (error) {
-      console.error("Erro ao candidatar-se:", error);
-      toast.error("Erro ao enviar candidatura");
-    }
+  const handleResetFilters = () => {
+    setSearchTerm("");
+    setFilters({ city: "", state: "", date: "", service: "" });
   };
-
-  // Filter events based on search term and filters
-  const filteredEvents = events.filter(event => {
-    let matches = true;
-    
-    // Search term filter
-    if (searchTerm) {
-      const searchLower = searchTerm.toLowerCase();
-      matches = matches && (
-        event.name.toLowerCase().includes(searchLower) ||
-        event.description.toLowerCase().includes(searchLower) ||
-        event.city.toLowerCase().includes(searchLower) ||
-        event.state.toLowerCase().includes(searchLower) ||
-        event.location.toLowerCase().includes(searchLower)
-      );
-    }
-    
-    // City filter
-    if (filters.city) {
-      matches = matches && event.city.toLowerCase().includes(filters.city.toLowerCase());
-    }
-    
-    // State filter
-    if (filters.state) {
-      matches = matches && event.state.toLowerCase().includes(filters.state.toLowerCase());
-    }
-    
-    // Date filter
-    if (filters.date) {
-      matches = matches && event.date === filters.date;
-    }
-    
-    // Service filter
-    if (filters.service && filters.service !== "all") {
-      matches = matches && event.required_services.some(
-        service => service.toLowerCase() === filters.service.toLowerCase()
-      );
-    }
-    
-    return matches;
-  });
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -198,155 +44,21 @@ const ExploreEvents = () => {
         <div className="w-[80px]"></div> {/* Spacer for alignment */}
       </div>
 
-      <div className="mb-6">
-        <div className="flex flex-col md:flex-row gap-4">
-          <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-toca-text-secondary" size={18} />
-            <Input
-              placeholder="Buscar eventos..."
-              className="bg-toca-card border-toca-border text-white pl-10"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-          </div>
-          <Button
-            variant="outline"
-            className="border-toca-accent text-toca-accent hover:bg-toca-accent hover:text-white"
-            onClick={toggleFilters}
-          >
-            <Filter size={18} className="mr-2" /> Filtros
-          </Button>
-        </div>
+      <EventFiltersComponent
+        searchTerm={searchTerm}
+        setSearchTerm={setSearchTerm}
+        filters={filters}
+        setFilters={setFilters}
+        showFilters={showFilters}
+        toggleFilters={toggleFilters}
+      />
 
-        {showFilters && (
-          <div className="bg-toca-card border border-toca-border rounded-md p-4 mt-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              <div>
-                <Label>Cidade</Label>
-                <div className="relative">
-                  <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 text-toca-text-secondary" size={16} />
-                  <Input
-                    placeholder="Digite a cidade"
-                    className="bg-toca-background border-toca-border text-white pl-10"
-                    value={filters.city}
-                    onChange={(e) => setFilters({ ...filters, city: e.target.value })}
-                  />
-                </div>
-              </div>
-
-              <div>
-                <Label>Estado</Label>
-                <div className="relative">
-                  <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 text-toca-text-secondary" size={16} />
-                  <Input
-                    placeholder="Digite o estado"
-                    className="bg-toca-background border-toca-border text-white pl-10"
-                    value={filters.state}
-                    onChange={(e) => setFilters({ ...filters, state: e.target.value })}
-                  />
-                </div>
-              </div>
-
-              <div>
-                <Label>Data</Label>
-                <div className="relative">
-                  <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-toca-text-secondary" size={16} />
-                  <Input
-                    type="date"
-                    className="bg-toca-background border-toca-border text-white pl-10"
-                    value={filters.date}
-                    onChange={(e) => setFilters({ ...filters, date: e.target.value })}
-                  />
-                </div>
-              </div>
-
-              <div>
-                <Label>Serviço</Label>
-                <Select
-                  value={filters.service}
-                  onValueChange={(value) => setFilters({ ...filters, service: value })}
-                >
-                  <SelectTrigger className="bg-toca-background border-toca-border">
-                    <SelectValue placeholder="Selecione" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Todos</SelectItem>
-                    <SelectItem value="DJ">DJ</SelectItem>
-                    <SelectItem value="Músico">Músico</SelectItem>
-                    <SelectItem value="Fotógrafo">Fotógrafo</SelectItem>
-                    <SelectItem value="Filmmaker">Filmmaker</SelectItem>
-                    <SelectItem value="Técnico de Som">Técnico de Som</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            <div className="flex justify-end mt-4">
-              <Button 
-                variant="outline" 
-                className="mr-2 bg-black text-white hover:bg-gray-800"
-                onClick={() => setFilters({ city: "", state: "", date: "", service: "" })}
-              >
-                Limpar
-              </Button>
-              <Button 
-                className="bg-toca-accent hover:bg-toca-accent-hover"
-                onClick={toggleFilters}
-              >
-                Aplicar
-              </Button>
-            </div>
-          </div>
-        )}
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {isLoading ? (
-          <div className="col-span-full text-center py-16">
-            <div className="flex justify-center">
-              <div className="w-8 h-8 border-2 border-toca-accent border-t-transparent rounded-full animate-spin"></div>
-            </div>
-            <p className="text-toca-text-secondary mt-4">Carregando eventos...</p>
-          </div>
-        ) : isError ? (
-          <div className="col-span-full text-center py-16">
-            <p className="text-toca-text-secondary">Erro ao carregar eventos. Tente novamente mais tarde.</p>
-          </div>
-        ) : filteredEvents.length > 0 ? (
-          filteredEvents.map((event) => (
-            <EventCard
-              key={event.id}
-              event={{
-                id: event.id,
-                name: event.name,
-                description: event.description,
-                date: event.date,
-                time: event.time,
-                location: event.location,
-                city: event.city,
-                state: event.state,
-                services: event.required_services,
-                image: event.image || "https://images.unsplash.com/photo-1527576539890-dfa815648363" // Default image
-              }}
-              onClick={() => navigate(`/eventos/${event.id}`)}
-              onApply={() => handleApply(event.id)}
-            />
-          ))
-        ) : (
-          <div className="col-span-full text-center py-16">
-            <p className="text-toca-text-secondary mb-4">Nenhum evento encontrado com os filtros atuais.</p>
-            <Button 
-              className="bg-black text-toca-accent hover:bg-gray-900"
-              onClick={() => {
-                setSearchTerm("");
-                setFilters({ city: "", state: "", date: "", service: "" });
-              }}
-            >
-              Limpar filtros
-            </Button>
-          </div>
-        )}
-      </div>
+      <EventsList 
+        events={events}
+        isLoading={isLoading}
+        isError={isError}
+        onResetFilters={handleResetFilters}
+      />
     </div>
   );
 };
