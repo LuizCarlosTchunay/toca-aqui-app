@@ -136,12 +136,9 @@ const EditEvent = () => {
         })
         .eq("id", id)
         .eq("contratante_id", user.id);
-
+      
       if (error) {
-        console.error("Erro ao atualizar evento:", error);
-        toast.error(error.message || "Ocorreu um erro ao atualizar o evento. Tente novamente.");
-        setIsSubmitting(false);
-        return;
+        throw error;
       }
       
       toast.success("Evento atualizado com sucesso!");
@@ -152,7 +149,7 @@ const EditEvent = () => {
     } finally {
       setIsSubmitting(false);
     }
-  }
+  };
 
   if (isLoading) {
     return (
@@ -213,8 +210,10 @@ const EditEvent = () => {
               <div className="space-y-2">
                 <Label htmlFor="date">Data do Evento</Label>
                 <DatePicker
-                  defaultDate={formData.date}
+                  id="date"
                   onSelect={handleDateChange}
+                  defaultDate={formData.date}
+                  selected={formData.date}
                   required
                 />
               </div>
