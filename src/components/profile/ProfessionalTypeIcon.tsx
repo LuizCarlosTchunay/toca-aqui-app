@@ -26,8 +26,10 @@ const ProfessionalTypeIcon: React.FC<ProfessionalTypeIconProps> = ({
 
   switch (normalizedType) {
     case "musico":
+    case "músico":
       return <Music size={size} />;
     case "voz e violao":
+    case "voz e violão":
       return <MicVocal size={size} />;
     case "baterista":
       return <Drum size={size} />;
@@ -38,6 +40,7 @@ const ProfessionalTypeIcon: React.FC<ProfessionalTypeIconProps> = ({
     case "dj":
       return <Disc size={size} />;
     case "fotografo":
+    case "fotógrafo":
       return <Camera size={size} />;
     case "filmmaker":
       return <Film size={size} />;
