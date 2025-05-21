@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import Navbar from "@/components/Navbar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -90,17 +91,29 @@ const EditProfile = () => {
           
           // Try to get profile image
           try {
+            // Ensure bucket exists first
+            try {
+              await supabase.storage.createBucket('profile_images', {
+                public: true
+              });
+            } catch (e) {
+              console.log("Bucket may already exist");
+            }
+            
             const { data: imageData } = supabase.storage
               .from('profile_images')
               .getPublicUrl(`professionals/${data.id}`);
             
             if (imageData?.publicUrl) {
+              // Add cache busting
+              const imageUrl = imageData.publicUrl + '?t=' + new Date().getTime();
+              
               const checkImage = await fetch(imageData.publicUrl, { method: 'HEAD' })
                 .then(res => res.ok)
                 .catch(() => false);
                 
               if (checkImage) {
-                setProfileImageUrl(imageData.publicUrl);
+                setProfileImageUrl(imageUrl);
               }
             }
           } catch (imgError) {
@@ -242,19 +255,19 @@ const EditProfile = () => {
       
       toast.success("Perfil atualizado com sucesso!");
       
-      // Add a longer delay and wrap navigation in try-catch to prevent black screen issues
+      // First set loading to false to ensure UI is responsive
+      setIsLoading(false);
+      
+      // Then navigate after a short delay to avoid the black screen issue
       setTimeout(() => {
         try {
-          // First set loading false to ensure UI is responsive
-          setIsLoading(false);
-          // Then navigate
-          navigate("/dashboard", { replace: true });
+          navigate("/meu-perfil", { replace: true });
         } catch (navError) {
           console.error("Navigation error:", navError);
           // If navigation fails, provide a fallback
-          window.location.href = "/dashboard";
+          window.location.href = "/meu-perfil";
         }
-      }, 2000); // Longer delay to ensure all operations complete
+      }, 100);
       
     } catch (error: any) {
       console.error("Error saving profile:", error);
@@ -281,17 +294,21 @@ const EditProfile = () => {
     }
   };
 
-  // If the user is not logged in, show a message and redirect
-  if (!user) {
+  // Check if user is authenticated
+  useEffect(() => {
+    if (!user) {
+      toast.error("Você precisa estar logado para acessar esta página");
+      navigate("/login");
+    }
+  }, [user, navigate]);
+
+  if (isLoading && !profileData.artisticName) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-toca-background">
-        <p className="text-white mb-4">Você precisa estar logado para acessar esta página.</p>
-        <Button 
-          onClick={() => navigate("/")}
-          className="bg-toca-accent hover:bg-toca-accent-hover"
-        >
-          Voltar para o início
-        </Button>
+      <div className="min-h-screen flex flex-col bg-toca-background">
+        <Navbar isAuthenticated={!!user} />
+        <div className="container mx-auto px-4 py-8 flex items-center justify-center">
+          <div className="w-8 h-8 border-2 border-toca-accent border-t-transparent rounded-full animate-spin"></div>
+        </div>
       </div>
     );
   }

@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import Navbar from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
 import { useNavigate, useParams } from "react-router-dom";
@@ -26,14 +26,24 @@ const ProfessionalProfile = () => {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
+  const [retryCount, setRetryCount] = useState(0);
   
   // Fetch professional data
-  const { data: professional, isLoading, isError } = useQuery({
-    queryKey: ['professional', id],
+  const { data: professional, isLoading, isError, refetch } = useQuery({
+    queryKey: ['professional', id, retryCount],
     queryFn: async () => {
       if (!id) throw new Error("ID do profissional não fornecido");
 
       try {
+        // Ensure storage bucket exists to avoid errors
+        try {
+          await supabase.storage.createBucket('profile_images', {
+            public: true
+          });
+        } catch (e) {
+          console.log("Bucket may already exist");
+        }
+        
         // Get professional details
         const { data: professionalData, error } = await supabase
           .from("profissionais")
@@ -72,7 +82,8 @@ const ProfessionalProfile = () => {
           try {
             const response = await fetch(imageData.publicUrl, { method: 'HEAD' });
             if (response.ok) {
-              imageUrl = imageData.publicUrl;
+              // Add cache busting to prevent stale images
+              imageUrl = imageData.publicUrl + '?t=' + new Date().getTime();
             }
           } catch (err) {
             console.log("Image may not exist");
@@ -103,12 +114,14 @@ const ProfessionalProfile = () => {
         throw error;
       }
     },
-    enabled: !!id
+    enabled: !!id,
+    retry: 2,
+    staleTime: 30000 // 30 seconds
   });
 
   // Fetch portfolio items
   const { data: portfolioItems = [] } = useQuery<PortfolioItem[]>({
-    queryKey: ['portfolio', id],
+    queryKey: ['portfolio', id, retryCount],
     queryFn: async () => {
       if (!id) return [];
       
@@ -136,8 +149,22 @@ const ProfessionalProfile = () => {
         return [];
       }
     },
-    enabled: !!id
+    enabled: !!id,
+    retry: 2,
+    staleTime: 30000 // 30 seconds
   });
+
+  // Force refresh data if any errors occur
+  useEffect(() => {
+    if (isError && retryCount < 3) {
+      const timer = setTimeout(() => {
+        setRetryCount(prev => prev + 1);
+        refetch();
+      }, 1000);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [isError, retryCount, refetch]);
 
   const handleBookProfessional = () => {
     if (!user) {
@@ -171,6 +198,16 @@ const ProfessionalProfile = () => {
           <p className="text-center text-toca-text-secondary">Erro ao carregar perfil. Tente novamente mais tarde.</p>
           <Button 
             className="mx-auto mt-4 block bg-toca-accent hover:bg-toca-accent-hover"
+            onClick={() => {
+              setRetryCount(prev => prev + 1);
+              refetch();
+            }}
+          >
+            Tentar novamente
+          </Button>
+          <Button 
+            className="mx-auto mt-4 block"
+            variant="outline"
             onClick={() => navigate(-1)}
           >
             Voltar
@@ -217,7 +254,7 @@ const ProfessionalProfile = () => {
             />
             
             {/* Reviews card */}
-            <ReviewsSection />
+            <ReviewsSection professionalId={professional.id} />
           </div>
         </div>
       </div>

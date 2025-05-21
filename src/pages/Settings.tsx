@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import Navbar from "@/components/Navbar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -14,6 +15,7 @@ import { useForm } from "react-hook-form";
 import { Form, FormField, FormItem, FormControl, FormMessage } from "@/components/ui/form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
+import ImageUploader from "@/components/ImageUploader";
 
 // Schema definition for profile form
 const profileSchema = z.object({
@@ -44,6 +46,7 @@ const Settings = () => {
   const navigate = useNavigate();
   const { user, loading } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
+  const [profileImage, setProfileImage] = useState<string | undefined>(undefined);
   const [notificationSettings, setNotificationSettings] = useState<NotificationSettings>({
     emailNotifications: true,
     bookingNotifications: true,
@@ -94,6 +97,26 @@ const Settings = () => {
             email: userData.email || "",
             phone: userData.telefone || "",
           });
+          
+          // Try to fetch profile image
+          try {
+            const { data: imageData } = supabase.storage
+              .from('profile_images')
+              .getPublicUrl(`users/${user.id}`);
+            
+            if (imageData?.publicUrl) {
+              // Add cache-busting parameter
+              const imageUrl = imageData.publicUrl + '?t=' + new Date().getTime();
+              
+              // Check if image exists
+              const response = await fetch(imageUrl, { method: 'HEAD' });
+              if (response.ok) {
+                setProfileImage(imageUrl);
+              }
+            }
+          } catch (imageError) {
+            console.log("Profile image may not exist yet");
+          }
         }
 
         // Fetch notification settings if they exist
@@ -127,7 +150,45 @@ const Settings = () => {
     if (user && !loading) {
       loadUserData();
     }
-  }, [user, loading]);
+  }, [user, loading, profileForm]);
+
+  // Handle profile image change
+  const handleImageChange = async (file: File, imageUrl?: string) => {
+    if (!user) return;
+    
+    try {
+      // Ensure storage bucket exists
+      try {
+        await supabase.storage.createBucket('profile_images', {
+          public: true
+        });
+      } catch (bucketError) {
+        console.log("Bucket may already exist", bucketError);
+      }
+      
+      // Upload image to storage
+      const { error: uploadError } = await supabase.storage
+        .from('profile_images')
+        .upload(`users/${user.id}`, file, {
+          upsert: true,
+          contentType: file.type
+        });
+        
+      if (uploadError) throw uploadError;
+      
+      // Update profile image URL with cache busting
+      if (imageUrl) {
+        const cacheBustedUrl = imageUrl.includes('?') 
+          ? imageUrl 
+          : `${imageUrl}?t=${new Date().getTime()}`;
+        setProfileImage(cacheBustedUrl);
+        toast.success("Imagem de perfil atualizada com sucesso!");
+      }
+    } catch (error: any) {
+      console.error("Erro ao atualizar imagem:", error);
+      toast.error("Erro ao atualizar imagem: " + (error.message || "Tente novamente"));
+    }
+  };
 
   // Handle profile form submission
   const handleSaveProfile = async (data: z.infer<typeof profileSchema>) => {
@@ -246,6 +307,25 @@ const Settings = () => {
     }
   };
 
+  // Check if user is authenticated
+  useEffect(() => {
+    if (!loading && !user) {
+      toast.error("Você precisa estar logado para acessar esta página");
+      navigate("/login");
+    }
+  }, [user, loading, navigate]);
+
+  if (loading || !user) {
+    return (
+      <div className="min-h-screen flex flex-col bg-toca-background">
+        <Navbar isAuthenticated={false} />
+        <div className="container mx-auto px-4 py-8 flex items-center justify-center">
+          <div className="w-8 h-8 border-2 border-toca-accent border-t-transparent rounded-full animate-spin"></div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen flex flex-col bg-toca-background">
       <Navbar isAuthenticated={!!user} />
@@ -266,6 +346,16 @@ const Settings = () => {
                 <CardTitle>Informações do Perfil</CardTitle>
               </CardHeader>
               <CardContent>
+                <div className="flex flex-col items-center mb-8">
+                  <ImageUploader 
+                    currentImage={profileImage}
+                    onImageChange={handleImageChange}
+                    size="lg"
+                    bucketName="profile_images"
+                    objectPath={user ? `users/${user.id}` : undefined}
+                  />
+                </div>
+                
                 <Form {...profileForm}>
                   <form onSubmit={profileForm.handleSubmit(handleSaveProfile)} className="space-y-4">
                     <FormField

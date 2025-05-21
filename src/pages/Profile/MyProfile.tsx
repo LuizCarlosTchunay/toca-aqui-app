@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "@/components/Navbar";
@@ -6,79 +7,105 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { MapPin, Edit, Star, Calendar, Clock } from "lucide-react";
+import { MapPin, Edit, Star, Calendar, Clock, Loader2 } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import ImageUploader from "@/components/ImageUploader";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import PortfolioManager from "@/components/PortfolioManager";
 
 const MyProfile = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { toast } = useToast();
   const [activeTab, setActiveTab] = useState("profile");
   const [isProfessional, setIsProfessional] = useState(false);
   const [profileImage, setProfileImage] = useState<string | null>(null);
+  const queryClient = useQueryClient();
+  const [refreshKey, setRefreshKey] = useState(0);
 
   // Fetch professional data if the user is a professional
-  const { data: professional, isLoading } = useQuery({
-    queryKey: ['my-professional-profile', user?.id],
+  const { data: professional, isLoading, refetch } = useQuery({
+    queryKey: ['my-professional-profile', user?.id, refreshKey],
     queryFn: async () => {
       if (!user?.id) return null;
 
-      // First check if user has a professional profile
-      const { data: userData, error: userError } = await supabase
-        .from('users')
-        .select('tem_perfil_profissional')
-        .eq('id', user.id)
-        .maybeSingle();
-
-      if (userError) throw userError;
-      
-      if (!userData?.tem_perfil_profissional) {
-        setIsProfessional(false);
-        return null;
-      }
-
-      setIsProfessional(true);
-
-      // Fetch professional profile
-      const { data: profData, error: profError } = await supabase
-        .from('profissionais')
-        .select('*')
-        .eq('user_id', user.id)
-        .maybeSingle();
-
-      if (profError) throw profError;
-      if (!profData) return null;
-
-      // Try to get the profile image
       try {
-        const { data: imageData } = await supabase.storage
-          .from('profile_images')
-          .getPublicUrl(`professionals/${profData.id}`);
-          
-        if (imageData?.publicUrl) {
-          // Check if image exists by making a head request
-          const imgExists = await fetch(imageData.publicUrl, { method: 'HEAD' })
-            .then(res => res.ok)
-            .catch(() => false);
-            
-          if (imgExists) {
-            setProfileImage(imageData.publicUrl);
-          }
+        // First check if user has a professional profile
+        const { data: userData, error: userError } = await supabase
+          .from('users')
+          .select('tem_perfil_profissional')
+          .eq('id', user.id)
+          .maybeSingle();
+  
+        if (userError) throw userError;
+        
+        if (!userData?.tem_perfil_profissional) {
+          setIsProfessional(false);
+          return null;
         }
+  
+        setIsProfessional(true);
+  
+        // Fetch professional profile
+        const { data: profData, error: profError } = await supabase
+          .from('profissionais')
+          .select('*')
+          .eq('user_id', user.id)
+          .maybeSingle();
+  
+        if (profError) throw profError;
+        if (!profData) return null;
+  
+        // Try to get the profile image
+        try {
+          // Ensure bucket exists
+          try {
+            await supabase.storage.createBucket('profile_images', {
+              public: true
+            });
+          } catch (e) {
+            console.log("Bucket may already exist");
+          }
+          
+          const { data: imageData } = await supabase.storage
+            .from('profile_images')
+            .getPublicUrl(`professionals/${profData.id}`);
+            
+          if (imageData?.publicUrl) {
+            // Add cache busting parameter
+            const imageUrl = `${imageData.publicUrl}?t=${new Date().getTime()}`;
+            
+            // Check if image exists by making a head request
+            const imgExists = await fetch(imageData.publicUrl, { method: 'HEAD' })
+              .then(res => res.ok)
+              .catch(() => false);
+              
+            if (imgExists) {
+              setProfileImage(imageUrl);
+            }
+          }
+        } catch (error) {
+          console.error("Error fetching profile image:", error);
+        }
+  
+        return profData;
       } catch (error) {
-        console.error("Error fetching profile image:", error);
+        console.error("Error fetching professional profile:", error);
+        throw error;
       }
-
-      return profData;
     },
     enabled: !!user?.id,
+    staleTime: 10000, // 10 seconds
+    retry: 1
   });
+
+  // Refresh data after any update
+  const refreshProfileData = () => {
+    setRefreshKey(prev => prev + 1);
+    refetch();
+  };
 
   // Redirect to create professional profile if user is not a professional
   useEffect(() => {
@@ -90,15 +117,20 @@ const MyProfile = () => {
   // Handle image upload
   const handleImageUpload = async (file: File) => {
     if (!professional?.id) {
-      toast({
-        title: "Erro",
-        description: "Você precisa ter um perfil profissional para fazer upload de imagem.",
-        variant: "destructive"
-      });
+      toast.error("Você precisa ter um perfil profissional para fazer upload de imagem.");
       return;
     }
 
     try {
+      // Ensure bucket exists
+      try {
+        await supabase.storage.createBucket('profile_images', {
+          public: true
+        });
+      } catch (e) {
+        console.log("Bucket may already exist");
+      }
+      
       const { error } = await supabase.storage
         .from('profile_images')
         .upload(`professionals/${professional.id}`, file, {
@@ -108,28 +140,35 @@ const MyProfile = () => {
 
       if (error) throw error;
 
-      // Update the profile image URL
+      // Update the profile image URL with cache busting
       const { data } = await supabase.storage
         .from('profile_images')
         .getPublicUrl(`professionals/${professional.id}`);
 
       if (data?.publicUrl) {
-        setProfileImage(data.publicUrl);
+        const imageUrl = `${data.publicUrl}?t=${new Date().getTime()}`;
+        setProfileImage(imageUrl);
         
-        toast({
-          title: "Sucesso",
-          description: "Imagem de perfil atualizada com sucesso!",
+        toast.success("Imagem de perfil atualizada com sucesso!");
+        
+        // Invalidate queries to refresh data
+        queryClient.invalidateQueries({
+          queryKey: ['my-professional-profile']
         });
       }
     } catch (error: any) {
       console.error("Error uploading image:", error);
-      toast({
-        title: "Erro ao fazer upload",
-        description: error.message || "Ocorreu um erro ao fazer upload da imagem.",
-        variant: "destructive"
-      });
+      toast.error("Erro ao fazer upload: " + (error.message || "Ocorreu um erro ao fazer upload da imagem."));
     }
   };
+
+  // Redirect to login if not authenticated
+  useEffect(() => {
+    if (!user && !isLoading) {
+      toast.error("Você precisa estar logado para acessar esta página");
+      navigate("/login");
+    }
+  }, [user, isLoading, navigate]);
 
   if (isLoading || !user) {
     return (
@@ -137,8 +176,9 @@ const MyProfile = () => {
         <Navbar isAuthenticated={!!user} />
         <div className="container mx-auto px-4 py-8">
           <div className="flex justify-center py-16">
-            <div className="w-8 h-8 border-2 border-toca-accent border-t-transparent rounded-full animate-spin"></div>
+            <Loader2 className="h-8 w-8 animate-spin text-toca-accent" />
           </div>
+          <p className="text-center text-toca-text-secondary">Carregando perfil...</p>
         </div>
       </div>
     );
@@ -258,6 +298,23 @@ const MyProfile = () => {
               </Card>
             )}
             
+            {professional?.servicos?.length > 0 && (
+              <Card className="bg-toca-card border-toca-border shadow-md mb-6">
+                <CardHeader>
+                  <CardTitle className="text-lg">Serviços</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex flex-wrap gap-2">
+                    {professional.servicos.map((service, index) => (
+                      <Badge key={index} className="bg-toca-background border-toca-border text-white">
+                        {service}
+                      </Badge>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+            
             {professional?.subgeneros?.length > 0 && (
               <Card className="bg-toca-card border-toca-border shadow-md">
                 <CardHeader>
@@ -322,7 +379,10 @@ const MyProfile = () => {
               
               <TabsContent value="portfolio">
                 {professional?.id ? (
-                  <PortfolioManager professionalId={professional.id} />
+                  <PortfolioManager 
+                    professionalId={professional.id} 
+                    onUpdate={refreshProfileData} 
+                  />
                 ) : (
                   <Card className="bg-toca-card border-toca-border shadow-md">
                     <CardContent className="py-12">

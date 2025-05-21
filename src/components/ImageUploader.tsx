@@ -43,6 +43,16 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
       if (!objectPath || !bucketName) return;
       
       try {
+        // Ensure the bucket exists first
+        try {
+          await supabase.storage.createBucket(bucketName, {
+            public: true
+          });
+        } catch (e) {
+          // Bucket likely already exists
+          console.log("Bucket may already exist");
+        }
+
         // Try to get public URL
         const { data } = supabase.storage
           .from(bucketName)
@@ -139,14 +149,15 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
           }
         }
         
-        // Get the public URL of the uploaded file
+        // Get the public URL of the uploaded file with cache busting
         const { data: publicUrlData } = supabase.storage
           .from(bucketName)
           .getPublicUrl(objectPath);
           
         if (publicUrlData && handleImageChange) {
           // Pass both the file and the public URL to the parent component
-          handleImageChange(file, publicUrlData.publicUrl + '?t=' + new Date().getTime());
+          const cachedBustedUrl = publicUrlData.publicUrl + '?t=' + new Date().getTime();
+          handleImageChange(file, cachedBustedUrl);
           toast.success("Imagem atualizada com sucesso!");
         } else if (handleImageChange) {
           handleImageChange(file);
@@ -176,14 +187,15 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
           throw error;
         }
         
-        // Get the public URL of the uploaded file
+        // Get the public URL of the uploaded file with cache busting
         const { data: publicUrlData } = supabase.storage
           .from(bucketName)
           .getPublicUrl(fileName);
           
         if (publicUrlData && handleImageChange) {
           // Pass both the file and the public URL to the parent component
-          handleImageChange(file, publicUrlData.publicUrl + '?t=' + new Date().getTime());
+          const cachedBustedUrl = publicUrlData.publicUrl + '?t=' + new Date().getTime();
+          handleImageChange(file, cachedBustedUrl);
           toast.success("Imagem atualizada com sucesso!");
         } else if (handleImageChange) {
           handleImageChange(file);
