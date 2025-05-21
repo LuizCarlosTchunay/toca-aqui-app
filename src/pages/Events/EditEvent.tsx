@@ -12,7 +12,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import Navbar from "@/components/Navbar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Calendar, Save } from "lucide-react";
+import { Save } from "lucide-react";
 
 const EditEvent = () => {
   const navigate = useNavigate();
@@ -137,9 +137,7 @@ const EditEvent = () => {
         .eq("id", id)
         .eq("contratante_id", user.id);
       
-      if (error) {
-        throw error;
-      }
+      if (error) throw error;
       
       toast.success("Evento atualizado com sucesso!");
       navigate(`/eventos/${id}`);
@@ -211,9 +209,8 @@ const EditEvent = () => {
                 <Label htmlFor="date">Data do Evento</Label>
                 <DatePicker
                   id="date"
-                  onSelect={handleDateChange}
                   defaultDate={formData.date}
-                  selected={formData.date}
+                  onSelect={handleDateChange}
                   required
                 />
               </div>
