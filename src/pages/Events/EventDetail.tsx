@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useNavigate, useParams } from "react-router-dom";
-import { ChevronLeft, Calendar, MapPin, Clock, Users } from "lucide-react";
+import { ChevronLeft, Calendar, MapPin, Clock, Edit } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
@@ -73,6 +73,9 @@ const EventDetail = () => {
     },
     enabled: !!id,
   });
+
+  // Check if the current user is the owner of this event
+  const isEventOwner = user && event?.contratante_id === user.id;
 
   // Get user professional profile (if exists)
   const { data: professionalProfile } = useQuery({
@@ -167,6 +170,13 @@ const EventDetail = () => {
     }
   };
 
+  // Handle edit event
+  const handleEditEvent = () => {
+    if (id) {
+      navigate(`/eventos/editar/${id}`);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex flex-col bg-toca-background">
@@ -206,7 +216,7 @@ const EventDetail = () => {
       <Navbar isAuthenticated={!!user} />
       
       <div className="container mx-auto px-4 py-8">
-        <div className="mb-6">
+        <div className="mb-6 flex justify-between items-center">
           <Button 
             variant="outline" 
             className="bg-black text-toca-accent hover:bg-gray-800 border-toca-accent"
@@ -214,6 +224,16 @@ const EventDetail = () => {
           >
             <ChevronLeft size={18} className="mr-1" /> Voltar
           </Button>
+
+          {isEventOwner && (
+            <Button
+              variant="outline"
+              className="bg-black border-toca-accent text-toca-accent hover:bg-toca-accent hover:text-white transition-colors duration-300"
+              onClick={handleEditEvent}
+            >
+              <Edit size={18} className="mr-2" /> Editar Evento
+            </Button>
+          )}
         </div>
         
         <div 
@@ -299,20 +319,22 @@ const EventDetail = () => {
                         </div>
                       </div>
                       
-                      <Button 
-                        className="w-full bg-toca-accent hover:bg-toca-accent-hover mt-4 transition-all duration-300 shadow-[0_0_10px_rgba(234,56,76,0.5)] hover:shadow-[0_0_15px_rgba(234,56,76,0.8)] animate-neon-pulse"
-                        onClick={handleApply}
-                        disabled={isApplying}
-                      >
-                        {isApplying ? (
-                          <>
-                            <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-b-transparent"></div>
-                            Processando...
-                          </>
-                        ) : (
-                          "Me candidatar"
-                        )}
-                      </Button>
+                      {!isEventOwner && (
+                        <Button 
+                          className="w-full bg-toca-accent hover:bg-toca-accent-hover mt-4 transition-all duration-300 shadow-[0_0_10px_rgba(234,56,76,0.5)] hover:shadow-[0_0_15px_rgba(234,56,76,0.8)] animate-neon-pulse"
+                          onClick={handleApply}
+                          disabled={isApplying}
+                        >
+                          {isApplying ? (
+                            <>
+                              <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-b-transparent"></div>
+                              Processando...
+                            </>
+                          ) : (
+                            "Me candidatar"
+                          )}
+                        </Button>
+                      )}
                     </CardContent>
                   </Card>
                 </div>
