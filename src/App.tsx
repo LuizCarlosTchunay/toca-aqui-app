@@ -1,3 +1,4 @@
+
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { Toaster } from 'sonner';
 import './index.css';
@@ -5,31 +6,24 @@ import ProtectedRoute from './components/ProtectedRoute';
 import { AuthProvider } from './hooks/useAuth';
 
 // Pages
-import Home from './pages/Home';
-import Login from './pages/Login';
-import Register from './pages/Register';
+import Index from './pages/Index';
 import Dashboard from './pages/Dashboard';
-import Profile from './pages/Profile';
 import EditProfile from './pages/Profile/EditProfile';
 import ProfessionalProfile from './pages/Profile/ProfessionalProfile';
-import Explore from './pages/Explore';
 import EventDetail from './pages/Events/EventDetail';
 import CreateEvent from './pages/Events/CreateEvent';
 import EditEvent from './pages/Events/EditEvent';
-import Booking from './pages/Booking';
 
 function App() {
   return (
     <Router>
       <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
+        <Route path="/" element={<Index />} />
         <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-        <Route path="/perfil" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+        <Route path="/perfil" element={<ProtectedRoute><Index /></ProtectedRoute>} />
         <Route path="/editar-perfil" element={<ProtectedRoute><EditProfile /></ProtectedRoute>} />
         <Route path="/profissional/:id" element={<ProfessionalProfile />} />
-        <Route path="/explorar" element={<Explore />} />
+        <Route path="/explorar" element={<Index />} />
         
         {/* Events routes */}
         <Route 
@@ -56,7 +50,7 @@ function App() {
         />
         
         {/* Booking route */}
-        <Route path="/reservar/:professionalId" element={<ProtectedRoute><Booking /></ProtectedRoute>} />
+        <Route path="/reservar/:professionalId" element={<ProtectedRoute><Index /></ProtectedRoute>} />
       </Routes>
       <Toaster position="top-center" richColors />
     </Router>

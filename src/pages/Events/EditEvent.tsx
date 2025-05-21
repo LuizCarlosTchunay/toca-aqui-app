@@ -213,7 +213,6 @@ const EditEvent = () => {
                   id="date"
                   onSelect={handleDateChange}
                   defaultDate={formData.date}
-                  selected={formData.date}
                   required
                 />
               </div>
