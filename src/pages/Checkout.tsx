@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import Navbar from "@/components/Navbar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -25,8 +26,8 @@ const Checkout = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
-  // Extract professional ID from location state or use default for testing
-  const professionalId = location.state?.professionalId || "";
+  // Extract professional ID from location state
+  const professionalId = location.state?.professionalId;
   const bookingType = location.state?.bookingType || "event";
   const hours = location.state?.hours || 4;
   const bookingDetails = location.state?.bookingDetails || {};
@@ -45,17 +46,14 @@ const Checkout = () => {
   // Fetch professional data
   useEffect(() => {
     const fetchProfessionalData = async () => {
+      // If no professional ID is provided in state, redirect back
       if (!professionalId) {
-        setIsLoading(false);
-        setCartItems([{
-          id: "1",
-          professional: "DJ Pulse",
-          type: "DJ",
-          event: "Casamento Silva",
-          date: "15/06/2025",
-          price: 1200,
-          professionalId: "1"
-        }]);
+        toast({
+          title: "Erro",
+          description: "Não foi possível identificar o profissional selecionado.",
+          variant: "destructive",
+        });
+        navigate(-1);
         return;
       }
       
@@ -113,7 +111,7 @@ const Checkout = () => {
     };
     
     fetchProfessionalData();
-  }, [professionalId, bookingType, hours, bookingDetails]);
+  }, [professionalId, bookingType, hours, bookingDetails, navigate]);
   
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -235,6 +233,17 @@ const Checkout = () => {
                         Voltar para seleção
                       </Button>
                     </div>
+                  ) : cartItems.length === 0 ? (
+                    <div className="text-center py-8">
+                      <p className="text-white">Seu carrinho está vazio.</p>
+                      <Button 
+                        variant="outline" 
+                        className="mt-4"
+                        onClick={() => navigate(-1)}
+                      >
+                        Voltar para seleção
+                      </Button>
+                    </div>
                   ) : (
                     <div className="space-y-4">
                       {cartItems.map((item) => (
@@ -269,184 +278,188 @@ const Checkout = () => {
                 </CardContent>
               </Card>
               
-              <Card className="bg-toca-card border-toca-border">
-                <CardHeader>
-                  <CardTitle className="text-white">Método de Pagamento</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  {!termsAccepted && (
-                    <div className="mb-6 p-4 border border-amber-500 bg-amber-500/10 rounded-md flex items-start gap-3">
-                      <AlertTriangle className="text-amber-500 mt-0.5" size={20} />
-                      <div className="flex-1">
-                        <p className="text-white text-sm">
-                          É necessário aceitar os termos de serviço para prosseguir com o pagamento.
-                        </p>
-                        <Button 
-                          variant="link" 
-                          className="text-toca-accent p-0 h-auto text-sm mt-1"
-                          onClick={() => setShowTermsDialog(true)}
-                        >
-                          Ler e aceitar os termos
-                        </Button>
-                      </div>
-                    </div>
-                  )}
-                
-                  <form onSubmit={handleSubmit} className="space-y-6">
-                    <RadioGroup 
-                      defaultValue="credit" 
-                      onValueChange={(value) => setPaymentMethod(value as "credit" | "pix" | "debit")}
-                      className="space-y-4"
-                    >
-                      <div className="flex items-center space-x-2 bg-toca-background p-3 rounded-md border border-toca-border">
-                        <RadioGroupItem value="credit" id="credit" />
-                        <Label htmlFor="credit" className="flex items-center gap-2 cursor-pointer flex-1 text-white">
-                          <CreditCard size={20} />
-                          Cartão de Crédito
-                        </Label>
-                      </div>
-                      
-                      <div className="flex items-center space-x-2 bg-toca-background p-3 rounded-md border border-toca-border">
-                        <RadioGroupItem value="debit" id="debit" />
-                        <Label htmlFor="debit" className="flex items-center gap-2 cursor-pointer flex-1 text-white">
-                          <CreditCard size={20} />
-                          Cartão de Débito
-                        </Label>
-                      </div>
-                      
-                      <div className="flex items-center space-x-2 bg-toca-background p-3 rounded-md border border-toca-border">
-                        <RadioGroupItem value="pix" id="pix" />
-                        <Label htmlFor="pix" className="flex items-center gap-2 cursor-pointer flex-1 text-white">
-                          <QrCode size={20} />
-                          Pix
-                        </Label>
-                      </div>
-                    </RadioGroup>
-                    
-                    {paymentMethod !== "pix" && (
-                      <div className="space-y-4">
-                        <div className="space-y-2">
-                          <Label htmlFor="cardName" className="text-white">Nome no Cartão</Label>
-                          <Input 
-                            id="cardName" 
-                            placeholder="Nome impresso no cartão" 
-                            className="bg-toca-background border-toca-border text-white"
-                            required
-                          />
-                        </div>
-                        
-                        <div className="space-y-2">
-                          <Label htmlFor="cardNumber" className="text-white">Número do Cartão</Label>
-                          <Input 
-                            id="cardNumber" 
-                            placeholder="0000 0000 0000 0000" 
-                            className="bg-toca-background border-toca-border text-white"
-                            required
-                          />
-                        </div>
-                        
-                        <div className="grid grid-cols-2 gap-4">
-                          <div className="space-y-2">
-                            <Label htmlFor="expiry" className="text-white">Data de Validade</Label>
-                            <Input 
-                              id="expiry" 
-                              placeholder="MM/AA" 
-                              className="bg-toca-background border-toca-border text-white"
-                              required
-                            />
-                          </div>
-                          <div className="space-y-2">
-                            <Label htmlFor="cvv" className="text-white">CVV</Label>
-                            <Input 
-                              id="cvv" 
-                              placeholder="123" 
-                              className="bg-toca-background border-toca-border text-white"
-                              required
-                            />
-                          </div>
+              {!isLoading && !error && cartItems.length > 0 && (
+                <Card className="bg-toca-card border-toca-border">
+                  <CardHeader>
+                    <CardTitle className="text-white">Método de Pagamento</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {!termsAccepted && (
+                      <div className="mb-6 p-4 border border-amber-500 bg-amber-500/10 rounded-md flex items-start gap-3">
+                        <AlertTriangle className="text-amber-500 mt-0.5" size={20} />
+                        <div className="flex-1">
+                          <p className="text-white text-sm">
+                            É necessário aceitar os termos de serviço para prosseguir com o pagamento.
+                          </p>
+                          <Button 
+                            variant="link" 
+                            className="text-toca-accent p-0 h-auto text-sm mt-1"
+                            onClick={() => setShowTermsDialog(true)}
+                          >
+                            Ler e aceitar os termos
+                          </Button>
                         </div>
                       </div>
                     )}
-                    
-                    {paymentMethod === "pix" && (
-                      <div className="flex flex-col items-center py-4">
-                        <div className="w-48 h-48 bg-white p-2 rounded-md mb-4 flex items-center justify-center">
-                          <div className="text-black text-center">
-                            [QR Code Pix]
-                          </div>
-                        </div>
-                        <p className="text-sm text-toca-text-secondary text-center mb-4">
-                          Escaneie o QR Code acima com o app do seu banco para pagar via Pix. 
-                          O pagamento será confirmado automaticamente.
-                        </p>
-                        <Button 
-                          variant="outline" 
-                          className="border-toca-border text-toca-text-secondary"
-                          onClick={() => toast({
-                            title: "Copiado",
-                            description: "Código Pix copiado para a área de transferência!"
-                          })}
-                        >
-                          Copiar código Pix
-                        </Button>
-                      </div>
-                    )}
-                    
-                    <div className="pt-4">
-                      <Button 
-                        type="submit"
-                        className="w-full bg-toca-accent hover:bg-toca-accent-hover"
-                        disabled={!termsAccepted || isLoading || !!error || cartItems.length === 0}
+                  
+                    <form onSubmit={handleSubmit} className="space-y-6">
+                      <RadioGroup 
+                        defaultValue="credit" 
+                        onValueChange={(value) => setPaymentMethod(value as "credit" | "pix" | "debit")}
+                        className="space-y-4"
                       >
-                        {paymentMethod === "pix" ? "Confirmar Pagamento" : "Pagar"}
-                      </Button>
+                        <div className="flex items-center space-x-2 bg-toca-background p-3 rounded-md border border-toca-border">
+                          <RadioGroupItem value="credit" id="credit" />
+                          <Label htmlFor="credit" className="flex items-center gap-2 cursor-pointer flex-1 text-white">
+                            <CreditCard size={20} />
+                            Cartão de Crédito
+                          </Label>
+                        </div>
+                        
+                        <div className="flex items-center space-x-2 bg-toca-background p-3 rounded-md border border-toca-border">
+                          <RadioGroupItem value="debit" id="debit" />
+                          <Label htmlFor="debit" className="flex items-center gap-2 cursor-pointer flex-1 text-white">
+                            <CreditCard size={20} />
+                            Cartão de Débito
+                          </Label>
+                        </div>
+                        
+                        <div className="flex items-center space-x-2 bg-toca-background p-3 rounded-md border border-toca-border">
+                          <RadioGroupItem value="pix" id="pix" />
+                          <Label htmlFor="pix" className="flex items-center gap-2 cursor-pointer flex-1 text-white">
+                            <QrCode size={20} />
+                            Pix
+                          </Label>
+                        </div>
+                      </RadioGroup>
                       
-                      {!termsAccepted && (
-                        <p className="text-amber-400 text-xs text-center mt-2">
-                          Você precisa aceitar os termos de serviço para continuar
-                        </p>
+                      {paymentMethod !== "pix" && (
+                        <div className="space-y-4">
+                          <div className="space-y-2">
+                            <Label htmlFor="cardName" className="text-white">Nome no Cartão</Label>
+                            <Input 
+                              id="cardName" 
+                              placeholder="Nome impresso no cartão" 
+                              className="bg-toca-background border-toca-border text-white"
+                              required
+                            />
+                          </div>
+                          
+                          <div className="space-y-2">
+                            <Label htmlFor="cardNumber" className="text-white">Número do Cartão</Label>
+                            <Input 
+                              id="cardNumber" 
+                              placeholder="0000 0000 0000 0000" 
+                              className="bg-toca-background border-toca-border text-white"
+                              required
+                            />
+                          </div>
+                          
+                          <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                              <Label htmlFor="expiry" className="text-white">Data de Validade</Label>
+                              <Input 
+                                id="expiry" 
+                                placeholder="MM/AA" 
+                                className="bg-toca-background border-toca-border text-white"
+                                required
+                              />
+                            </div>
+                            <div className="space-y-2">
+                              <Label htmlFor="cvv" className="text-white">CVV</Label>
+                              <Input 
+                                id="cvv" 
+                                placeholder="123" 
+                                className="bg-toca-background border-toca-border text-white"
+                                required
+                              />
+                            </div>
+                          </div>
+                        </div>
                       )}
-                    </div>
-                  </form>
-                </CardContent>
-              </Card>
+                      
+                      {paymentMethod === "pix" && (
+                        <div className="flex flex-col items-center py-4">
+                          <div className="w-48 h-48 bg-white p-2 rounded-md mb-4 flex items-center justify-center">
+                            <div className="text-black text-center">
+                              [QR Code Pix]
+                            </div>
+                          </div>
+                          <p className="text-sm text-toca-text-secondary text-center mb-4">
+                            Escaneie o QR Code acima com o app do seu banco para pagar via Pix. 
+                            O pagamento será confirmado automaticamente.
+                          </p>
+                          <Button 
+                            variant="outline" 
+                            className="border-toca-border text-toca-text-secondary"
+                            onClick={() => toast({
+                              title: "Copiado",
+                              description: "Código Pix copiado para a área de transferência!"
+                            })}
+                          >
+                            Copiar código Pix
+                          </Button>
+                        </div>
+                      )}
+                      
+                      <div className="pt-4">
+                        <Button 
+                          type="submit"
+                          className="w-full bg-toca-accent hover:bg-toca-accent-hover"
+                          disabled={!termsAccepted || isLoading || !!error || cartItems.length === 0}
+                        >
+                          {paymentMethod === "pix" ? "Confirmar Pagamento" : "Pagar"}
+                        </Button>
+                        
+                        {!termsAccepted && (
+                          <p className="text-amber-400 text-xs text-center mt-2">
+                            Você precisa aceitar os termos de serviço para continuar
+                          </p>
+                        )}
+                      </div>
+                    </form>
+                  </CardContent>
+                </Card>
+              )}
             </div>
             
-            <div>
-              <Card className="bg-toca-card border-toca-border sticky top-24">
-                <CardHeader>
-                  <CardTitle className="text-white">Resumo de Valores</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <div className="flex justify-between items-center">
-                      <span className="text-toca-text-secondary">Subtotal:</span>
-                      <span className="text-white">{formatCurrency(subtotal)}</span>
+            {!isLoading && !error && cartItems.length > 0 && (
+              <div>
+                <Card className="bg-toca-card border-toca-border sticky top-24">
+                  <CardHeader>
+                    <CardTitle className="text-white">Resumo de Valores</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      <div className="flex justify-between items-center">
+                        <span className="text-toca-text-secondary">Subtotal:</span>
+                        <span className="text-white">{formatCurrency(subtotal)}</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-toca-text-secondary">Taxa de serviço (9,98%):</span>
+                        <span className="text-white">{formatCurrency(fee)}</span>
+                      </div>
+                      
+                      <Separator className="bg-toca-border" />
+                      
+                      <div className="flex justify-between items-center">
+                        <span className="font-semibold text-white">Total:</span>
+                        <span className="text-toca-accent font-semibold text-lg">{formatCurrency(total)}</span>
+                      </div>
+                      
+                      <div className="pt-4 text-xs text-toca-text-secondary">
+                        <p>A taxa de serviço de 9,98% é aplicada para garantir:</p>
+                        <ul className="list-disc pl-4 mt-1 space-y-0.5">
+                          <li>Intermediação segura entre você e o profissional</li>
+                          <li>Garantia de recebimento ao profissional</li>
+                          <li>Garantia de reserva ao contratante</li>
+                        </ul>
+                      </div>
                     </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-toca-text-secondary">Taxa de serviço (9,98%):</span>
-                      <span className="text-white">{formatCurrency(fee)}</span>
-                    </div>
-                    
-                    <Separator className="bg-toca-border" />
-                    
-                    <div className="flex justify-between items-center">
-                      <span className="font-semibold text-white">Total:</span>
-                      <span className="text-toca-accent font-semibold text-lg">{formatCurrency(total)}</span>
-                    </div>
-                    
-                    <div className="pt-4 text-xs text-toca-text-secondary">
-                      <p>A taxa de serviço de 9,98% é aplicada para garantir:</p>
-                      <ul className="list-disc pl-4 mt-1 space-y-0.5">
-                        <li>Intermediação segura entre você e o profissional</li>
-                        <li>Garantia de recebimento ao profissional</li>
-                        <li>Garantia de reserva ao contratante</li>
-                      </ul>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
+                  </CardContent>
+                </Card>
+              </div>
+            )}
           </div>
         )}
       </div>
