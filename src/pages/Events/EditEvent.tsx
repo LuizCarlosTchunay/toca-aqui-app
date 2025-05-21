@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { format, parse } from "date-fns";
@@ -99,7 +98,7 @@ const EditEvent = () => {
     }
   };
 
-  const handleUpdateEvent = async () => {
+  const handleUpdateEvent = () => {
     if (!user) {
       toast.error("Você precisa estar logado para editar um evento");
       return;
@@ -125,7 +124,7 @@ const EditEvent = () => {
       // Convert comma-separated services to array
       const servicesArray = formData.requiredServices.split(",").map(item => item.trim()).filter(item => item);
       
-      const { error } = await supabase
+      supabase
         .from("eventos")
         .update({
           titulo: formData.title,
@@ -135,21 +134,28 @@ const EditEvent = () => {
           servicos_requeridos: servicesArray,
         })
         .eq("id", id)
-        .eq("contratante_id", user.id);
-      
-      if (error) {
-        throw error;
-      }
-      
-      toast.success("Evento atualizado com sucesso!");
-      navigate(`/eventos/${id}`);
+        .eq("contratante_id", user.id)
+        .then(({ error }) => {
+          if (error) {
+            throw error;
+          }
+          
+          toast.success("Evento atualizado com sucesso!");
+          navigate(`/eventos/${id}`);
+        })
+        .catch((err) => {
+          console.error("Erro ao atualizar evento:", err);
+          toast.error(err?.message || "Ocorreu um erro ao atualizar o evento. Tente novamente.");
+        })
+        .finally(() => {
+          setIsSubmitting(false);
+        });
     } catch (err: any) {
       console.error("Erro ao atualizar evento:", err);
       toast.error(err?.message || "Ocorreu um erro ao atualizar o evento. Tente novamente.");
-    } finally {
       setIsSubmitting(false);
     }
-  };
+  }
 
   if (isLoading) {
     return (
@@ -210,9 +216,8 @@ const EditEvent = () => {
               <div className="space-y-2">
                 <Label htmlFor="date">Data do Evento</Label>
                 <DatePicker
-                  id="date"
+                  date={formData.date}
                   onSelect={handleDateChange}
-                  defaultDate={formData.date}
                   required
                 />
               </div>
