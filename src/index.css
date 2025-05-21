@@ -83,7 +83,7 @@
 
   /* Card description styling */
   .card-description {
-    @apply text-white/90;
+    @apply text-toca-text-secondary;
   }
 
   /* Form labels should be white */
@@ -99,27 +99,5 @@
   /* Neon button styles */
   .btn-neon {
     @apply relative overflow-hidden bg-transparent border border-toca-accent text-toca-accent font-semibold py-2 px-4 rounded transition-all duration-300 hover:bg-toca-accent hover:text-white hover:shadow-[0_0_10px_#ea384c,0_0_20px_#ea384c];
-  }
-  
-  /* Neon text effect */
-  .neon-text {
-    @apply font-bold text-white;
-    text-shadow: 0 0 5px #fff, 0 0 10px #fff, 0 0 15px #ea384c, 0 0 20px #ea384c, 0 0 25px #ea384c;
-  }
-  
-  /* Neon border effect */
-  .neon-border {
-    @apply border border-toca-accent;
-    box-shadow: 0 0 5px #ea384c, 0 0 10px #ea384c;
-  }
-}
-
-@layer components {
-  .event-card {
-    @apply transition-all duration-300 transform hover:scale-[1.02];
-  }
-  
-  .neon-badge {
-    @apply bg-toca-accent text-white shadow-[0_0_10px_rgba(234,56,76,0.7)];
   }
 }
