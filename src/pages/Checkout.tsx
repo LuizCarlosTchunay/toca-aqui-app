@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import Navbar from "@/components/Navbar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -46,16 +45,31 @@ const Checkout = () => {
   // Fetch professional data
   useEffect(() => {
     const fetchProfessionalData = async () => {
-      // If no professional ID is provided in state, redirect back
+      // If no professional ID is provided in state or URL, redirect back
       if (!professionalId) {
-        toast({
-          title: "Erro",
-          description: "Não foi possível identificar o profissional selecionado.",
-          variant: "destructive",
-        });
-        navigate(-1);
-        return;
+        // Check if we can get it from URL
+        const pathParts = window.location.pathname.split('/');
+        const possibleId = pathParts[pathParts.length - 1];
+        
+        // If ID is in a valid UUID format, we can try to use it
+        if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(possibleId)) {
+          toast({
+            title: "Erro",
+            description: "Não foi possível identificar o profissional selecionado.",
+            variant: "destructive",
+          });
+          
+          console.error("Professional ID missing:", { 
+            locationState: location.state,
+            pathParts: pathParts
+          });
+          
+          navigate(-1);
+          return;
+        }
       }
+      
+      const idToUse = professionalId || window.location.pathname.split('/').pop();
       
       try {
         setIsLoading(true);
@@ -70,7 +84,7 @@ const Checkout = () => {
             cache_hora,
             cache_evento
           `)
-          .eq("id", professionalId)
+          .eq("id", idToUse)
           .single();
         
         if (error) {
@@ -111,7 +125,7 @@ const Checkout = () => {
     };
     
     fetchProfessionalData();
-  }, [professionalId, bookingType, hours, bookingDetails, navigate]);
+  }, [professionalId, bookingType, hours, bookingDetails, navigate, location]);
   
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();

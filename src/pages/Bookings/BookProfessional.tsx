@@ -138,10 +138,31 @@ const BookProfessional = () => {
       return;
     }
     
-    // In a real application, you would add this to a cart in the database
-    // For now, just show a success message
+    if (!professional) {
+      toast.error("Não foi possível identificar o profissional selecionado");
+      return;
+    }
+    
+    // Create event name from location if using a new event
+    const eventName = selectedEvent === "new" ? 
+      `Evento em ${bookingDetails.location.split(',')[0]}` : 
+      userEvents.find(event => event.id === selectedEvent)?.titulo || "Novo Evento";
+    
+    // Navigate to checkout with all necessary information
+    navigate("/checkout", {
+      state: {
+        professionalId: id,
+        bookingType,
+        hours,
+        bookingDetails: {
+          ...bookingDetails,
+          eventName,
+          date: bookingDetails.date,
+        }
+      }
+    });
+    
     toast.success("Reserva adicionada ao carrinho!");
-    navigate("/checkout");
   };
 
   // Calculate the estimated price based on booking type and hours
