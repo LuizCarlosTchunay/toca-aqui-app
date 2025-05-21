@@ -32,9 +32,10 @@ interface PortfolioItem {
 
 interface PortfolioManagerProps {
   professionalId: string;
+  onUpdate?: () => void; // Making it optional with ?
 }
 
-const PortfolioManager: React.FC<PortfolioManagerProps> = ({ professionalId }) => {
+const PortfolioManager: React.FC<PortfolioManagerProps> = ({ professionalId, onUpdate }) => {
   const [portfolioItems, setPortfolioItems] = useState<PortfolioItem[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -122,6 +123,11 @@ const PortfolioManager: React.FC<PortfolioManagerProps> = ({ professionalId }) =
         title: "Item adicionado",
         description: "Item de portfólio adicionado com sucesso.",
       });
+
+      // Call the onUpdate callback if provided
+      if (onUpdate) {
+        onUpdate();
+      }
     } catch (error: any) {
       console.error("Error adding portfolio item:", error);
       toast({
@@ -150,6 +156,11 @@ const PortfolioManager: React.FC<PortfolioManagerProps> = ({ professionalId }) =
         title: "Item removido",
         description: "Item de portfólio removido com sucesso.",
       });
+
+      // Call the onUpdate callback if provided
+      if (onUpdate) {
+        onUpdate();
+      }
     } catch (error: any) {
       console.error("Error deleting portfolio item:", error);
       toast({
