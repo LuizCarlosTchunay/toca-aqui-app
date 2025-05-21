@@ -16,12 +16,14 @@ interface PortfolioSectionProps {
   portfolioItems: PortfolioItem[];
   instagram?: string;
   youtube?: string;
+  isLoading?: boolean;
 }
 
 const PortfolioSection: React.FC<PortfolioSectionProps> = ({
   portfolioItems,
   instagram,
-  youtube
+  youtube,
+  isLoading = false
 }) => {
   return (
     <Card className="bg-toca-card border-toca-border mb-6">
@@ -29,7 +31,11 @@ const PortfolioSection: React.FC<PortfolioSectionProps> = ({
         <CardTitle>Portfólio</CardTitle>
       </CardHeader>
       <CardContent>
-        {portfolioItems && portfolioItems.length > 0 ? (
+        {isLoading ? (
+          <div className="flex justify-center py-6">
+            <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-toca-accent"></div>
+          </div>
+        ) : portfolioItems && portfolioItems.length > 0 ? (
           <Carousel className="w-full">
             <CarouselContent>
               {portfolioItems && portfolioItems.map((item) => (
