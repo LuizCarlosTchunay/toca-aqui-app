@@ -4,17 +4,7 @@ import { Calendar, Clock, MapPin } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { formatDate } from "@/lib/utils";
-
-interface EventCardDetailsProps {
-  date: string;
-  time: string;
-  location: string;
-  city: string;
-  state: string;
-  description: string;
-  services: string[];
-  onApply?: () => void;
-}
+import { EventCardDetailsProps } from "./types";
 
 const EventCardDetails: React.FC<EventCardDetailsProps> = ({
   date,

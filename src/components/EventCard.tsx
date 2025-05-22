@@ -3,24 +3,7 @@ import React from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import EventCardImage from "./event/EventCardImage";
 import EventCardDetails from "./event/EventCardDetails";
-
-interface EventCardProps {
-  event: {
-    id: string;
-    name: string;
-    description: string;
-    date: string;
-    time: string;
-    location: string;
-    city: string;
-    state: string;
-    services: string[];
-    image?: string;
-  };
-  className?: string;
-  onClick?: () => void;
-  onApply?: () => void;
-}
+import { EventCardProps } from "./event/types";
 
 const EventCard: React.FC<EventCardProps> = ({
   event,

@@ -2,13 +2,7 @@
 import React from "react";
 import { Badge } from "@/components/ui/badge";
 import { formatDate } from "@/lib/utils";
-
-interface EventCardImageProps {
-  name: string;
-  date: string;
-  imageUrl: string;
-  onClick?: () => void;
-}
+import { EventCardImageProps } from "./types";
 
 const EventCardImage: React.FC<EventCardImageProps> = ({
   name,
