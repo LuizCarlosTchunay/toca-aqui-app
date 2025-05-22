@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import Navbar from "@/components/Navbar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -12,7 +12,7 @@ import { toast } from "sonner";
 import ImageUploader from "@/components/ImageUploader";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { X, Plus } from "lucide-react";
+import { X, Plus, Loader2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import PortfolioManager from "@/components/PortfolioManager";
 
@@ -26,6 +26,7 @@ const EditProfile = () => {
   const [isNavigating, setIsNavigating] = useState(false);
   const [existingProfessionalId, setExistingProfessionalId] = useState<string | null>(null);
   const [otherType, setOtherType] = useState<string>("");
+  const [loadedData, setLoadedData] = useState(false);
   
   // State for services management
   const [newService, setNewService] = useState<string>("");
@@ -41,98 +42,114 @@ const EditProfile = () => {
     eventRate: "",
   });
   
-  useEffect(() => {
-    const fetchProfileData = async () => {
-      if (!user) {
+  // Use useCallback for fetchProfileData to prevent re-creation on every render
+  const fetchProfileData = useCallback(async () => {
+    if (!user) {
+      console.log("No user found, redirecting to home");
+      // Delay setting isNavigating to true until we're sure we need to navigate
+      setTimeout(() => {
         toast.error("Você precisa estar logado para editar seu perfil");
         setIsNavigating(true);
         setTimeout(() => {
           navigate("/");
         }, 50);
-        return;
-      }
-      
-      setIsLoading(true);
-      
-      try {
-        console.log("Fetching professional profile data for editing");
-        // Get professional profile if exists
-        const { data, error } = await supabase
-          .from('profissionais')
-          .select('*')
-          .eq('user_id', user.id)
-          .maybeSingle();
-        
-        if (error) {
-          console.error("Error fetching professional profile:", error);
-          throw error;
-        }
-        
-        if (data) {
-          console.log("Found professional profile:", data.id);
-          setExistingProfessionalId(data.id);
-          
-          // Check if the profile type is one of the predefined ones or custom
-          const predefinedTypes = ["dj", "musico", "baterista", "guitarrista", "baixista", "voz e violão", "duo", "trio", "banda", "fotografo", "filmmaker", "tecnico_som", "tecnico_luz"];
-          const isPredefined = predefinedTypes.includes(data.tipo_profissional?.toLowerCase() || "");
-          
-          // Load services from database
-          setServices(data.servicos || data.instrumentos || []);
-          
-          // Update state with existing data
-          setProfileData({
-            artisticName: data.nome_artistico || "",
-            profileType: isPredefined ? data.tipo_profissional || "dj" : "outro",
-            bio: data.bio || "",
-            city: data.cidade || "",
-            state: data.estado || "",
-            hourlyRate: data.cache_hora?.toString() || "",
-            eventRate: data.cache_evento?.toString() || "",
-          });
-          
-          if (!isPredefined && data.tipo_profissional) {
-            setOtherType(data.tipo_profissional);
-          }
-          
-          // Try to get profile image
-          try {
-            console.log("Fetching profile image");
-            const { data: imageData } = supabase.storage
-              .from('profile_images')
-              .getPublicUrl(`professionals/${data.id}`);
-            
-            if (imageData?.publicUrl) {
-              // Add cache busting
-              const imageUrl = imageData.publicUrl + '?t=' + new Date().getTime();
-              
-              const checkImage = await fetch(imageData.publicUrl, { method: 'HEAD' })
-                .then(res => res.ok)
-                .catch(() => false);
-                
-              if (checkImage) {
-                console.log("Profile image found");
-                setProfileImageUrl(imageUrl);
-              } else {
-                console.log("Profile image not found or not accessible");
-              }
-            }
-          } catch (imgError) {
-            console.error("Error fetching profile image:", imgError);
-            // Continue without image - don't throw
-          }
-        } else {
-          console.log("No professional profile found, creating new");
-        }
-      } catch (error: any) {
-        console.error("Error loading profile data:", error);
-        toast.error("Erro ao carregar dados do perfil: " + (error.message || "Tente novamente"));
-      } finally {
-        setIsLoading(false);
-      }
-    };
+      }, 0);
+      return;
+    }
     
-    fetchProfileData();
+    setIsLoading(true);
+    
+    try {
+      console.log("Fetching professional profile data for editing");
+      // Get professional profile if exists
+      const { data, error } = await supabase
+        .from('profissionais')
+        .select('*')
+        .eq('user_id', user.id)
+        .maybeSingle();
+      
+      if (error) {
+        console.error("Error fetching professional profile:", error);
+        throw error;
+      }
+      
+      if (data) {
+        console.log("Found professional profile:", data.id);
+        setExistingProfessionalId(data.id);
+        
+        // Check if the profile type is one of the predefined ones or custom
+        const predefinedTypes = ["dj", "musico", "baterista", "guitarrista", "baixista", "voz e violão", "duo", "trio", "banda", "fotografo", "filmmaker", "tecnico_som", "tecnico_luz"];
+        const isPredefined = predefinedTypes.includes(data.tipo_profissional?.toLowerCase() || "");
+        
+        // Load services from database
+        setServices(data.servicos || data.instrumentos || []);
+        
+        // Update state with existing data
+        setProfileData({
+          artisticName: data.nome_artistico || "",
+          profileType: isPredefined ? data.tipo_profissional || "dj" : "outro",
+          bio: data.bio || "",
+          city: data.cidade || "",
+          state: data.estado || "",
+          hourlyRate: data.cache_hora?.toString() || "",
+          eventRate: data.cache_evento?.toString() || "",
+        });
+        
+        if (!isPredefined && data.tipo_profissional) {
+          setOtherType(data.tipo_profissional);
+        }
+        
+        // Try to get profile image
+        try {
+          console.log("Fetching profile image");
+          const { data: imageData } = supabase.storage
+            .from('profile_images')
+            .getPublicUrl(`professionals/${data.id}`);
+          
+          if (imageData?.publicUrl) {
+            // Add cache busting
+            const imageUrl = imageData.publicUrl + '?t=' + new Date().getTime();
+            
+            const checkImage = await fetch(imageData.publicUrl, { method: 'HEAD' })
+              .then(res => res.ok)
+              .catch(() => false);
+              
+            if (checkImage) {
+              console.log("Profile image found");
+              setProfileImageUrl(imageUrl);
+            } else {
+              console.log("Profile image not found or not accessible");
+            }
+          }
+        } catch (imgError) {
+          console.error("Error fetching profile image:", imgError);
+          // Continue without image - don't throw
+        }
+      } else {
+        console.log("No professional profile found, creating new");
+      }
+      
+      // Mark that we've loaded data successfully
+      setLoadedData(true);
+    } catch (error: any) {
+      console.error("Error loading profile data:", error);
+      toast.error("Erro ao carregar dados do perfil: " + (error.message || "Tente novamente"));
+    } finally {
+      setIsLoading(false);
+    }
   }, [user, navigate]);
+
+  useEffect(() => {
+    // Only fetch profile data once on component mount
+    fetchProfileData();
+    
+    // Cleanup function to prevent state updates after unmount
+    return () => {
+      setIsLoading(false);
+      setIsSaving(false);
+      setIsNavigating(false);
+    };
+  }, [fetchProfileData]);
 
   const handleChange = (field: string, value: string) => {
     setProfileData({
@@ -165,11 +182,15 @@ const EditProfile = () => {
     setIsNavigating(true);
     console.log(`Navigating to ${path}`);
     
-    setTimeout(() => {
-      navigate(path, { replace: true });
-    }, 50);
+    // Use requestAnimationFrame to ensure UI updates before navigation
+    requestAnimationFrame(() => {
+      setTimeout(() => {
+        navigate(path, { replace: true });
+      }, 50);
+    });
   };
   
+  // Memoize the submit handler to prevent recreating on every render
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -181,6 +202,12 @@ const EditProfile = () => {
     // Validation
     if (!profileData.artisticName) {
       toast.error("Nome artístico é obrigatório");
+      return;
+    }
+    
+    // Prevent multiple submissions
+    if (isSaving || isNavigating) {
+      console.log("Already saving or navigating, preventing duplicate submission");
       return;
     }
     
@@ -276,16 +303,20 @@ const EditProfile = () => {
       setIsSaving(false);
       setIsNavigating(true);
       
-      // Then navigate after a short delay to avoid the black screen issue
-      setTimeout(() => {
-        try {
-          navigate("/meu-perfil", { replace: true });
-        } catch (navError) {
-          console.error("Navigation error:", navError);
-          // If navigation fails, provide a fallback
-          window.location.href = "/meu-perfil";
-        }
-      }, 100);
+      // Use requestAnimationFrame to ensure UI updates before navigation
+      requestAnimationFrame(() => {
+        // Then navigate after a short delay to avoid the black screen issue
+        setTimeout(() => {
+          try {
+            console.log("Navigating to meu-perfil");
+            navigate("/meu-perfil", { replace: true });
+          } catch (navError) {
+            console.error("Navigation error:", navError);
+            // If navigation fails, provide a fallback
+            window.location.href = "/meu-perfil";
+          }
+        }, 100);
+      });
       
     } catch (error: any) {
       console.error("Error saving profile:", error);
@@ -305,21 +336,29 @@ const EditProfile = () => {
 
   // Check if user is authenticated
   useEffect(() => {
-    if (!user) {
+    if (!user && loadedData) {
+      console.log("No authenticated user found, redirecting to login");
       toast.error("Você precisa estar logado para acessar esta página");
-      setIsNavigating(true);
-      setTimeout(() => {
-        navigate("/login");
-      }, 50);
+      
+      // Use requestAnimationFrame to ensure UI updates before navigation
+      requestAnimationFrame(() => {
+        setIsNavigating(true);
+        setTimeout(() => {
+          navigate("/login");
+        }, 50);
+      });
     }
-  }, [user, navigate]);
+  }, [user, navigate, loadedData]);
 
-  if (isLoading && !profileData.artisticName) {
+  if (isLoading && !loadedData) {
     return (
       <div className="min-h-screen flex flex-col bg-toca-background">
         <Navbar isAuthenticated={!!user} />
         <div className="container mx-auto px-4 py-8 flex items-center justify-center">
-          <div className="w-8 h-8 border-2 border-toca-accent border-t-transparent rounded-full animate-spin"></div>
+          <div className="flex flex-col items-center gap-2">
+            <div className="w-8 h-8 border-2 border-toca-accent border-t-transparent rounded-full animate-spin"></div>
+            <p className="text-toca-text-secondary">Carregando perfil...</p>
+          </div>
         </div>
       </div>
     );
@@ -369,7 +408,7 @@ const EditProfile = () => {
                   <SelectTrigger className="bg-toca-background border-toca-border text-white">
                     <SelectValue placeholder="Selecione" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="bg-toca-background border-toca-border text-white z-50">
                     <SelectItem value="dj">DJ</SelectItem>
                     <SelectItem value="musico">Músico</SelectItem>
                     <SelectItem value="baterista">Baterista</SelectItem>
@@ -529,14 +568,24 @@ const EditProfile = () => {
                   className="border-toca-border text-white"
                   disabled={isLoading || isSaving || isNavigating}
                 >
-                  Cancelar
+                  {isNavigating ? (
+                    <span className="flex items-center">
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Aguarde...
+                    </span>
+                  ) : "Cancelar"}
                 </Button>
                 <Button 
                   type="submit"
                   className="bg-toca-accent hover:bg-toca-accent-hover"
                   disabled={isLoading || isSaving || isNavigating}
                 >
-                  {(isLoading || isSaving) ? "Salvando..." : "Salvar Alterações"}
+                  {(isLoading || isSaving) ? (
+                    <span className="flex items-center">
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Salvando...
+                    </span>
+                  ) : "Salvar Alterações"}
                 </Button>
               </div>
             </form>
