@@ -96,6 +96,21 @@
     @apply text-[#C8C8C9];
   }
 
+  /* All form inputs should have white text */
+  input, textarea, select {
+    @apply text-white;
+  }
+
+  /* Style for select component content */
+  .select-content {
+    @apply bg-toca-background text-white border-toca-border;
+  }
+
+  /* Style for placeholder text */
+  ::placeholder {
+    @apply text-gray-400;
+  }
+
   /* Neon button styles */
   .btn-neon {
     @apply relative overflow-hidden bg-transparent border border-toca-accent text-toca-accent font-semibold py-2 px-4 rounded transition-all duration-300 hover:bg-toca-accent hover:text-white hover:shadow-[0_0_10px_#ea384c,0_0_20px_#ea384c];

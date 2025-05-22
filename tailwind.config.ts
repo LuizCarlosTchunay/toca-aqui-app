@@ -70,7 +70,8 @@ export default {
 					card: '#1A1A1A',
 					border: '#333333',
 					'text-primary': '#FFFFFF',
-					'text-secondary': '#AAAAAA'
+					'text-secondary': '#AAAAAA',
+					input: '#FFFFFF'  // Add this new color for input text
 				}
 			},
 			borderRadius: {
