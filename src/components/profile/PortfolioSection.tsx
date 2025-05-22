@@ -131,7 +131,10 @@ const PortfolioSection: React.FC<PortfolioSectionProps> = ({
                         />
                         <div className="absolute inset-0 flex items-center justify-center">
                           <div className="bg-black bg-opacity-40 rounded-full p-3 hover:bg-opacity-60 transition-opacity">
-                            <span className="text-white font-medium">Assistir</span>
+                            {/* Removed the "Assistir" text as requested */}
+                            <div className="h-12 w-12 flex items-center justify-center">
+                              <div className="w-0 h-0 border-y-8 border-y-transparent border-l-12 border-l-white ml-1"></div>
+                            </div>
                           </div>
                         </div>
                       </div>
@@ -222,7 +225,10 @@ const PortfolioSection: React.FC<PortfolioSectionProps> = ({
                         />
                         <div className="absolute inset-0 flex items-center justify-center">
                           <div className="bg-black bg-opacity-40 rounded-full p-3 hover:bg-opacity-60 transition-opacity">
-                            <span className="text-white font-medium">Assistir</span>
+                            {/* Removed the "Assistir" text as requested */}
+                            <div className="h-12 w-12 flex items-center justify-center">
+                              <div className="w-0 h-0 border-y-8 border-y-transparent border-l-12 border-l-white ml-1"></div>
+                            </div>
                           </div>
                         </div>
                       </>
