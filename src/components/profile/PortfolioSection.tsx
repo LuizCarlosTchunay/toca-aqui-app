@@ -1,8 +1,7 @@
-
 import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
-import { ExternalLink, LinkIcon, Youtube, Instagram } from "lucide-react";
+import { ExternalLink, LinkIcon } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 interface PortfolioItem {
@@ -102,8 +101,9 @@ const PortfolioSection: React.FC<PortfolioSectionProps> = ({
                           className="w-full h-full object-cover"
                         />
                         <div className="absolute inset-0 flex items-center justify-center">
-                          <div className="bg-red-600 bg-opacity-80 rounded-full p-3 hover:bg-opacity-100 transition-opacity">
-                            <Youtube className="text-white" size={32} />
+                          <div className="bg-black bg-opacity-40 rounded-full p-3 hover:bg-opacity-60 transition-opacity">
+                            {/* Changed from red circle to text indicator */}
+                            <span className="text-white font-medium">Assistir</span>
                           </div>
                         </div>
                       </div>
@@ -189,14 +189,15 @@ const PortfolioSection: React.FC<PortfolioSectionProps> = ({
                           className="w-full h-full object-cover"
                         />
                         <div className="absolute inset-0 flex items-center justify-center">
-                          <div className="bg-red-600 bg-opacity-80 rounded-full p-3 hover:bg-opacity-100 transition-opacity">
-                            <Youtube className="text-white" size={32} />
+                          <div className="bg-black bg-opacity-40 rounded-full p-3 hover:bg-opacity-60 transition-opacity">
+                            {/* Changed from red circle to text indicator */}
+                            <span className="text-white font-medium">Assistir</span>
                           </div>
                         </div>
                       </>
                     ) : (
                       <div className="w-full h-full flex items-center justify-center bg-black/30">
-                        <Youtube className="text-red-500" size={48} />
+                        <span className="text-white font-medium">Vídeo</span>
                       </div>
                     )}
                   </div>
