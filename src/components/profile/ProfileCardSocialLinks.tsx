@@ -5,6 +5,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 
 interface ProfileCardSocialLinksProps {
   youtube?: string;
+  // Removing instagram property since we no longer use it
 }
 
 const ProfileCardSocialLinks: React.FC<ProfileCardSocialLinksProps> = ({

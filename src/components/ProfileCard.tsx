@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Star, MapPin } from "lucide-react";
@@ -149,9 +148,8 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
               {professional.type}
             </ProfileCardBadge>
             
-            {/* Social Media links - Always display if available */}
+            {/* Social Media links - Only pass YouTube now */}
             <ProfileCardSocialLinks 
-              instagram={professional.instagram} 
               youtube={professional.youtube} 
             />
           </div>
@@ -247,8 +245,8 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
               />
             </div>
             
-            {/* Show social links when portfolio is empty */}
-            {expanded && !((professional.instagram || professional.youtube)) && (
+            {/* Show message when no YouTube link */}
+            {expanded && !professional.youtube && (
               <div className="mt-4 text-center">
                 <p className="text-sm text-toca-text-secondary">Este profissional ainda não adicionou links de portfólio.</p>
               </div>
