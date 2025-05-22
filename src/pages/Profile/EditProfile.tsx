@@ -33,6 +33,10 @@ const EditProfile = () => {
   const [newService, setNewService] = useState<string>("");
   const [services, setServices] = useState<string[]>([]);
   
+  // Add YouTube and Instagram URL management
+  const [youtubeUrl, setYoutubeUrl] = useState<string>("");
+  const [instagramUrl, setInstagramUrl] = useState<string>("");
+  
   const [profileData, setProfileData] = useState({
     artisticName: "",
     profileType: "dj",
@@ -84,6 +88,10 @@ const EditProfile = () => {
         
         // Load services from database
         setServices(data.servicos || data.instrumentos || []);
+        
+        // Load social media URLs
+        setYoutubeUrl(data.youtube_url || "");
+        setInstagramUrl(data.instagram_url || "");
         
         // Update state with existing data
         setProfileData({
@@ -220,6 +228,42 @@ const EditProfile = () => {
       let professionalId = existingProfessionalId;
       let finalProfileType = profileData.profileType === "outro" ? otherType : profileData.profileType;
       
+      // Validate YouTube URL
+      let youtubeUrlToSave = null;
+      if (youtubeUrl) {
+        try {
+          const url = new URL(youtubeUrl);
+          if (url.hostname.includes('youtube.com') || url.hostname.includes('youtu.be')) {
+            youtubeUrlToSave = youtubeUrl;
+          } else {
+            throw new Error("URL inválida");
+          }
+        } catch (error) {
+          toast.error("URL do YouTube inválida");
+          setIsLoading(false);
+          setIsSaving(false);
+          return;
+        }
+      }
+      
+      // Validate Instagram URL
+      let instagramUrlToSave = null;
+      if (instagramUrl) {
+        try {
+          const url = new URL(instagramUrl);
+          if (url.hostname.includes('instagram.com')) {
+            instagramUrlToSave = instagramUrl;
+          } else {
+            throw new Error("URL inválida");
+          }
+        } catch (error) {
+          toast.error("URL do Instagram inválida");
+          setIsLoading(false);
+          setIsSaving(false);
+          return;
+        }
+      }
+      
       const profileDataToSave = {
         nome_artistico: profileData.artisticName,
         tipo_profissional: finalProfileType,
@@ -228,8 +272,8 @@ const EditProfile = () => {
         estado: profileData.state,
         cache_hora: profileData.hourlyRate ? parseFloat(profileData.hourlyRate) : null,
         cache_evento: profileData.eventRate ? parseFloat(profileData.eventRate) : null,
-        youtube_url: null, // Set explicitly to null to remove any previous value
-        instagram_url: null, // Set explicitly to null to remove any previous value
+        youtube_url: youtubeUrlToSave,
+        instagram_url: instagramUrlToSave,
         servicos: services,
         user_id: user.id,
       };
@@ -489,6 +533,33 @@ const EditProfile = () => {
                 <p className="text-xs text-toca-text-secondary">
                   Pressione Enter ou clique em Adicionar para incluir um serviço. Estes serviços ficarão visíveis no seu perfil.
                 </p>
+              </div>
+              
+              {/* Social Media Links */}
+              <div className="space-y-4">
+                <Label htmlFor="socialMedia" className="text-white text-lg">Redes Sociais</Label>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="youtubeUrl" className="text-white">YouTube</Label>
+                  <Input 
+                    id="youtubeUrl" 
+                    value={youtubeUrl}
+                    onChange={(e) => setYoutubeUrl(e.target.value)}
+                    placeholder="https://youtube.com/channel/seu-canal"
+                    className="bg-toca-background border-toca-border text-white"
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="instagramUrl" className="text-white">Instagram</Label>
+                  <Input 
+                    id="instagramUrl" 
+                    value={instagramUrl}
+                    onChange={(e) => setInstagramUrl(e.target.value)}
+                    placeholder="https://instagram.com/seu-usuario"
+                    className="bg-toca-background border-toca-border text-white"
+                  />
+                </div>
               </div>
               
               <div className="space-y-2">

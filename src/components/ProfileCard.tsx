@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Star, MapPin } from "lucide-react";
@@ -7,6 +8,7 @@ import ProfileCardBadge from "@/components/profile/ProfileCardBadge";
 import ProfileCardRateDisplay from "@/components/profile/ProfileCardRateDisplay";
 import ProfileCardNeonBorder from "@/components/profile/ProfileCardNeonBorder";
 import ProfessionalTypeIcon from "@/components/profile/ProfessionalTypeIcon";
+import ProfileCardSocialLinks from "@/components/profile/ProfileCardSocialLinks";
 
 interface ProfileCardProps {
   professional: {
@@ -40,6 +42,7 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
 }) => {
   const [imageUrl, setImageUrl] = useState<string | undefined>(professional.image);
   const [isHovered, setIsHovered] = useState(false);
+  const [imageLoaded, setImageLoaded] = useState(false);
 
   useEffect(() => {
     const fetchImage = async () => {
@@ -114,6 +117,11 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
                 "w-full h-full object-cover transition-transform duration-500",
                 isHovered && "scale-110"
               )}
+              onLoad={() => setImageLoaded(true)}
+              onError={() => {
+                console.error("Failed to load image for:", professional.id);
+                setImageLoaded(false);
+              }}
             />
           ) : (
             <div className={cn(
@@ -147,7 +155,13 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
               {professional.type}
             </ProfileCardBadge>
             
-            {/* Removed Social Media links section completely */}
+            {/* Social Media Links */}
+            {(professional.youtube || professional.instagram) && (
+              <ProfileCardSocialLinks 
+                youtube={professional.youtube} 
+                instagram={professional.instagram} 
+              />
+            )}
           </div>
 
           <CardContent className="px-0 pt-0 pb-4">
@@ -240,13 +254,6 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
                 isHovered={isHovered} 
               />
             </div>
-            
-            {/* Show message when no YouTube link - Modified to not appear in the card */}
-            {expanded && !professional.youtube && !professional.instagram && (
-              <div className="mt-4 text-center">
-                <p className="text-sm text-toca-text-secondary">Este profissional ainda não adicionou links de portfólio.</p>
-              </div>
-            )}
           </CardContent>
         </div>
       </div>

@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { MapPin, Edit, Star, Calendar, Clock, Loader2 } from "lucide-react";
+import { MapPin, Edit, Star, Calendar, Clock, Loader2, ExternalLink } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -15,6 +15,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import ImageUploader from "@/components/ImageUploader";
 import { toast } from "sonner";
 import PortfolioManager from "@/components/PortfolioManager";
+import ProfileCardSocialLinks from "@/components/profile/ProfileCardSocialLinks";
 
 const MyProfile = () => {
   const navigate = useNavigate();
@@ -25,6 +26,7 @@ const MyProfile = () => {
   const queryClient = useQueryClient();
   const [refreshKey, setRefreshKey] = useState(0);
   const [isNavigating, setIsNavigating] = useState(false);
+  const [isImgLoaded, setIsImgLoaded] = useState(false);
 
   // Fetch professional data if the user is a professional
   const { data: professional, isLoading, refetch } = useQuery({
@@ -257,6 +259,8 @@ const MyProfile = () => {
                       <AvatarImage 
                         src={profileImage || ""}
                         alt={professional?.nome_artistico || "Profile"}
+                        onLoad={() => setIsImgLoaded(true)}
+                        onError={() => setIsImgLoaded(false)}
                       />
                       <AvatarFallback className="text-4xl font-bold text-toca-accent bg-toca-accent/20">
                         {initials || "MP"}
@@ -296,6 +300,16 @@ const MyProfile = () => {
                           .filter(Boolean)
                           .join(", ")}
                       </span>
+                    </div>
+                  )}
+                  
+                  {/* Add social media links */}
+                  {(professional?.youtube_url || professional?.instagram_url) && (
+                    <div className="mb-4">
+                      <ProfileCardSocialLinks
+                        youtube={professional.youtube_url || undefined}
+                        instagram={professional.instagram_url || undefined}
+                      />
                     </div>
                   )}
                   
