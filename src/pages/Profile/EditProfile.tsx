@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import Navbar from "@/components/Navbar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,7 +12,7 @@ import { toast } from "sonner";
 import ImageUploader from "@/components/ImageUploader";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { Instagram, Youtube, X, Plus } from "lucide-react";
+import { Youtube, X, Plus } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
 const EditProfile = () => {
@@ -35,7 +36,6 @@ const EditProfile = () => {
     state: "",
     hourlyRate: "",
     eventRate: "",
-    instagramUrl: "",
     youtubeUrl: "",
   });
   
@@ -80,7 +80,6 @@ const EditProfile = () => {
             state: data.estado || "",
             hourlyRate: data.cache_hora?.toString() || "",
             eventRate: data.cache_evento?.toString() || "",
-            instagramUrl: data.instagram_url || "",
             youtubeUrl: data.youtube_url || "",
           });
           
@@ -120,7 +119,7 @@ const EditProfile = () => {
           }
         }
       } catch (error: any) {
-        console.error("Error fetching profile data:", error);
+        console.error("Erro ao carregar dados do perfil:", error);
         toast.error("Erro ao carregar dados do perfil: " + (error.message || "Tente novamente"));
       } finally {
         setIsLoading(false);
@@ -182,8 +181,8 @@ const EditProfile = () => {
         estado: profileData.state,
         cache_hora: profileData.hourlyRate ? parseFloat(profileData.hourlyRate) : null,
         cache_evento: profileData.eventRate ? parseFloat(profileData.eventRate) : null,
-        instagram_url: profileData.instagramUrl,
         youtube_url: profileData.youtubeUrl,
+        instagram_url: null, // Definindo explicitamente como null para remover qualquer valor anterior
         servicos: services, // Save the services array
         user_id: user.id, // Ensure user_id is always set
       };
@@ -494,29 +493,9 @@ const EditProfile = () => {
                 </div>
               </div>
               
-              {/* Social media URL fields */}
+              {/* YouTube URL field - Instagram field removed */}
               <div className="space-y-6">
-                <h3 className="text-white text-lg font-medium">Links para Redes Sociais</h3>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="instagramUrl" className="text-white flex items-center gap-2">
-                    <Instagram size={18} className="text-pink-400" />
-                    Instagram
-                  </Label>
-                  <div className="relative">
-                    <Input 
-                      id="instagramUrl" 
-                      value={profileData.instagramUrl}
-                      onChange={(e) => handleChange('instagramUrl', e.target.value)}
-                      className="bg-toca-background border-toca-border text-white pl-10"
-                      placeholder="https://instagram.com/seu_perfil"
-                    />
-                    <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-pink-400">@</span>
-                  </div>
-                  {profileData.instagramUrl && !isValidUrl(profileData.instagramUrl) && (
-                    <p className="text-sm text-red-500">URL inválida. Inclua http:// ou https://</p>
-                  )}
-                </div>
+                <h3 className="text-white text-lg font-medium">Vídeo do Portfólio</h3>
                 
                 <div className="space-y-2">
                   <Label htmlFor="youtubeUrl" className="text-white flex items-center gap-2">
@@ -528,11 +507,14 @@ const EditProfile = () => {
                     value={profileData.youtubeUrl}
                     onChange={(e) => handleChange('youtubeUrl', e.target.value)}
                     className="bg-toca-background border-toca-border text-white"
-                    placeholder="https://youtube.com/c/seu_canal"
+                    placeholder="https://youtube.com/watch?v=VIDEO_ID"
                   />
                   {profileData.youtubeUrl && !isValidUrl(profileData.youtubeUrl) && (
                     <p className="text-sm text-red-500">URL inválida. Inclua http:// ou https://</p>
                   )}
+                  <p className="text-xs text-toca-text-secondary">
+                    Adicione um link para seu vídeo no YouTube. Os contratantes poderão assistir ao vídeo diretamente no aplicativo Toca Aqui.
+                  </p>
                 </div>
               </div>
               
