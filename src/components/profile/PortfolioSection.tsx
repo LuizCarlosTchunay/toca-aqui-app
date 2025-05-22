@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
@@ -68,6 +69,11 @@ const PortfolioSection: React.FC<PortfolioSectionProps> = ({
     });
   }
 
+  // Função para lidar com cliques nos vídeos
+  const handleVideoClick = (url: string) => {
+    setSelectedVideoUrl(url);
+  };
+
   return (
     <Card className="bg-toca-card border-toca-border mb-6">
       <CardHeader>
@@ -93,7 +99,7 @@ const PortfolioSection: React.FC<PortfolioSectionProps> = ({
                       <div 
                         key={`youtube-${index}`} 
                         className="aspect-video rounded-md overflow-hidden border border-toca-border cursor-pointer hover:border-toca-accent transition-colors"
-                        onClick={() => setSelectedVideoUrl(url)}
+                        onClick={() => handleVideoClick(url)}
                       >
                         <img 
                           src={`https://img.youtube.com/vi/${videoId}/hqdefault.jpg`} 
@@ -102,7 +108,6 @@ const PortfolioSection: React.FC<PortfolioSectionProps> = ({
                         />
                         <div className="absolute inset-0 flex items-center justify-center">
                           <div className="bg-black bg-opacity-40 rounded-full p-3 hover:bg-opacity-60 transition-opacity">
-                            {/* Changed from red circle to text indicator */}
                             <span className="text-white font-medium">Assistir</span>
                           </div>
                         </div>
@@ -179,7 +184,7 @@ const PortfolioSection: React.FC<PortfolioSectionProps> = ({
                 <div className="flex justify-center">
                   <div 
                     className="aspect-video w-full max-w-md rounded-md overflow-hidden border border-toca-border cursor-pointer hover:border-toca-accent transition-colors"
-                    onClick={() => setSelectedVideoUrl(youtube)}
+                    onClick={() => youtube && handleVideoClick(youtube)}
                   >
                     {getYoutubeVideoId(youtube) ? (
                       <>
@@ -190,7 +195,6 @@ const PortfolioSection: React.FC<PortfolioSectionProps> = ({
                         />
                         <div className="absolute inset-0 flex items-center justify-center">
                           <div className="bg-black bg-opacity-40 rounded-full p-3 hover:bg-opacity-60 transition-opacity">
-                            {/* Changed from red circle to text indicator */}
                             <span className="text-white font-medium">Assistir</span>
                           </div>
                         </div>
