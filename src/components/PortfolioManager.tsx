@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { 
   Card, 
@@ -16,11 +15,13 @@ import {
   Trash2, 
   Plus, 
   Save,
-  Loader2
+  Loader2,
+  Youtube
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface PortfolioItem {
   id?: string;
@@ -47,6 +48,38 @@ const PortfolioManager: React.FC<PortfolioManagerProps> = ({ professionalId, onU
     url: '',
     descricao: ''
   });
+
+  // Verificar se uma URL é do YouTube
+  const isYoutubeUrl = (url: string): boolean => {
+    try {
+      const urlObj = new URL(url);
+      return urlObj.hostname.includes('youtube.com') || urlObj.hostname.includes('youtu.be');
+    } catch (e) {
+      return false;
+    }
+  };
+
+  // Função para extrair o ID do vídeo do YouTube de uma URL
+  const getYoutubeVideoId = (url: string): string | null => {
+    try {
+      const urlObj = new URL(url);
+      
+      // Formato padrão youtube.com/watch?v=VIDEO_ID
+      if (urlObj.hostname.includes('youtube.com') && urlObj.pathname.includes('/watch')) {
+        return urlObj.searchParams.get('v');
+      }
+      
+      // Formato abreviado youtu.be/VIDEO_ID
+      if (urlObj.hostname.includes('youtu.be')) {
+        return urlObj.pathname.substring(1);
+      }
+      
+      return null;
+    } catch (e) {
+      console.error("URL inválida do YouTube:", e);
+      return null;
+    }
+  };
 
   // Fetch portfolio items
   useEffect(() => {
@@ -170,6 +203,11 @@ const PortfolioManager: React.FC<PortfolioManagerProps> = ({ professionalId, onU
       });
     }
   };
+  
+  // Conta quantos vídeos do YouTube já existem
+  const youtubeItemCount = portfolioItems.filter(item => 
+    isYoutubeUrl(item.url)
+  ).length;
 
   return (
     <Card className="bg-toca-card border-toca-border shadow-md">
@@ -187,52 +225,129 @@ const PortfolioManager: React.FC<PortfolioManagerProps> = ({ professionalId, onU
           </div>
         ) : (
           <>
-            {/* Portfolio items list */}
-            {portfolioItems.length > 0 ? (
-              <div className="space-y-3">
-                {portfolioItems.map((item) => (
-                  <div 
-                    key={item.id} 
-                    className="group flex items-center justify-between p-3 bg-toca-background rounded-md border border-toca-border hover:border-toca-accent transition-colors"
-                  >
-                    <div className="flex items-center gap-3">
-                      <Avatar className="h-10 w-10 bg-toca-accent/10">
-                        <AvatarImage src="" alt="" />
-                        <AvatarFallback className="bg-toca-accent/20 text-toca-accent">
-                          {item.tipo.slice(0, 2).toUpperCase()}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <h4 className="text-white font-medium">{item.tipo}</h4>
-                        <a 
-                          href={item.url} 
-                          target="_blank" 
-                          rel="noopener noreferrer" 
-                          className="text-sm text-toca-accent hover:underline flex items-center"
+            {/* YouTube videos section */}
+            <div>
+              <h3 className="text-white font-medium mb-3 flex items-center">
+                <Youtube size={18} className="mr-2 text-red-500" />
+                Vídeos do YouTube ({youtubeItemCount}/5)
+              </h3>
+              
+              {portfolioItems.some(item => isYoutubeUrl(item.url)) ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {portfolioItems
+                    .filter(item => isYoutubeUrl(item.url))
+                    .map((item) => {
+                      const videoId = getYoutubeVideoId(item.url);
+                      
+                      return (
+                        <div 
+                          key={item.id} 
+                          className="group flex flex-col p-3 bg-toca-background rounded-md border border-toca-border hover:border-toca-accent transition-colors"
                         >
-                          <LinkIcon size={12} className="mr-1" />
-                          {item.url.length > 30 ? `${item.url.substring(0, 30)}...` : item.url}
-                        </a>
+                          {videoId && (
+                            <div className="aspect-video mb-3 rounded overflow-hidden bg-black">
+                              <img 
+                                src={`https://img.youtube.com/vi/${videoId}/mqdefault.jpg`}
+                                alt="YouTube thumbnail"
+                                className="w-full h-full object-cover"
+                              />
+                            </div>
+                          )}
+                          
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <h4 className="text-white font-medium">{item.tipo}</h4>
+                              <a 
+                                href={item.url} 
+                                target="_blank" 
+                                rel="noopener noreferrer" 
+                                className="text-sm text-toca-accent hover:underline flex items-center"
+                              >
+                                <Youtube size={12} className="mr-1" />
+                                {item.url.length > 30 ? `${item.url.substring(0, 30)}...` : item.url}
+                              </a>
+                            </div>
+                            <Button 
+                              variant="ghost" 
+                              size="icon" 
+                              className="text-toca-text-secondary hover:text-red-500 focus:text-red-500"
+                              onClick={() => handleDeleteItem(item.id || "")}
+                            >
+                              <Trash2 size={18} />
+                            </Button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                </div>
+              ) : (
+                <div className="text-center py-4 text-toca-text-secondary bg-toca-background/30 rounded-md">
+                  <Youtube className="mx-auto h-8 w-8 opacity-25 mb-2 text-red-500" />
+                  <p>Nenhum vídeo do YouTube adicionado.</p>
+                </div>
+              )}
+              
+              {youtubeItemCount >= 5 && (
+                <div className="mt-2 text-sm text-yellow-400">
+                  Você atingiu o limite máximo de 5 vídeos do YouTube. Remova algum vídeo existente para adicionar novos.
+                </div>
+              )}
+            </div>
+
+            {/* Other portfolio items */}
+            <div>
+              <h3 className="text-white font-medium mb-3 flex items-center">
+                <LinkIcon size={18} className="mr-2 text-toca-accent" />
+                Outros itens de portfólio
+              </h3>
+              
+              {portfolioItems.some(item => !isYoutubeUrl(item.url)) ? (
+                <div className="space-y-3">
+                  {portfolioItems
+                    .filter(item => !isYoutubeUrl(item.url))
+                    .map((item) => (
+                      <div 
+                        key={item.id} 
+                        className="group flex items-center justify-between p-3 bg-toca-background rounded-md border border-toca-border hover:border-toca-accent transition-colors"
+                      >
+                        <div className="flex items-center gap-3">
+                          <Avatar className="h-10 w-10 bg-toca-accent/10">
+                            <AvatarImage src="" alt="" />
+                            <AvatarFallback className="bg-toca-accent/20 text-toca-accent">
+                              {item.tipo.slice(0, 2).toUpperCase()}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div>
+                            <h4 className="text-white font-medium">{item.tipo}</h4>
+                            <a 
+                              href={item.url} 
+                              target="_blank" 
+                              rel="noopener noreferrer" 
+                              className="text-sm text-toca-accent hover:underline flex items-center"
+                            >
+                              <LinkIcon size={12} className="mr-1" />
+                              {item.url.length > 30 ? `${item.url.substring(0, 30)}...` : item.url}
+                            </a>
+                          </div>
+                        </div>
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="text-toca-text-secondary hover:text-red-500 focus:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                          onClick={() => handleDeleteItem(item.id || "")}
+                        >
+                          <Trash2 size={18} />
+                        </Button>
                       </div>
-                    </div>
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
-                      className="text-toca-text-secondary hover:text-red-500 focus:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
-                      onClick={() => handleDeleteItem(item.id || "")}
-                    >
-                      <Trash2 size={18} />
-                    </Button>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-8 text-toca-text-secondary">
-                <FileImage className="mx-auto h-12 w-12 opacity-25 mb-3" />
-                <p>Nenhum item de portfólio adicionado ainda.</p>
-                <p className="text-sm">Adicione links para seus trabalhos, vídeos ou fotos de apresentações.</p>
-              </div>
-            )}
+                    ))}
+                </div>
+              ) : (
+                <div className="text-center py-4 text-toca-text-secondary bg-toca-background/30 rounded-md">
+                  <LinkIcon className="mx-auto h-8 w-8 opacity-25 mb-2" />
+                  <p>Nenhum item regular adicionado.</p>
+                </div>
+              )}
+            </div>
 
             {/* Add new item form */}
             <div className="mt-6 pt-6 border-t border-toca-border">
@@ -247,13 +362,31 @@ const PortfolioManager: React.FC<PortfolioManagerProps> = ({ professionalId, onU
                     <label htmlFor="item-type" className="block text-sm text-toca-text-secondary mb-1">
                       Tipo de Item*
                     </label>
-                    <Input
-                      id="item-type"
+                    <Select
                       value={newItem.tipo}
-                      onChange={(e) => setNewItem({...newItem, tipo: e.target.value})}
-                      placeholder="Ex: Vídeo, Foto, Link"
-                      className="bg-toca-background border-toca-border"
-                    />
+                      onValueChange={(value) => setNewItem({...newItem, tipo: value})}
+                    >
+                      <SelectTrigger id="item-type" className="bg-toca-background border-toca-border">
+                        <SelectValue placeholder="Selecione o tipo" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Vídeo YouTube">
+                          <div className="flex items-center">
+                            <Youtube size={16} className="mr-2 text-red-500" />
+                            Vídeo YouTube
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="Link para Site">
+                          <div className="flex items-center">
+                            <LinkIcon size={16} className="mr-2" />
+                            Link para Site
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="Foto">Foto</SelectItem>
+                        <SelectItem value="Áudio">Áudio</SelectItem>
+                        <SelectItem value="Outro">Outro</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
                   
                   <div>
@@ -264,7 +397,7 @@ const PortfolioManager: React.FC<PortfolioManagerProps> = ({ professionalId, onU
                       id="item-url"
                       value={newItem.url}
                       onChange={(e) => setNewItem({...newItem, url: e.target.value})}
-                      placeholder="https://..."
+                      placeholder={newItem.tipo === "Vídeo YouTube" ? "https://youtube.com/watch?v=..." : "https://..."}
                       className="bg-toca-background border-toca-border"
                     />
                   </div>
@@ -282,6 +415,40 @@ const PortfolioManager: React.FC<PortfolioManagerProps> = ({ professionalId, onU
                     className="bg-toca-background border-toca-border resize-none h-20"
                   />
                 </div>
+                
+                {/* Validação para URL do YouTube */}
+                {newItem.tipo === "Vídeo YouTube" && newItem.url && !isYoutubeUrl(newItem.url) && (
+                  <div className="text-red-400 text-sm">
+                    A URL não parece ser um link válido do YouTube. Use formatos como https://youtube.com/watch?v=... ou https://youtu.be/...
+                  </div>
+                )}
+                
+                {/* Aviso de limite de vídeos */}
+                {newItem.tipo === "Vídeo YouTube" && youtubeItemCount >= 5 && (
+                  <div className="text-yellow-400 text-sm">
+                    Você já atingiu o limite máximo de 5 vídeos do YouTube. Remova algum vídeo existente para adicionar novos.
+                  </div>
+                )}
+                
+                {/* Preview se for URL do YouTube */}
+                {newItem.tipo === "Vídeo YouTube" && isYoutubeUrl(newItem.url) && (
+                  <div className="bg-black/30 p-3 rounded-md">
+                    <h4 className="text-sm text-white mb-2">Preview:</h4>
+                    <div className="aspect-video max-w-xs mx-auto">
+                      {getYoutubeVideoId(newItem.url) ? (
+                        <img 
+                          src={`https://img.youtube.com/vi/${getYoutubeVideoId(newItem.url)}/mqdefault.jpg`}
+                          alt="YouTube thumbnail"
+                          className="w-full h-full object-cover rounded-md"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center bg-black rounded-md">
+                          <Youtube className="text-red-500" size={48} />
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </>
@@ -292,7 +459,13 @@ const PortfolioManager: React.FC<PortfolioManagerProps> = ({ professionalId, onU
         <Button 
           onClick={handleAddItem} 
           className="bg-toca-accent hover:bg-toca-accent-hover"
-          disabled={isSaving || !newItem.tipo || !newItem.url}
+          disabled={
+            isSaving || 
+            !newItem.tipo || 
+            !newItem.url || 
+            (newItem.tipo === "Vídeo YouTube" && !isYoutubeUrl(newItem.url)) ||
+            (newItem.tipo === "Vídeo YouTube" && youtubeItemCount >= 5)
+          }
         >
           {isSaving ? (
             <>
