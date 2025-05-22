@@ -127,6 +127,10 @@ const PortfolioSection: React.FC<PortfolioSectionProps> = ({
                           src={`https://img.youtube.com/vi/${videoId}/hqdefault.jpg`} 
                           alt="Thumbnail do YouTube"
                           className="w-full h-full object-cover"
+                          onError={(e) => {
+                            // Fallback if image fails to load
+                            e.currentTarget.src = `https://img.youtube.com/vi/${videoId}/0.jpg`;
+                          }}
                         />
                         <div className="absolute inset-0 flex items-center justify-center">
                           <div className="bg-black bg-opacity-40 rounded-full p-3 hover:bg-opacity-60 transition-opacity">
@@ -167,6 +171,7 @@ const PortfolioSection: React.FC<PortfolioSectionProps> = ({
                                   target="_blank" 
                                   rel="noopener noreferrer"
                                   className="text-toca-accent hover:text-toca-accent-hover"
+                                  onClick={(e) => e.stopPropagation()} // Prevent event bubbling
                                 >
                                   <ExternalLink size={16} />
                                 </a>
@@ -178,6 +183,7 @@ const PortfolioSection: React.FC<PortfolioSectionProps> = ({
                                   target="_blank" 
                                   rel="noopener noreferrer" 
                                   className="text-sm text-toca-accent hover:underline flex items-center"
+                                  onClick={(e) => e.stopPropagation()} // Prevent event bubbling
                                 >
                                   <LinkIcon size={12} className="mr-1" />
                                   {item.url.length > 30 ? `${item.url.substring(0, 30)}...` : item.url}
@@ -222,6 +228,13 @@ const PortfolioSection: React.FC<PortfolioSectionProps> = ({
                           src={`https://img.youtube.com/vi/${getYoutubeVideoId(youtube)}/hqdefault.jpg`} 
                           alt="Thumbnail do YouTube"
                           className="w-full h-full object-cover"
+                          onError={(e) => {
+                            // Fallback if image fails to load
+                            const videoId = getYoutubeVideoId(youtube);
+                            if (videoId) {
+                              e.currentTarget.src = `https://img.youtube.com/vi/${videoId}/0.jpg`;
+                            }
+                          }}
                         />
                         <div className="absolute inset-0 flex items-center justify-center">
                           <div className="bg-black bg-opacity-40 rounded-full p-3 hover:bg-opacity-60 transition-opacity">

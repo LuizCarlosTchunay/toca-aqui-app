@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import Navbar from "@/components/Navbar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -21,6 +22,8 @@ const EditProfile = () => {
   const [profileImage, setProfileImage] = useState<File | null>(null);
   const [profileImageUrl, setProfileImageUrl] = useState<string | undefined>(undefined);
   const [isLoading, setIsLoading] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isNavigating, setIsNavigating] = useState(false);
   const [existingProfessionalId, setExistingProfessionalId] = useState<string | null>(null);
   const [otherType, setOtherType] = useState<string>("");
   
@@ -42,13 +45,17 @@ const EditProfile = () => {
     const fetchProfileData = async () => {
       if (!user) {
         toast.error("Você precisa estar logado para editar seu perfil");
-        navigate("/");
+        setIsNavigating(true);
+        setTimeout(() => {
+          navigate("/");
+        }, 50);
         return;
       }
       
       setIsLoading(true);
       
       try {
+        console.log("Fetching professional profile data for editing");
         // Get professional profile if exists
         const { data, error } = await supabase
           .from('profissionais')
@@ -57,10 +64,12 @@ const EditProfile = () => {
           .maybeSingle();
         
         if (error) {
+          console.error("Error fetching professional profile:", error);
           throw error;
         }
         
         if (data) {
+          console.log("Found professional profile:", data.id);
           setExistingProfessionalId(data.id);
           
           // Check if the profile type is one of the predefined ones or custom
@@ -87,15 +96,7 @@ const EditProfile = () => {
           
           // Try to get profile image
           try {
-            // Ensure bucket exists first
-            try {
-              await supabase.storage.createBucket('profile_images', {
-                public: true
-              });
-            } catch (e) {
-              console.log("Bucket may already exist");
-            }
-            
+            console.log("Fetching profile image");
             const { data: imageData } = supabase.storage
               .from('profile_images')
               .getPublicUrl(`professionals/${data.id}`);
@@ -109,15 +110,21 @@ const EditProfile = () => {
                 .catch(() => false);
                 
               if (checkImage) {
+                console.log("Profile image found");
                 setProfileImageUrl(imageUrl);
+              } else {
+                console.log("Profile image not found or not accessible");
               }
             }
           } catch (imgError) {
             console.error("Error fetching profile image:", imgError);
+            // Continue without image - don't throw
           }
+        } else {
+          console.log("No professional profile found, creating new");
         }
       } catch (error: any) {
-        console.error("Erro ao carregar dados do perfil:", error);
+        console.error("Error loading profile data:", error);
         toast.error("Erro ao carregar dados do perfil: " + (error.message || "Tente novamente"));
       } finally {
         setIsLoading(false);
@@ -150,6 +157,18 @@ const EditProfile = () => {
   const handleRemoveService = (serviceToRemove: string) => {
     setServices(services.filter(service => service !== serviceToRemove));
   };
+
+  // Navigation handler with safety checks
+  const handleNavigate = (path: string) => {
+    if (isNavigating) return; // Prevent multiple clicks
+    
+    setIsNavigating(true);
+    console.log(`Navigating to ${path}`);
+    
+    setTimeout(() => {
+      navigate(path, { replace: true });
+    }, 50);
+  };
   
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -166,8 +185,10 @@ const EditProfile = () => {
     }
     
     setIsLoading(true);
+    setIsSaving(true);
     
     try {
+      console.log("Saving profile data");
       let professionalId = existingProfessionalId;
       let finalProfileType = profileData.profileType === "outro" ? otherType : profileData.profileType;
       
@@ -186,6 +207,7 @@ const EditProfile = () => {
       };
       
       if (existingProfessionalId) {
+        console.log("Updating existing profile:", existingProfessionalId);
         // Update existing profile
         const { error: updateError } = await supabase
           .from('profissionais')
@@ -194,6 +216,7 @@ const EditProfile = () => {
         
         if (updateError) throw updateError;
       } else {
+        console.log("Creating new professional profile");
         // Create new profile
         const { data: newProfile, error: insertError } = await supabase
           .from('profissionais')
@@ -211,6 +234,8 @@ const EditProfile = () => {
           throw new Error("Falha ao obter o ID do perfil criado");
         }
         
+        console.log("Created new profile:", professionalId);
+        
         // Update user to have professional profile
         const { error: userUpdateError } = await supabase
           .from('users')
@@ -223,14 +248,7 @@ const EditProfile = () => {
       // Upload profile image if provided
       if (profileImage && professionalId) {
         try {
-          // Ensure bucket exists
-          try {
-            await supabase.storage.createBucket('profile_images', {
-              public: true
-            });
-          } catch (bucketError) {
-            console.log("Bucket may already exist:", bucketError);
-          }
+          console.log("Uploading profile image");
           
           const fileName = `professionals/${professionalId}`;
           
@@ -242,6 +260,7 @@ const EditProfile = () => {
             });
           
           if (uploadError) throw uploadError;
+          console.log("Profile image uploaded successfully");
         } catch (imageError) {
           console.error("Error uploading image:", imageError);
           // Continue even if image upload fails
@@ -249,10 +268,13 @@ const EditProfile = () => {
         }
       }
       
+      console.log("Profile saved successfully");
       toast.success("Perfil atualizado com sucesso!");
       
       // First set loading to false to ensure UI is responsive
       setIsLoading(false);
+      setIsSaving(false);
+      setIsNavigating(true);
       
       // Then navigate after a short delay to avoid the black screen issue
       setTimeout(() => {
@@ -269,24 +291,15 @@ const EditProfile = () => {
       console.error("Error saving profile:", error);
       toast.error("Erro ao salvar o perfil: " + (error.message || "Tente novamente"));
       setIsLoading(false);
+      setIsSaving(false);
     }
   };
 
   const handleImageChange = (imageFile: File, imageUrl?: string) => {
+    console.log("Profile image selected");
     setProfileImage(imageFile);
     if (imageUrl) {
       setProfileImageUrl(imageUrl);
-    }
-  };
-
-  // Simple URL validator function
-  const isValidUrl = (url: string) => {
-    if (!url) return true; // Empty URLs are valid (optional)
-    try {
-      new URL(url);
-      return true;
-    } catch (e) {
-      return false;
     }
   };
 
@@ -294,7 +307,10 @@ const EditProfile = () => {
   useEffect(() => {
     if (!user) {
       toast.error("Você precisa estar logado para acessar esta página");
-      navigate("/login");
+      setIsNavigating(true);
+      setTimeout(() => {
+        navigate("/login");
+      }, 50);
     }
   }, [user, navigate]);
 
@@ -509,18 +525,18 @@ const EditProfile = () => {
                 <Button 
                   type="button" 
                   variant="outline" 
-                  onClick={() => navigate("/dashboard")}
+                  onClick={() => handleNavigate("/dashboard")}
                   className="border-toca-border text-white"
-                  disabled={isLoading}
+                  disabled={isLoading || isSaving || isNavigating}
                 >
                   Cancelar
                 </Button>
                 <Button 
                   type="submit"
                   className="bg-toca-accent hover:bg-toca-accent-hover"
-                  disabled={isLoading}
+                  disabled={isLoading || isSaving || isNavigating}
                 >
-                  {isLoading ? "Salvando..." : "Salvar Alterações"}
+                  {(isLoading || isSaving) ? "Salvando..." : "Salvar Alterações"}
                 </Button>
               </div>
             </form>
