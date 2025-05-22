@@ -21,8 +21,6 @@ interface ProfileSidebarProps {
     city: string;
     state: string;
     bio?: string;
-    instagram?: string;
-    youtube?: string;
   };
   onBookClick: () => void;
 }

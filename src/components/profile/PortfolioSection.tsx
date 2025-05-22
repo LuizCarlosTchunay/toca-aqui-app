@@ -15,15 +15,11 @@ interface PortfolioItem {
 
 interface PortfolioSectionProps {
   portfolioItems: PortfolioItem[];
-  youtube?: string;
-  instagram?: string;
   isLoading?: boolean;
 }
 
 const PortfolioSection: React.FC<PortfolioSectionProps> = ({
   portfolioItems,
-  youtube,
-  instagram,
   isLoading = false
 }) => {
   // Using a controlled dialog state instead of just a URL string
@@ -70,24 +66,10 @@ const PortfolioSection: React.FC<PortfolioSectionProps> = ({
     }
   };
 
-  // Collect all YouTube videos (up to 5) from portfolio items and the main YouTube URL
-  const youtubeVideos: string[] = [];
-
-  // Add the main YouTube URL if it exists
-  if (youtube) {
-    youtubeVideos.push(youtube);
-  }
-
-  // Add YouTube videos from portfolio items
-  if (portfolioItems && portfolioItems.length > 0) {
-    portfolioItems.forEach(item => {
-      if (youtubeVideos.length < 5 && // Limit to 5 videos total
-          item.url && 
-          (item.url.includes('youtube.com') || item.url.includes('youtu.be'))) {
-        youtubeVideos.push(item.url);
-      }
-    });
-  }
+  // Collect all YouTube videos from portfolio items
+  const youtubeVideos = portfolioItems
+    .filter(item => item.url && (item.url.includes('youtube.com') || item.url.includes('youtu.be')))
+    .slice(0, 5); // Limit to 5 videos total
 
   // Handle video clicks - explicitly controls dialog state
   const handleVideoClick = (e: React.MouseEvent, url: string) => {
@@ -135,15 +117,15 @@ const PortfolioSection: React.FC<PortfolioSectionProps> = ({
               <div className="space-y-4">
                 <h3 className="text-lg font-medium text-white">Vídeos</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {youtubeVideos.slice(0, 5).map((url, index) => {
-                    const videoId = getYoutubeVideoId(url);
+                  {youtubeVideos.map((item, index) => {
+                    const videoId = getYoutubeVideoId(item.url);
                     if (!videoId) return null;
                     
                     return (
                       <div 
                         key={`youtube-${index}`} 
                         className="aspect-video rounded-md overflow-hidden border border-toca-border cursor-pointer hover:border-toca-accent transition-colors relative"
-                        onClick={(e) => handleVideoClick(e, url)}
+                        onClick={(e) => handleVideoClick(e, item.url)}
                       >
                         <img 
                           src={`https://img.youtube.com/vi/${videoId}/hqdefault.jpg`} 
@@ -232,54 +214,7 @@ const PortfolioSection: React.FC<PortfolioSectionProps> = ({
           </div>
         ) : (
           <div className="text-center text-toca-text-secondary py-6">
-            {youtube ? (
-              <div>
-                <p className="mb-3">Este profissional ainda não adicionou itens ao portfólio, mas você pode conferir seus vídeos:</p>
-                <div className="flex justify-center">
-                  <div 
-                    className="aspect-video w-full max-w-md rounded-md overflow-hidden border border-toca-border cursor-pointer hover:border-toca-accent transition-colors"
-                    onClick={(e) => {
-                      // Prevent event bubbling
-                      e.preventDefault();
-                      e.stopPropagation();
-                      youtube && handleVideoClick(e, youtube);
-                    }}
-                  >
-                    {getYoutubeVideoId(youtube) ? (
-                      <>
-                        <img 
-                          src={`https://img.youtube.com/vi/${getYoutubeVideoId(youtube)}/hqdefault.jpg`} 
-                          alt="Thumbnail do YouTube"
-                          className="w-full h-full object-cover"
-                          loading="lazy"
-                          onError={(e) => {
-                            // Fallback if image fails to load
-                            const videoId = getYoutubeVideoId(youtube);
-                            if (videoId) {
-                              e.currentTarget.src = `https://img.youtube.com/vi/${videoId}/0.jpg`;
-                            }
-                          }}
-                        />
-                        <div className="absolute inset-0 flex items-center justify-center">
-                          <div className="bg-black bg-opacity-40 rounded-full p-3 hover:bg-opacity-60 transition-opacity">
-                            {/* Play button icon */}
-                            <div className="h-12 w-12 flex items-center justify-center">
-                              <div className="w-0 h-0 border-y-8 border-y-transparent border-l-12 border-l-white ml-1"></div>
-                            </div>
-                          </div>
-                        </div>
-                      </>
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center bg-black/30">
-                        <span className="text-white font-medium">Vídeo</span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <p>Este profissional ainda não adicionou itens ao portfólio.</p>
-            )}
+            <p>Este profissional ainda não adicionou itens ao portfólio.</p>
           </div>
         )}
       </CardContent>

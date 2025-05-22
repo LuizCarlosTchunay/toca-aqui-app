@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Star, MapPin } from "lucide-react";
@@ -7,7 +8,6 @@ import ProfileCardBadge from "@/components/profile/ProfileCardBadge";
 import ProfileCardRateDisplay from "@/components/profile/ProfileCardRateDisplay";
 import ProfileCardNeonBorder from "@/components/profile/ProfileCardNeonBorder";
 import ProfessionalTypeIcon from "@/components/profile/ProfessionalTypeIcon";
-import ProfileCardSocialLinks from "@/components/profile/ProfileCardSocialLinks";
 
 interface ProfileCardProps {
   professional: {
@@ -25,8 +25,6 @@ interface ProfileCardProps {
     city: string;
     state: string;
     bio?: string;
-    instagram?: string;
-    youtube?: string;
   };
   className?: string;
   onClick?: () => void;
@@ -153,14 +151,6 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
               <ProfessionalTypeIcon type={professional.type} />
               {professional.type}
             </ProfileCardBadge>
-            
-            {/* Social Media Links */}
-            {(professional.youtube || professional.instagram) && (
-              <ProfileCardSocialLinks 
-                youtube={professional.youtube} 
-                instagram={professional.instagram} 
-              />
-            )}
           </div>
 
           <CardContent className="px-0 pt-0 pb-4">
