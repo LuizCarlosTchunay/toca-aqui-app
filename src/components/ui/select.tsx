@@ -80,6 +80,7 @@ const SelectContent = React.forwardRef<
         className
       )}
       position={position}
+      style={{backgroundColor: 'var(--popover)'}} // Forçando background para corrigir a tela preta
       {...props}
     >
       <SelectScrollUpButton />
@@ -89,6 +90,7 @@ const SelectContent = React.forwardRef<
           position === "popper" &&
             "h-[var(--radix-select-trigger-height)] w-full min-w-[var(--radix-select-trigger-width)]"
         )}
+        style={{backgroundColor: 'var(--popover)'}} // Forçando background para o viewport também
       >
         {children}
       </SelectPrimitive.Viewport>

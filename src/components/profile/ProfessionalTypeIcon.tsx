@@ -9,7 +9,8 @@ import {
   UserRound, 
   MicVocal, 
   Drum, 
-  Guitar 
+  Guitar,
+  LucideIcon
 } from "lucide-react";
 
 interface ProfessionalTypeIconProps {
@@ -24,7 +25,8 @@ const ProfessionalTypeIcon: React.FC<ProfessionalTypeIconProps> = ({
   // First normalize the type by converting to lowercase and removing accents
   const normalizedType = type?.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '') || '';
 
-  let IconComponent;
+  // Define o ícone como LucideIcon explicitamente para evitar problemas de tipagem
+  let IconComponent: LucideIcon;
   
   switch (normalizedType) {
     case "musico":
@@ -59,12 +61,21 @@ const ProfessionalTypeIcon: React.FC<ProfessionalTypeIconProps> = ({
     case "banda":
       IconComponent = Users;
       break;
+    case "tecnico_som":
+    case "técnico_som":
+      IconComponent = MicVocal;
+      break;
+    case "tecnico_luz":
+    case "técnico_luz":
+      IconComponent = Film;
+      break;
     default:
       IconComponent = UserRound;
       break;
   }
   
-  return <IconComponent size={size} />;
+  // Usar uma renderização direta do componente para evitar problemas
+  return React.createElement(IconComponent, { size });
 };
 
 export default ProfessionalTypeIcon;
