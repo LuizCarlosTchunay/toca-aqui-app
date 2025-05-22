@@ -24,33 +24,47 @@ const ProfessionalTypeIcon: React.FC<ProfessionalTypeIconProps> = ({
   // First normalize the type by converting to lowercase and removing accents
   const normalizedType = type?.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '') || '';
 
+  let IconComponent;
+  
   switch (normalizedType) {
     case "musico":
     case "músico":
-      return <Music size={size} />;
+      IconComponent = Music;
+      break;
     case "voz e violao":
     case "voz e violão":
-      return <MicVocal size={size} />;
+      IconComponent = MicVocal;
+      break;
     case "baterista":
-      return <Drum size={size} />;
+      IconComponent = Drum;
+      break;
     case "guitarrista":
-      return <Guitar size={size} />;
+      IconComponent = Guitar;
+      break;
     case "baixista":
-      return <Music size={size} />;
+      IconComponent = Music;
+      break;
     case "dj":
-      return <Disc size={size} />;
+      IconComponent = Disc;
+      break;
     case "fotografo":
     case "fotógrafo":
-      return <Camera size={size} />;
+      IconComponent = Camera;
+      break;
     case "filmmaker":
-      return <Film size={size} />;
+      IconComponent = Film;
+      break;
     case "duo":
     case "trio":
     case "banda":
-      return <Users size={size} />;
+      IconComponent = Users;
+      break;
     default:
-      return <UserRound size={size} />;
+      IconComponent = UserRound;
+      break;
   }
+  
+  return <IconComponent size={size} />;
 };
 
 export default ProfessionalTypeIcon;
