@@ -2,7 +2,7 @@
 import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
-import { ExternalLink, LinkIcon, Youtube } from "lucide-react";
+import { ExternalLink, LinkIcon, Youtube, Instagram } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 interface PortfolioItem {
@@ -16,12 +16,14 @@ interface PortfolioItem {
 interface PortfolioSectionProps {
   portfolioItems: PortfolioItem[];
   youtube?: string;
+  instagram?: string;
   isLoading?: boolean;
 }
 
 const PortfolioSection: React.FC<PortfolioSectionProps> = ({
   portfolioItems,
   youtube,
+  instagram,
   isLoading = false
 }) => {
   const [selectedVideoUrl, setSelectedVideoUrl] = useState<string | null>(null);
