@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import Navbar from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
@@ -188,7 +187,10 @@ const ProfessionalProfile = () => {
     navigate(`/reservar/${id}`);
   };
   
-  const handleGoBack = () => {
+  // Add explicit e.preventDefault() to ensure no unintended side effects
+  const handleGoBack = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
     setIsNavigating(true);
     navigate(-1);
   };
@@ -251,7 +253,7 @@ const ProfessionalProfile = () => {
       <Navbar isAuthenticated={!!user} />
       
       <div className="container mx-auto px-4 py-8">
-        {/* Back button */}
+        {/* Back button with explicit stopPropagation */}
         <Button 
           variant="ghost" 
           className="mb-6 text-toca-text-secondary hover:text-white"

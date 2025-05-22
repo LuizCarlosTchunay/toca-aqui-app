@@ -26,7 +26,14 @@ const PortfolioSection: React.FC<PortfolioSectionProps> = ({
   instagram,
   isLoading = false
 }) => {
-  const [selectedVideoUrl, setSelectedVideoUrl] = useState<string | null>(null);
+  // Using a controlled dialog state instead of just a URL string
+  const [videoDialogState, setVideoDialogState] = useState<{
+    isOpen: boolean;
+    videoUrl: string | null;
+  }>({
+    isOpen: false,
+    videoUrl: null
+  });
 
   // Função para extrair o ID do vídeo do YouTube de uma URL
   const getYoutubeVideoId = (url: string): string | null => {
@@ -69,9 +76,21 @@ const PortfolioSection: React.FC<PortfolioSectionProps> = ({
     });
   }
 
-  // Função para lidar com cliques nos vídeos
+  // Função para lidar com cliques nos vídeos - now explicitly controls dialog state
   const handleVideoClick = (url: string) => {
-    setSelectedVideoUrl(url);
+    // Only open dialog if the click came from a video element
+    setVideoDialogState({
+      isOpen: true,
+      videoUrl: url
+    });
+  };
+
+  // Function to close the dialog
+  const handleCloseDialog = () => {
+    setVideoDialogState({
+      isOpen: false,
+      videoUrl: null
+    });
   };
 
   return (
@@ -99,7 +118,11 @@ const PortfolioSection: React.FC<PortfolioSectionProps> = ({
                       <div 
                         key={`youtube-${index}`} 
                         className="aspect-video rounded-md overflow-hidden border border-toca-border cursor-pointer hover:border-toca-accent transition-colors"
-                        onClick={() => handleVideoClick(url)}
+                        onClick={(e) => {
+                          // Prevent event bubbling
+                          e.stopPropagation();
+                          handleVideoClick(url);
+                        }}
                       >
                         <img 
                           src={`https://img.youtube.com/vi/${videoId}/hqdefault.jpg`} 
@@ -184,7 +207,11 @@ const PortfolioSection: React.FC<PortfolioSectionProps> = ({
                 <div className="flex justify-center">
                   <div 
                     className="aspect-video w-full max-w-md rounded-md overflow-hidden border border-toca-border cursor-pointer hover:border-toca-accent transition-colors"
-                    onClick={() => youtube && handleVideoClick(youtube)}
+                    onClick={(e) => {
+                      // Prevent event bubbling
+                      e.stopPropagation();
+                      youtube && handleVideoClick(youtube);
+                    }}
                   >
                     {getYoutubeVideoId(youtube) ? (
                       <>
@@ -214,31 +241,34 @@ const PortfolioSection: React.FC<PortfolioSectionProps> = ({
         )}
       </CardContent>
 
-      {/* Modal para reproduzir o vídeo selecionado */}
-      {selectedVideoUrl && (
-        <Dialog open={!!selectedVideoUrl} onOpenChange={() => setSelectedVideoUrl(null)}>
-          <DialogContent className="sm:max-w-[800px] bg-toca-background border-toca-border">
-            <DialogHeader>
-              <DialogTitle className="text-white">Vídeo do Portfólio</DialogTitle>
-            </DialogHeader>
-            {getYoutubeVideoId(selectedVideoUrl) ? (
-              <div className="aspect-video w-full">
-                <iframe
-                  src={`https://www.youtube.com/embed/${getYoutubeVideoId(selectedVideoUrl)}`}
-                  title="YouTube video player"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
-                  className="w-full h-full rounded-md"
-                />
-              </div>
-            ) : (
-              <div className="text-center p-4 text-toca-text-secondary">
-                Não foi possível carregar o vídeo. Verifique se o link está correto.
-              </div>
-            )}
-          </DialogContent>
-        </Dialog>
-      )}
+      {/* Modal para reproduzir o vídeo selecionado - now using controlled dialog state */}
+      <Dialog 
+        open={videoDialogState.isOpen} 
+        onOpenChange={(open) => {
+          if (!open) handleCloseDialog();
+        }}
+      >
+        <DialogContent className="sm:max-w-[800px] bg-toca-background border-toca-border">
+          <DialogHeader>
+            <DialogTitle className="text-white">Vídeo do Portfólio</DialogTitle>
+          </DialogHeader>
+          {videoDialogState.videoUrl && getYoutubeVideoId(videoDialogState.videoUrl) ? (
+            <div className="aspect-video w-full">
+              <iframe
+                src={`https://www.youtube.com/embed/${getYoutubeVideoId(videoDialogState.videoUrl)}`}
+                title="YouTube video player"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+                className="w-full h-full rounded-md"
+              />
+            </div>
+          ) : (
+            <div className="text-center p-4 text-toca-text-secondary">
+              Não foi possível carregar o vídeo. Verifique se o link está correto.
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 };
