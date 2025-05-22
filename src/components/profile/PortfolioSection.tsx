@@ -57,18 +57,18 @@ const PortfolioSection: React.FC<PortfolioSectionProps> = ({
     }
   };
 
-  // Filtrar apenas itens do YouTube no portfolio ou usar a URL principal, limitando a 5 vídeos
+  // Collect all YouTube videos (up to 5) from portfolio items and the main YouTube URL
   const youtubeVideos: string[] = [];
 
-  // Adicionar o vídeo principal do YouTube se existir
+  // Add the main YouTube URL if it exists
   if (youtube) {
     youtubeVideos.push(youtube);
   }
 
-  // Adicionar vídeos do portfólio que são do YouTube
+  // Add YouTube videos from portfolio items
   if (portfolioItems && portfolioItems.length > 0) {
     portfolioItems.forEach(item => {
-      if (youtubeVideos.length < 5 && // Limitar a 5 vídeos no total
+      if (youtubeVideos.length < 5 && // Limit to 5 videos total
           item.url && 
           (item.url.includes('youtube.com') || item.url.includes('youtu.be'))) {
         youtubeVideos.push(item.url);
@@ -76,9 +76,12 @@ const PortfolioSection: React.FC<PortfolioSectionProps> = ({
     });
   }
 
-  // Função para lidar com cliques nos vídeos - now explicitly controls dialog state
-  const handleVideoClick = (url: string) => {
-    // Only open dialog if the click came from a video element
+  // Handle video clicks - explicitly controls dialog state
+  const handleVideoClick = (e: React.MouseEvent, url: string) => {
+    // Prevent event bubbling and default behavior
+    e.stopPropagation();
+    e.preventDefault();
+    
     setVideoDialogState({
       isOpen: true,
       videoUrl: url
@@ -117,12 +120,8 @@ const PortfolioSection: React.FC<PortfolioSectionProps> = ({
                     return (
                       <div 
                         key={`youtube-${index}`} 
-                        className="aspect-video rounded-md overflow-hidden border border-toca-border cursor-pointer hover:border-toca-accent transition-colors"
-                        onClick={(e) => {
-                          // Prevent event bubbling
-                          e.stopPropagation();
-                          handleVideoClick(url);
-                        }}
+                        className="aspect-video rounded-md overflow-hidden border border-toca-border cursor-pointer hover:border-toca-accent transition-colors relative"
+                        onClick={(e) => handleVideoClick(e, url)}
                       >
                         <img 
                           src={`https://img.youtube.com/vi/${videoId}/hqdefault.jpg`} 
@@ -131,7 +130,7 @@ const PortfolioSection: React.FC<PortfolioSectionProps> = ({
                         />
                         <div className="absolute inset-0 flex items-center justify-center">
                           <div className="bg-black bg-opacity-40 rounded-full p-3 hover:bg-opacity-60 transition-opacity">
-                            {/* Removed the "Assistir" text as requested */}
+                            {/* Play button icon */}
                             <div className="h-12 w-12 flex items-center justify-center">
                               <div className="w-0 h-0 border-y-8 border-y-transparent border-l-12 border-l-white ml-1"></div>
                             </div>
@@ -144,11 +143,11 @@ const PortfolioSection: React.FC<PortfolioSectionProps> = ({
               </div>
             )}
             
-            {/* Items regulares de portfólio */}
+            {/* Regular portfolio items */}
             <Carousel className="w-full">
               <CarouselContent>
                 {portfolioItems && portfolioItems.map((item) => {
-                  // Pular itens do YouTube que já foram exibidos acima
+                  // Skip YouTube items that were already displayed above
                   if (item.url && (item.url.includes('youtube.com') || item.url.includes('youtu.be'))) {
                     return null;
                   }
@@ -213,7 +212,8 @@ const PortfolioSection: React.FC<PortfolioSectionProps> = ({
                     onClick={(e) => {
                       // Prevent event bubbling
                       e.stopPropagation();
-                      youtube && handleVideoClick(youtube);
+                      e.preventDefault();
+                      youtube && handleVideoClick(e, youtube);
                     }}
                   >
                     {getYoutubeVideoId(youtube) ? (
@@ -225,7 +225,7 @@ const PortfolioSection: React.FC<PortfolioSectionProps> = ({
                         />
                         <div className="absolute inset-0 flex items-center justify-center">
                           <div className="bg-black bg-opacity-40 rounded-full p-3 hover:bg-opacity-60 transition-opacity">
-                            {/* Removed the "Assistir" text as requested */}
+                            {/* Play button icon */}
                             <div className="h-12 w-12 flex items-center justify-center">
                               <div className="w-0 h-0 border-y-8 border-y-transparent border-l-12 border-l-white ml-1"></div>
                             </div>
@@ -247,7 +247,7 @@ const PortfolioSection: React.FC<PortfolioSectionProps> = ({
         )}
       </CardContent>
 
-      {/* Modal para reproduzir o vídeo selecionado - now using controlled dialog state */}
+      {/* Modal para reproduzir o vídeo selecionado */}
       <Dialog 
         open={videoDialogState.isOpen} 
         onOpenChange={(open) => {

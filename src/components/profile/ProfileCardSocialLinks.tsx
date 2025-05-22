@@ -1,15 +1,12 @@
 
 import React from "react";
-import { Youtube } from "lucide-react";
 
 interface ProfileCardSocialLinksProps {
   youtube?: string;
 }
 
-const ProfileCardSocialLinks: React.FC<ProfileCardSocialLinksProps> = ({
-  youtube
-}) => {
-  // Completely remove the rendering of YouTube links in this component
+const ProfileCardSocialLinks: React.FC<ProfileCardSocialLinksProps> = () => {
+  // This component no longer renders YouTube links as they are handled in the portfolio section
   return null;
 };
 

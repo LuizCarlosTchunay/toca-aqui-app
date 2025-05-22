@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import Navbar from "@/components/Navbar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,8 +11,9 @@ import { toast } from "sonner";
 import ImageUploader from "@/components/ImageUploader";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { Youtube, X, Plus } from "lucide-react";
+import { X, Plus } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import PortfolioManager from "@/components/PortfolioManager";
 
 const EditProfile = () => {
   const navigate = useNavigate();
@@ -24,7 +24,7 @@ const EditProfile = () => {
   const [existingProfessionalId, setExistingProfessionalId] = useState<string | null>(null);
   const [otherType, setOtherType] = useState<string>("");
   
-  // New state for services management
+  // State for services management
   const [newService, setNewService] = useState<string>("");
   const [services, setServices] = useState<string[]>([]);
   
@@ -36,7 +36,6 @@ const EditProfile = () => {
     state: "",
     hourlyRate: "",
     eventRate: "",
-    youtubeUrl: "",
   });
   
   useEffect(() => {
@@ -80,7 +79,6 @@ const EditProfile = () => {
             state: data.estado || "",
             hourlyRate: data.cache_hora?.toString() || "",
             eventRate: data.cache_evento?.toString() || "",
-            youtubeUrl: data.youtube_url || "",
           });
           
           if (!isPredefined && data.tipo_profissional) {
@@ -181,10 +179,10 @@ const EditProfile = () => {
         estado: profileData.state,
         cache_hora: profileData.hourlyRate ? parseFloat(profileData.hourlyRate) : null,
         cache_evento: profileData.eventRate ? parseFloat(profileData.eventRate) : null,
-        youtube_url: profileData.youtubeUrl,
-        instagram_url: null, // Definindo explicitamente como null para remover qualquer valor anterior
-        servicos: services, // Save the services array
-        user_id: user.id, // Ensure user_id is always set
+        youtube_url: null, // Set explicitly to null to remove any previous value
+        instagram_url: null, // Set explicitly to null to remove any previous value
+        servicos: services,
+        user_id: user.id,
       };
       
       if (existingProfessionalId) {
@@ -334,6 +332,7 @@ const EditProfile = () => {
                 />
               </div>
               
+              {/* Basic profile fields */}
               <div className="space-y-2">
                 <Label htmlFor="artisticName" className="text-white">Nome Artístico</Label>
                 <Input 
@@ -493,30 +492,18 @@ const EditProfile = () => {
                 </div>
               </div>
               
-              {/* YouTube URL field - Instagram field removed */}
-              <div className="space-y-6">
-                <h3 className="text-white text-lg font-medium">Vídeo do Portfólio</h3>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="youtubeUrl" className="text-white flex items-center gap-2">
-                    <Youtube size={18} className="text-red-500" />
-                    YouTube
-                  </Label>
-                  <Input 
-                    id="youtubeUrl" 
-                    value={profileData.youtubeUrl}
-                    onChange={(e) => handleChange('youtubeUrl', e.target.value)}
-                    className="bg-toca-background border-toca-border text-white"
-                    placeholder="https://youtube.com/watch?v=VIDEO_ID"
+              {/* Portfolio Manager - only show once we have a professional ID */}
+              {existingProfessionalId && (
+                <div className="mt-8">
+                  <PortfolioManager 
+                    professionalId={existingProfessionalId} 
+                    onUpdate={() => {
+                      // Optional callback when portfolio is updated
+                      toast.success("Portfólio atualizado!");
+                    }}
                   />
-                  {profileData.youtubeUrl && !isValidUrl(profileData.youtubeUrl) && (
-                    <p className="text-sm text-red-500">URL inválida. Inclua http:// ou https://</p>
-                  )}
-                  <p className="text-xs text-toca-text-secondary">
-                    Adicione um link para seu vídeo no YouTube. Os contratantes poderão assistir ao vídeo diretamente no aplicativo Toca Aqui.
-                  </p>
                 </div>
-              </div>
+              )}
               
               <div className="flex justify-end gap-4 pt-4">
                 <Button 

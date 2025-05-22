@@ -129,6 +129,16 @@ const PortfolioManager: React.FC<PortfolioManagerProps> = ({ professionalId, onU
       return;
     }
 
+    // Check if we're adding a YouTube URL and we've already reached the limit
+    if (newItem.tipo === "Vídeo YouTube" && youtubeItemCount >= 5) {
+      toast({
+        title: "Limite atingido",
+        description: "Você já adicionou o máximo de 5 vídeos do YouTube.",
+        variant: "destructive"
+      });
+      return;
+    }
+
     setIsSaving(true);
     try {
       const { data, error } = await supabase
@@ -225,7 +235,7 @@ const PortfolioManager: React.FC<PortfolioManagerProps> = ({ professionalId, onU
           </div>
         ) : (
           <>
-            {/* YouTube videos section */}
+            {/* YouTube videos section - highlighting the 5 video limit */}
             <div>
               <h3 className="text-white font-medium mb-3 flex items-center">
                 <Youtube size={18} className="mr-2 text-red-500" />
@@ -284,6 +294,7 @@ const PortfolioManager: React.FC<PortfolioManagerProps> = ({ professionalId, onU
                 <div className="text-center py-4 text-toca-text-secondary bg-toca-background/30 rounded-md">
                   <Youtube className="mx-auto h-8 w-8 opacity-25 mb-2 text-red-500" />
                   <p>Nenhum vídeo do YouTube adicionado.</p>
+                  <p className="text-xs mt-2">Você pode adicionar até 5 vídeos do YouTube para exibir no seu portfólio.</p>
                 </div>
               )}
               
