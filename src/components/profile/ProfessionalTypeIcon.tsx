@@ -25,7 +25,7 @@ const ProfessionalTypeIcon: React.FC<ProfessionalTypeIconProps> = ({
   // First normalize the type by converting to lowercase and removing accents
   const normalizedType = type?.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '') || '';
 
-  // Define o ícone como LucideIcon explicitamente para evitar problemas de tipagem
+  // Define the icon component
   let IconComponent: LucideIcon;
   
   switch (normalizedType) {
@@ -74,8 +74,7 @@ const ProfessionalTypeIcon: React.FC<ProfessionalTypeIconProps> = ({
       break;
   }
   
-  // Usar uma renderização direta do componente para evitar problemas
-  return React.createElement(IconComponent, { size });
+  return <IconComponent size={size} />;
 };
 
 export default ProfessionalTypeIcon;
