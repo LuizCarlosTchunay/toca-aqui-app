@@ -7,7 +7,8 @@ interface ProfileCardSocialLinksProps {
 }
 
 const ProfileCardSocialLinks: React.FC<ProfileCardSocialLinksProps> = ({ youtube, instagram }) => {
-  // This component no longer renders YouTube links as they are handled in the portfolio section
+  // This component now works with the portfolio YouTube links
+  // All YouTube links are handled in the PortfolioSection component
   return null;
 };
 

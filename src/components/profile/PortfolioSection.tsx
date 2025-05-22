@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 import { ExternalLink, LinkIcon } from "lucide-react";
@@ -34,9 +34,22 @@ const PortfolioSection: React.FC<PortfolioSectionProps> = ({
     isOpen: false,
     videoUrl: null
   });
+  
+  // Track component mounted state to prevent memory leaks
+  const [isMounted, setIsMounted] = useState(true);
+
+  // Set component mounted on mount and unmounted on cleanup
+  useEffect(() => {
+    setIsMounted(true);
+    return () => {
+      setIsMounted(false);
+    };
+  }, []);
 
   // Função para extrair o ID do vídeo do YouTube de uma URL
   const getYoutubeVideoId = (url: string): string | null => {
+    if (!url) return null;
+    
     try {
       const urlObj = new URL(url);
       
@@ -78,18 +91,27 @@ const PortfolioSection: React.FC<PortfolioSectionProps> = ({
 
   // Handle video clicks - explicitly controls dialog state
   const handleVideoClick = (e: React.MouseEvent, url: string) => {
-    // Prevent event bubbling and default behavior
-    e.stopPropagation();
-    e.preventDefault();
+    if (!isMounted) return;
     
-    setVideoDialogState({
-      isOpen: true,
-      videoUrl: url
+    // Prevent event bubbling and default behavior
+    e.preventDefault();
+    e.stopPropagation();
+    
+    // Use requestAnimationFrame to ensure the UI is ready
+    requestAnimationFrame(() => {
+      if (isMounted) {
+        setVideoDialogState({
+          isOpen: true,
+          videoUrl: url
+        });
+      }
     });
   };
 
   // Function to close the dialog
   const handleCloseDialog = () => {
+    if (!isMounted) return;
+    
     setVideoDialogState({
       isOpen: false,
       videoUrl: null
@@ -131,6 +153,7 @@ const PortfolioSection: React.FC<PortfolioSectionProps> = ({
                             // Fallback if image fails to load
                             e.currentTarget.src = `https://img.youtube.com/vi/${videoId}/0.jpg`;
                           }}
+                          loading="lazy"
                         />
                         <div className="absolute inset-0 flex items-center justify-center">
                           <div className="bg-black bg-opacity-40 rounded-full p-3 hover:bg-opacity-60 transition-opacity">
@@ -217,8 +240,8 @@ const PortfolioSection: React.FC<PortfolioSectionProps> = ({
                     className="aspect-video w-full max-w-md rounded-md overflow-hidden border border-toca-border cursor-pointer hover:border-toca-accent transition-colors"
                     onClick={(e) => {
                       // Prevent event bubbling
-                      e.stopPropagation();
                       e.preventDefault();
+                      e.stopPropagation();
                       youtube && handleVideoClick(e, youtube);
                     }}
                   >
@@ -228,6 +251,7 @@ const PortfolioSection: React.FC<PortfolioSectionProps> = ({
                           src={`https://img.youtube.com/vi/${getYoutubeVideoId(youtube)}/hqdefault.jpg`} 
                           alt="Thumbnail do YouTube"
                           className="w-full h-full object-cover"
+                          loading="lazy"
                           onError={(e) => {
                             // Fallback if image fails to load
                             const videoId = getYoutubeVideoId(youtube);
@@ -261,33 +285,35 @@ const PortfolioSection: React.FC<PortfolioSectionProps> = ({
       </CardContent>
 
       {/* Modal para reproduzir o vídeo selecionado */}
-      <Dialog 
-        open={videoDialogState.isOpen} 
-        onOpenChange={(open) => {
-          if (!open) handleCloseDialog();
-        }}
-      >
-        <DialogContent className="sm:max-w-[800px] bg-toca-background border-toca-border">
-          <DialogHeader>
-            <DialogTitle className="text-white">Vídeo do Portfólio</DialogTitle>
-          </DialogHeader>
-          {videoDialogState.videoUrl && getYoutubeVideoId(videoDialogState.videoUrl) ? (
-            <div className="aspect-video w-full">
-              <iframe
-                src={`https://www.youtube.com/embed/${getYoutubeVideoId(videoDialogState.videoUrl)}`}
-                title="YouTube video player"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowFullScreen
-                className="w-full h-full rounded-md"
-              />
-            </div>
-          ) : (
-            <div className="text-center p-4 text-toca-text-secondary">
-              Não foi possível carregar o vídeo. Verifique se o link está correto.
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
+      {isMounted && (
+        <Dialog 
+          open={videoDialogState.isOpen} 
+          onOpenChange={(open) => {
+            if (!open) handleCloseDialog();
+          }}
+        >
+          <DialogContent className="sm:max-w-[800px] bg-toca-background border-toca-border">
+            <DialogHeader>
+              <DialogTitle className="text-white">Vídeo do Portfólio</DialogTitle>
+            </DialogHeader>
+            {videoDialogState.videoUrl && getYoutubeVideoId(videoDialogState.videoUrl) ? (
+              <div className="aspect-video w-full">
+                <iframe
+                  src={`https://www.youtube.com/embed/${getYoutubeVideoId(videoDialogState.videoUrl)}`}
+                  title="YouTube video player"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                  className="w-full h-full rounded-md"
+                />
+              </div>
+            ) : (
+              <div className="text-center p-4 text-toca-text-secondary">
+                Não foi possível carregar o vídeo. Verifique se o link está correto.
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
+      )}
     </Card>
   );
 };

@@ -27,6 +27,7 @@ const EditProfile = () => {
   const [existingProfessionalId, setExistingProfessionalId] = useState<string | null>(null);
   const [otherType, setOtherType] = useState<string>("");
   const [loadedData, setLoadedData] = useState(false);
+  const [profileSaved, setProfileSaved] = useState(false);
   
   // State for services management
   const [newService, setNewService] = useState<string>("");
@@ -262,6 +263,7 @@ const EditProfile = () => {
         }
         
         console.log("Created new profile:", professionalId);
+        setExistingProfessionalId(professionalId);
         
         // Update user to have professional profile
         const { error: userUpdateError } = await supabase
@@ -298,29 +300,17 @@ const EditProfile = () => {
       console.log("Profile saved successfully");
       toast.success("Perfil atualizado com sucesso!");
       
-      // First set loading to false to ensure UI is responsive
+      // Set profile saved flag to true
+      setProfileSaved(true);
+      
+      // NO NAVIGATION - Just update the state
       setIsLoading(false);
       setIsSaving(false);
-      setIsNavigating(true);
-      
-      // Use requestAnimationFrame to ensure UI updates before navigation
-      requestAnimationFrame(() => {
-        // Then navigate after a short delay to avoid the black screen issue
-        setTimeout(() => {
-          try {
-            console.log("Navigating to meu-perfil");
-            navigate("/meu-perfil", { replace: true });
-          } catch (navError) {
-            console.error("Navigation error:", navError);
-            // If navigation fails, provide a fallback
-            window.location.href = "/meu-perfil";
-          }
-        }, 100);
-      });
       
     } catch (error: any) {
       console.error("Error saving profile:", error);
       toast.error("Erro ao salvar o perfil: " + (error.message || "Tente novamente"));
+    } finally {
       setIsLoading(false);
       setIsSaving(false);
     }
@@ -349,6 +339,14 @@ const EditProfile = () => {
       });
     }
   }, [user, navigate, loadedData]);
+
+  // Update the portfolio manager reference when profile is saved
+  useEffect(() => {
+    if (profileSaved && existingProfessionalId) {
+      // Refresh the component to show portfolio manager
+      setProfileSaved(false);
+    }
+  }, [profileSaved, existingProfessionalId]);
 
   if (isLoading && !loadedData) {
     return (
@@ -547,19 +545,6 @@ const EditProfile = () => {
                 </div>
               </div>
               
-              {/* Portfolio Manager - only show once we have a professional ID */}
-              {existingProfessionalId && (
-                <div className="mt-8">
-                  <PortfolioManager 
-                    professionalId={existingProfessionalId} 
-                    onUpdate={() => {
-                      // Optional callback when portfolio is updated
-                      toast.success("Portfólio atualizado!");
-                    }}
-                  />
-                </div>
-              )}
-              
               <div className="flex justify-end gap-4 pt-4">
                 <Button 
                   type="button" 
@@ -591,6 +576,19 @@ const EditProfile = () => {
             </form>
           </CardContent>
         </Card>
+        
+        {/* Portfolio Manager - only show once we have a professional ID */}
+        {existingProfessionalId && (
+          <div className="mt-8">
+            <PortfolioManager 
+              professionalId={existingProfessionalId} 
+              onUpdate={() => {
+                // Optional callback when portfolio is updated
+                toast.success("Portfólio atualizado!");
+              }}
+            />
+          </div>
+        )}
       </div>
     </div>
   );
