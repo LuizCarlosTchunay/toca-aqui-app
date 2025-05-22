@@ -6,7 +6,6 @@ import { supabase } from "@/integrations/supabase/client";
 import ProfileCardBadge from "@/components/profile/ProfileCardBadge";
 import ProfileCardRateDisplay from "@/components/profile/ProfileCardRateDisplay";
 import ProfileCardNeonBorder from "@/components/profile/ProfileCardNeonBorder";
-import ProfileCardSocialLinks from "@/components/profile/ProfileCardSocialLinks";
 import ProfessionalTypeIcon from "@/components/profile/ProfessionalTypeIcon";
 
 interface ProfileCardProps {
@@ -148,10 +147,7 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
               {professional.type}
             </ProfileCardBadge>
             
-            {/* Social Media links - Only pass YouTube now */}
-            <ProfileCardSocialLinks 
-              youtube={professional.youtube} 
-            />
+            {/* Removed Social Media links section completely */}
           </div>
 
           <CardContent className="px-0 pt-0 pb-4">
@@ -245,8 +241,8 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
               />
             </div>
             
-            {/* Show message when no YouTube link */}
-            {expanded && !professional.youtube && (
+            {/* Show message when no YouTube link - Modified to not appear in the card */}
+            {expanded && !professional.youtube && !professional.instagram && (
               <div className="mt-4 text-center">
                 <p className="text-sm text-toca-text-secondary">Este profissional ainda não adicionou links de portfólio.</p>
               </div>

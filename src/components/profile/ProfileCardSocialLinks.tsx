@@ -9,24 +9,8 @@ interface ProfileCardSocialLinksProps {
 const ProfileCardSocialLinks: React.FC<ProfileCardSocialLinksProps> = ({
   youtube
 }) => {
-  if (!youtube) {
-    return null;
-  }
-  
-  return (
-    <div className="flex gap-3 mt-2">
-      {youtube && (
-        <a 
-          href={youtube}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-red-500 hover:text-red-400 transition-colors"
-        >
-          <Youtube size={16} />
-        </a>
-      )}
-    </div>
-  );
+  // Completely remove the rendering of YouTube links in this component
+  return null;
 };
 
 export default ProfileCardSocialLinks;
