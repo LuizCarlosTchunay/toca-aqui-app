@@ -14,6 +14,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   
   // Set a timeout to prevent indefinite loading
   useEffect(() => {
+    // Only start the timeout if we're actually loading
     if (loading) {
       const timer = setTimeout(() => {
         setIsTimeoutReached(true);
@@ -22,8 +23,10 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
       return () => clearTimeout(timer);
     }
     
-    // Reset timeout state when loading changes
-    return () => setIsTimeoutReached(false);
+    // Reset timeout state when loading changes to false
+    if (!loading) {
+      setIsTimeoutReached(false);
+    }
   }, [loading]);
 
   // Show loading state while checking authentication
@@ -46,6 +49,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
 
   // Redirect to login if not authenticated
   if (!user) {
+    console.log("User not authenticated, redirecting to login");
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
