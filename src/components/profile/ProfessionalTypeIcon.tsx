@@ -10,6 +10,8 @@ import {
   MicVocal, 
   Drum, 
   Guitar,
+  Radio,
+  PenTool,
   LucideIcon
 } from "lucide-react";
 
@@ -63,11 +65,15 @@ const ProfessionalTypeIcon: React.FC<ProfessionalTypeIconProps> = ({
       break;
     case "tecnico_som":
     case "técnico_som":
-      IconComponent = MicVocal;
+    case "tecnico de som":
+    case "técnico de som":
+      IconComponent = Radio;
       break;
     case "tecnico_luz":
     case "técnico_luz":
-      IconComponent = Film;
+    case "tecnico de luz":
+    case "técnico de luz":
+      IconComponent = PenTool;
       break;
     default:
       IconComponent = UserRound;
