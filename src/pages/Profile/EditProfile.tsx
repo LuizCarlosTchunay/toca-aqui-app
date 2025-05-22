@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback } from "react";
 import Navbar from "@/components/Navbar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -39,7 +38,7 @@ const EditProfile = () => {
   
   const [profileData, setProfileData] = useState({
     artisticName: "",
-    profileType: "dj",
+    profileType: "musico",
     bio: "",
     city: "",
     state: "",
@@ -451,12 +450,8 @@ const EditProfile = () => {
                     <SelectValue placeholder="Selecione" />
                   </SelectTrigger>
                   <SelectContent className="bg-toca-background border-toca-border text-white z-50">
-                    <SelectItem value="dj">DJ</SelectItem>
                     <SelectItem value="musico">Músico</SelectItem>
-                    <SelectItem value="baterista">Baterista</SelectItem>
-                    <SelectItem value="guitarrista">Guitarrista</SelectItem>
-                    <SelectItem value="baixista">Baixista</SelectItem>
-                    <SelectItem value="voz e violão">Voz e Violão</SelectItem>
+                    <SelectItem value="dj">DJ</SelectItem>
                     <SelectItem value="duo">Duo</SelectItem>
                     <SelectItem value="trio">Trio</SelectItem>
                     <SelectItem value="banda">Banda</SelectItem>

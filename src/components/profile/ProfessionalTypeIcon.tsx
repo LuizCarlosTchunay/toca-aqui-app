@@ -7,14 +7,9 @@ import {
   Film, 
   Users, 
   UserRound, 
-  MicVocal, 
-  Drum, 
-  Guitar,
   Radio,
   PenTool,
-  Music2, // Replacing Bass with Music2
   Mic,
-  Piano,
   LucideIcon
 } from "lucide-react";
 
@@ -38,33 +33,17 @@ const ProfessionalTypeIcon: React.FC<ProfessionalTypeIconProps> = ({
     case "músico":
       IconComponent = Music;
       break;
-    case "voz e violao":
-    case "voz e violão":
-    case "violão e voz":
-    case "violao e voz":
-      IconComponent = MicVocal;
-      break;
-    case "baterista":
-      IconComponent = Drum;
-      break;
-    case "guitarrista":
-      IconComponent = Guitar;
-      break;
-    case "baixista":
-      IconComponent = Music2; // Using Music2 instead of Bass
-      break;
-    case "cantor":
-    case "cantora":
-    case "vocalista":
-      IconComponent = Mic;
-      break;
-    case "pianista":
-    case "tecladista":
-      IconComponent = Piano;
-      break;
     case "dj":
-    case "disk jockey":
       IconComponent = Disc;
+      break;
+    case "duo":
+      IconComponent = Users;
+      break;
+    case "trio":
+      IconComponent = Users;
+      break;
+    case "banda":
+      IconComponent = Users;
       break;
     case "fotografo":
     case "fotógrafo":
@@ -77,13 +56,6 @@ const ProfessionalTypeIcon: React.FC<ProfessionalTypeIconProps> = ({
     case "videomaker":
     case "cinegrafista":
       IconComponent = Film;
-      break;
-    case "duo":
-    case "trio":
-    case "banda":
-    case "grupo":
-    case "orquestra":
-      IconComponent = Users;
       break;
     case "tecnico_som":
     case "técnico_som":
@@ -104,7 +76,6 @@ const ProfessionalTypeIcon: React.FC<ProfessionalTypeIconProps> = ({
       break;
   }
   
-  console.log(`Rendering icon for type: ${type}, normalized: ${normalizedType}`);
   return <IconComponent size={size} />;
 };
 
