@@ -12,7 +12,7 @@ import {
   Guitar,
   Radio,
   PenTool,
-  Bass,
+  Music2, // Replacing Bass with Music2
   Mic,
   Piano,
   LucideIcon
@@ -51,7 +51,7 @@ const ProfessionalTypeIcon: React.FC<ProfessionalTypeIconProps> = ({
       IconComponent = Guitar;
       break;
     case "baixista":
-      IconComponent = Bass;
+      IconComponent = Music2; // Using Music2 instead of Bass
       break;
     case "cantor":
     case "cantora":
