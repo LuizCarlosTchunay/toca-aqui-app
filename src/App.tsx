@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -38,7 +37,11 @@ const queryClient = new QueryClient({
       // Prevent retry loop which can cause black screens
       retry: 1,
       // Add proper stale time to prevent unnecessary refetches
-      staleTime: 30000
+      staleTime: 30000,
+      // Fix para Chrome: timeout mais baixo para evitar travamentos
+      gcTime: 300000,
+      // Fix para Chrome: network mode mais tolerante
+      networkMode: 'online'
     },
   },
 });
@@ -50,8 +53,25 @@ const App = () => {
   const handleSplashComplete = () => {
     setShowSplash(false);
     // Add a small delay before rendering the app to ensure smooth transition
-    setTimeout(() => setIsReady(true), 100);
+    // Fix para Chrome: delay maior para garantir rendering completo
+    setTimeout(() => setIsReady(true), 150);
   };
+
+  // Fix para Chrome: detecta se é Chrome e ajusta comportamento
+  useEffect(() => {
+    const isChrome = /Chrome/.test(navigator.userAgent) && /Google Inc/.test(navigator.vendor);
+    if (isChrome) {
+      // Força repaint no Chrome
+      document.body.style.transform = 'translateZ(0)';
+      
+      // Remove o transform após o carregamento para evitar problemas
+      const timer = setTimeout(() => {
+        document.body.style.transform = '';
+      }, 1000);
+      
+      return () => clearTimeout(timer);
+    }
+  }, []);
 
   if (showSplash) {
     return <SplashScreen onComplete={handleSplashComplete} />;
@@ -59,7 +79,7 @@ const App = () => {
 
   if (!isReady) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-toca-background">
+      <div className="flex items-center justify-center min-h-screen bg-toca-background chrome-loading-fix">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-toca-accent"></div>
       </div>
     );
@@ -68,138 +88,140 @@ const App = () => {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <AuthProvider>
-            <Routes>
-              <Route path="/" element={<Index />} />
-              
-              {/* Auth Routes */}
-              <Route path="/login" element={<AuthPage initialMode="login" />} />
-              <Route path="/cadastro" element={<AuthPage initialMode="register" />} />
-              <Route path="/recuperar-senha" element={<AuthPage initialMode="reset-password" />} />
-              <Route path="/reset-password" element={<PasswordReset />} />
-              
-              {/* Dashboard Routes */}
-              <Route 
-                path="/dashboard" 
-                element={
-                  <ProtectedRoute>
-                    <Dashboard />
-                  </ProtectedRoute>
-                }
-              />
-              
-              {/* Profile Routes */}
-              <Route 
-                path="/meu-perfil" 
-                element={
-                  <ProtectedRoute>
-                    <MyProfile />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route path="/perfil" element={<Navigate to="/meu-perfil" replace />} />
-              <Route 
-                path="/editar-perfil" 
-                element={
-                  <ProtectedRoute>
-                    <EditProfile />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route path="/perfil-profissional" element={<ProfessionalProfile />} />
-              <Route path="/profissional/:id" element={<ProfessionalProfile />} />
-              
-              {/* Explore Routes */}
-              <Route path="/explorar" element={<ExploreProfessionals />} />
-              <Route path="/eventos" element={<ExploreEvents />} />
-              <Route path="/eventos/:id" element={<EventDetail />} />
-              
-              {/* Event Routes */}
-              <Route 
-                path="/criar-evento" 
-                element={
-                  <ProtectedRoute>
-                    <CreateEvent />
-                  </ProtectedRoute>
-                } 
-              />
-              
-              {/* Professional Routes */}
-              <Route 
-                path="/minhas-candidaturas" 
-                element={
-                  <ProtectedRoute>
-                    <MyApplications />
-                  </ProtectedRoute>
-                } 
-              />
-              
-              {/* Booking Routes */}
-              <Route 
-                path="/reservar" 
-                element={
-                  <ProtectedRoute>
-                    <BookProfessional />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/reservar/:id" 
-                element={
-                  <ProtectedRoute>
-                    <BookProfessional />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/checkout" 
-                element={
-                  <ProtectedRoute>
-                    <Checkout />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/checkout/:id" 
-                element={
-                  <ProtectedRoute>
-                    <Checkout />
-                  </ProtectedRoute>
-                } 
-              />
-              
-              {/* Static Info Routes */}
-              <Route path="/sobre" element={<About />} />
-              <Route path="/termos" element={<TermsOfUse />} />
-              <Route path="/privacidade" element={<PrivacyPolicy />} />
-              <Route path="/contato" element={<Contact />} />
-              
-              {/* Utility Routes */}
-              <Route 
-                path="/notificacoes" 
-                element={
-                  <ProtectedRoute>
-                    <Notifications />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/configuracoes" 
-                element={
-                  <ProtectedRoute>
-                    <Settings />
-                  </ProtectedRoute>
-                } 
-              />
-              
-              {/* Catch-all route */}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </AuthProvider>
-        </BrowserRouter>
+        <div className="chrome-loading-fix">
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <AuthProvider>
+              <Routes>
+                <Route path="/" element={<Index />} />
+                
+                {/* Auth Routes */}
+                <Route path="/login" element={<AuthPage initialMode="login" />} />
+                <Route path="/cadastro" element={<AuthPage initialMode="register" />} />
+                <Route path="/recuperar-senha" element={<AuthPage initialMode="reset-password" />} />
+                <Route path="/reset-password" element={<PasswordReset />} />
+                
+                {/* Dashboard Routes */}
+                <Route 
+                  path="/dashboard" 
+                  element={
+                    <ProtectedRoute>
+                      <Dashboard />
+                    </ProtectedRoute>
+                  }
+                />
+                
+                {/* Profile Routes */}
+                <Route 
+                  path="/meu-perfil" 
+                  element={
+                    <ProtectedRoute>
+                      <MyProfile />
+                    </ProtectedRoute>
+                  } 
+                />
+                <Route path="/perfil" element={<Navigate to="/meu-perfil" replace />} />
+                <Route 
+                  path="/editar-perfil" 
+                  element={
+                    <ProtectedRoute>
+                      <EditProfile />
+                    </ProtectedRoute>
+                  } 
+                />
+                <Route path="/perfil-profissional" element={<ProfessionalProfile />} />
+                <Route path="/profissional/:id" element={<ProfessionalProfile />} />
+                
+                {/* Explore Routes */}
+                <Route path="/explorar" element={<ExploreProfessionals />} />
+                <Route path="/eventos" element={<ExploreEvents />} />
+                <Route path="/eventos/:id" element={<EventDetail />} />
+                
+                {/* Event Routes */}
+                <Route 
+                  path="/criar-evento" 
+                  element={
+                    <ProtectedRoute>
+                      <CreateEvent />
+                    </ProtectedRoute>
+                  } 
+                />
+                
+                {/* Professional Routes */}
+                <Route 
+                  path="/minhas-candidaturas" 
+                  element={
+                    <ProtectedRoute>
+                      <MyApplications />
+                    </ProtectedRoute>
+                  } 
+                />
+                
+                {/* Booking Routes */}
+                <Route 
+                  path="/reservar" 
+                  element={
+                    <ProtectedRoute>
+                      <BookProfessional />
+                    </ProtectedRoute>
+                  } 
+                />
+                <Route 
+                  path="/reservar/:id" 
+                  element={
+                    <ProtectedRoute>
+                      <BookProfessional />
+                    </ProtectedRoute>
+                  } 
+                />
+                <Route 
+                  path="/checkout" 
+                  element={
+                    <ProtectedRoute>
+                      <Checkout />
+                    </ProtectedRoute>
+                  } 
+                />
+                <Route 
+                  path="/checkout/:id" 
+                  element={
+                    <ProtectedRoute>
+                      <Checkout />
+                    </ProtectedRoute>
+                  } 
+                />
+                
+                {/* Static Info Routes */}
+                <Route path="/sobre" element={<About />} />
+                <Route path="/termos" element={<TermsOfUse />} />
+                <Route path="/privacidade" element={<PrivacyPolicy />} />
+                <Route path="/contato" element={<Contact />} />
+                
+                {/* Utility Routes */}
+                <Route 
+                  path="/notificacoes" 
+                  element={
+                    <ProtectedRoute>
+                      <Notifications />
+                    </ProtectedRoute>
+                  } 
+                />
+                <Route 
+                  path="/configuracoes" 
+                  element={
+                    <ProtectedRoute>
+                      <Settings />
+                    </ProtectedRoute>
+                  } 
+                />
+                
+                {/* Catch-all route */}
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </AuthProvider>
+          </BrowserRouter>
+        </div>
       </TooltipProvider>
     </QueryClientProvider>
   );
