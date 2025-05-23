@@ -1,6 +1,5 @@
 
 import React, { useEffect, useState } from "react";
-import Logo from "./Logo";
 
 interface SplashScreenProps {
   onComplete: () => void;
@@ -25,7 +24,11 @@ const SplashScreen: React.FC<SplashScreenProps> = ({ onComplete }) => {
       }`}
     >
       <div className="flex flex-col items-center">
-        <Logo size="lg" withText={false} className="mb-6 animate-neon-pulse" />
+        <img
+          src="/lovable-uploads/4314d312-0c49-42bf-8b93-6fe415666ffd.png"
+          alt="Toca Aqui"
+          className="w-32 h-32 object-contain mb-6 animate-neon-pulse"
+        />
         <p className="text-toca-text-secondary text-sm">
           Conectando talentos audiovisuais
         </p>
