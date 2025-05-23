@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Menu, X, User, Search, Bell } from "lucide-react";
@@ -55,6 +56,15 @@ const Navbar: React.FC<NavbarProps> = ({
           <div className="hidden md:flex items-center space-x-4">
             {isAuthenticated ? (
               <>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-toca-text-secondary hover:text-white"
+                  asChild
+                >
+                  <Link to="/dashboard">Dashboard</Link>
+                </Button>
+                
                 <Button
                   variant="ghost"
                   size="sm"
@@ -166,6 +176,13 @@ const Navbar: React.FC<NavbarProps> = ({
                     </Button>
                   </div>
                 </div>
+                <Link
+                  to="/dashboard"
+                  className="block px-4 py-2 text-toca-text-secondary hover:bg-toca-card"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  Dashboard
+                </Link>
                 <Link
                   to="/explorar"
                   className="block px-4 py-2 text-toca-text-secondary hover:bg-toca-card"
