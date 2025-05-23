@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Menu, X, User, Search, Bell } from "lucide-react";
@@ -196,20 +195,6 @@ const Navbar: React.FC<NavbarProps> = ({
                   onClick={() => setIsMenuOpen(false)}
                 >
                   Eventos
-                </Link>
-                <Link
-                  to="/perfil"
-                  className="block px-4 py-2 text-toca-text-secondary hover:bg-toca-card"
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  Meu Perfil
-                </Link>
-                <Link
-                  to="/notificacoes"
-                  className="block px-4 py-2 text-toca-text-secondary hover:bg-toca-card"
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  Notificações
                 </Link>
                 <Link
                   to="/configuracoes"
