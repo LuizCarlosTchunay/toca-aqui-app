@@ -1,230 +1,175 @@
-import { useState, useEffect } from "react";
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
+
+import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { useEffect } from "react";
 import Index from "./pages/Index";
-import NotFound from "./pages/NotFound";
 import AuthPage from "./pages/AuthPage";
 import Dashboard from "./pages/Dashboard";
+import ProfessionalProfile from "./pages/Profile/ProfessionalProfile";
+import EditProfile from "./pages/Profile/EditProfile";
+import MyProfile from "./pages/Profile/MyProfile";
+import Contact from "./pages/Contact";
+import About from "./pages/About";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
+import TermsOfUse from "./pages/TermsOfUse";
+import Settings from "./pages/Settings";
+import NotFound from "./pages/NotFound";
 import ExploreProfessionals from "./pages/Explore/ExploreProfessionals";
 import ExploreEvents from "./pages/Explore/ExploreEvents";
-import EventDetail from "./pages/Events/EventDetail";
-import SplashScreen from "./components/SplashScreen";
-import About from "./pages/About";
-import EditProfile from "./pages/Profile/EditProfile";
-import ProfessionalProfile from "./pages/Profile/ProfessionalProfile";
-import MyProfile from "./pages/Profile/MyProfile";
 import CreateEvent from "./pages/Events/CreateEvent";
+import EditEvent from "./pages/Events/EditEvent";
+import EventDetail from "./pages/Events/EventDetail";
+import BookProfessional from "./pages/Bookings/BookProfessional";
 import MyApplications from "./pages/Professional/MyApplications";
 import Notifications from "./pages/Notifications";
-import Settings from "./pages/Settings";
-import BookProfessional from "./pages/Bookings/BookProfessional";
-import Checkout from "./pages/Checkout";
-import TermsOfUse from "./pages/TermsOfUse";
-import PrivacyPolicy from "./pages/PrivacyPolicy";
-import Contact from "./pages/Contact";
-import { AuthProvider } from "./hooks/useAuth";
 import PasswordReset from "./pages/PasswordReset";
+import Checkout from "./pages/Checkout";
 import ProtectedRoute from "./components/ProtectedRoute";
 
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      // Prevent auto refetching which can cause issues during navigation
-      refetchOnWindowFocus: false,
-      // Prevent retry loop which can cause black screens
-      retry: 1,
-      // Add proper stale time to prevent unnecessary refetches
-      staleTime: 30000,
-      // Fix para Chrome: timeout mais baixo para evitar travamentos
-      gcTime: 300000,
-      // Fix para Chrome: network mode mais tolerante
-      networkMode: 'online'
-    },
-  },
-});
+const queryClient = new QueryClient();
 
-const App = () => {
-  const [showSplash, setShowSplash] = useState(true);
-  const [isReady, setIsReady] = useState(false);
-
-  const handleSplashComplete = () => {
-    setShowSplash(false);
-    // Add a small delay before rendering the app to ensure smooth transition
-    // Fix para Chrome: delay maior para garantir rendering completo
-    setTimeout(() => setIsReady(true), 150);
-  };
-
-  // Fix para Chrome: detecta se é Chrome e ajusta comportamento
+function App() {
   useEffect(() => {
-    const isChrome = /Chrome/.test(navigator.userAgent) && /Google Inc/.test(navigator.vendor);
-    if (isChrome) {
-      // Força repaint no Chrome
-      document.body.style.transform = 'translateZ(0)';
-      
-      // Remove o transform após o carregamento para evitar problemas
-      const timer = setTimeout(() => {
-        document.body.style.transform = '';
-      }, 1000);
-      
-      return () => clearTimeout(timer);
-    }
+    // Melhoria para Chrome: força repaint inicial
+    document.body.style.opacity = '0.99';
+    setTimeout(() => {
+      document.body.style.opacity = '1';
+    }, 10);
   }, []);
-
-  if (showSplash) {
-    return <SplashScreen onComplete={handleSplashComplete} />;
-  }
-
-  if (!isReady) {
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-toca-background chrome-loading-fix">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-toca-accent"></div>
-      </div>
-    );
-  }
 
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <div className="chrome-loading-fix">
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <AuthProvider>
-              <Routes>
-                <Route path="/" element={<Index />} />
-                
-                {/* Auth Routes */}
-                <Route path="/login" element={<AuthPage initialMode="login" />} />
-                <Route path="/cadastro" element={<AuthPage initialMode="register" />} />
-                <Route path="/recuperar-senha" element={<AuthPage initialMode="reset-password" />} />
-                <Route path="/reset-password" element={<PasswordReset />} />
-                
-                {/* Dashboard Routes */}
-                <Route 
-                  path="/dashboard" 
-                  element={
-                    <ProtectedRoute>
-                      <Dashboard />
-                    </ProtectedRoute>
-                  }
-                />
-                
-                {/* Profile Routes */}
-                <Route 
-                  path="/meu-perfil" 
-                  element={
-                    <ProtectedRoute>
-                      <MyProfile />
-                    </ProtectedRoute>
-                  } 
-                />
-                <Route path="/perfil" element={<Navigate to="/meu-perfil" replace />} />
-                <Route 
-                  path="/editar-perfil" 
-                  element={
-                    <ProtectedRoute>
-                      <EditProfile />
-                    </ProtectedRoute>
-                  } 
-                />
-                <Route path="/perfil-profissional" element={<ProfessionalProfile />} />
-                <Route path="/profissional/:id" element={<ProfessionalProfile />} />
-                
-                {/* Explore Routes */}
-                <Route path="/explorar" element={<ExploreProfessionals />} />
-                <Route path="/eventos" element={<ExploreEvents />} />
-                <Route path="/eventos/:id" element={<EventDetail />} />
-                
-                {/* Event Routes */}
-                <Route 
-                  path="/criar-evento" 
-                  element={
-                    <ProtectedRoute>
-                      <CreateEvent />
-                    </ProtectedRoute>
-                  } 
-                />
-                
-                {/* Professional Routes */}
-                <Route 
-                  path="/minhas-candidaturas" 
-                  element={
-                    <ProtectedRoute>
-                      <MyApplications />
-                    </ProtectedRoute>
-                  } 
-                />
-                
-                {/* Booking Routes */}
-                <Route 
-                  path="/reservar" 
-                  element={
-                    <ProtectedRoute>
-                      <BookProfessional />
-                    </ProtectedRoute>
-                  } 
-                />
-                <Route 
-                  path="/reservar/:id" 
-                  element={
-                    <ProtectedRoute>
-                      <BookProfessional />
-                    </ProtectedRoute>
-                  } 
-                />
-                <Route 
-                  path="/checkout" 
-                  element={
-                    <ProtectedRoute>
-                      <Checkout />
-                    </ProtectedRoute>
-                  } 
-                />
-                <Route 
-                  path="/checkout/:id" 
-                  element={
-                    <ProtectedRoute>
-                      <Checkout />
-                    </ProtectedRoute>
-                  } 
-                />
-                
-                {/* Static Info Routes */}
-                <Route path="/sobre" element={<About />} />
-                <Route path="/termos" element={<TermsOfUse />} />
-                <Route path="/privacidade" element={<PrivacyPolicy />} />
-                <Route path="/contato" element={<Contact />} />
-                
-                {/* Utility Routes */}
-                <Route 
-                  path="/notificacoes" 
-                  element={
-                    <ProtectedRoute>
-                      <Notifications />
-                    </ProtectedRoute>
-                  } 
-                />
-                <Route 
-                  path="/configuracoes" 
-                  element={
-                    <ProtectedRoute>
-                      <Settings />
-                    </ProtectedRoute>
-                  } 
-                />
-                
-                {/* Catch-all route */}
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-            </AuthProvider>
-          </BrowserRouter>
-        </div>
+        <Toaster />
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<Index />} />
+            <Route path="/auth" element={<AuthPage />} />
+            <Route path="/password-reset" element={<PasswordReset />} />
+            <Route
+              path="/dashboard"
+              element={
+                <ProtectedRoute>
+                  <Dashboard />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/profile/:profileId"
+              element={
+                <ProtectedRoute>
+                  <ProfessionalProfile />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/edit-profile"
+              element={
+                <ProtectedRoute>
+                  <EditProfile />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/my-profile"
+              element={
+                <ProtectedRoute>
+                  <MyProfile />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/explore/professionals"
+              element={
+                <ProtectedRoute>
+                  <ExploreProfessionals />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/explore/events"
+              element={
+                <ProtectedRoute>
+                  <ExploreEvents />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/events/create"
+              element={
+                <ProtectedRoute>
+                  <CreateEvent />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/events/edit/:eventId"
+              element={
+                <ProtectedRoute>
+                  <EditEvent />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/events/:eventId"
+              element={
+                <ProtectedRoute>
+                  <EventDetail />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/book/:professionalId"
+              element={
+                <ProtectedRoute>
+                  <BookProfessional />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/my-applications"
+              element={
+                <ProtectedRoute>
+                  <MyApplications />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/notifications"
+              element={
+                <ProtectedRoute>
+                  <Notifications />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/checkout"
+              element={
+                <ProtectedRoute>
+                  <Checkout />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/settings"
+              element={
+                <ProtectedRoute>
+                  <Settings />
+                </ProtectedRoute>
+              }
+            />
+            <Route path="/contact" element={<Contact />} />
+            <Route path="/about" element={<About />} />
+            <Route path="/privacy" element={<PrivacyPolicy />} />
+            <Route path="/terms" element={<TermsOfUse />} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </BrowserRouter>
       </TooltipProvider>
     </QueryClientProvider>
   );
-};
+}
 
 export default App;

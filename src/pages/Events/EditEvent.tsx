@@ -1,7 +1,6 @@
 
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { Calendar } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import { DatePicker } from "@/components/ui/date-picker";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,13 +9,15 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
-import { format } from "date-fns";
+import { format, parseISO } from "date-fns";
 import Navbar from "@/components/Navbar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import ImageUploader from "@/components/ImageUploader";
+import { Loader2 } from "lucide-react";
 
-const CreateEvent = () => {
+const EditEvent = () => {
   const navigate = useNavigate();
+  const { eventId } = useParams();
   const { user } = useAuth();
   const [formData, setFormData] = useState({
     title: "",
@@ -27,6 +28,45 @@ const CreateEvent = () => {
   });
   const [eventImage, setEventImage] = useState<string | undefined>();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchEvent = async () => {
+      if (!eventId || !user) return;
+
+      try {
+        const { data: event, error } = await supabase
+          .from("eventos")
+          .select("*")
+          .eq("id", eventId)
+          .eq("contratante_id", user.id)
+          .single();
+
+        if (error) {
+          throw error;
+        }
+
+        if (event) {
+          setFormData({
+            title: event.titulo || "",
+            description: event.descricao || "",
+            date: event.data ? parseISO(event.data) : new Date(),
+            location: event.local || "",
+            requiredServices: event.servicos_requeridos ? event.servicos_requeridos.join(", ") : "",
+          });
+          setEventImage(event.imagem_url || undefined);
+        }
+      } catch (err: any) {
+        console.error("Erro ao carregar evento:", err);
+        toast.error("Erro ao carregar dados do evento");
+        navigate("/dashboard");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchEvent();
+  }, [eventId, user, navigate]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setFormData({
@@ -48,9 +88,9 @@ const CreateEvent = () => {
     setEventImage(imageUrl);
   };
 
-  const handleCreateEvent = async () => {
-    if (!user) {
-      toast.error("Você precisa estar logado para criar um evento");
+  const handleUpdateEvent = async () => {
+    if (!user || !eventId) {
+      toast.error("Erro de autenticação");
       return;
     }
     
@@ -69,41 +109,51 @@ const CreateEvent = () => {
       // Convert comma-separated services to array
       const servicesArray = formData.requiredServices.split(",").map(item => item.trim()).filter(item => item);
       
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from("eventos")
-        .insert({
-          contratante_id: user.id,
+        .update({
           titulo: formData.title,
           descricao: formData.description,
           data: formattedDate,
           local: formData.location,
           servicos_requeridos: servicesArray,
           imagem_url: eventImage,
-          status: "aberto"
         })
-        .select("*")
-        .single();
+        .eq("id", eventId)
+        .eq("contratante_id", user.id);
       
       if (error) {
         throw error;
       }
       
-      toast.success("Evento criado com sucesso!");
+      toast.success("Evento atualizado com sucesso!");
       navigate("/dashboard");
     } catch (err: any) {
-      console.error("Erro ao criar evento:", err);
-      toast.error(err?.message || "Ocorreu um erro ao criar o evento. Tente novamente.");
+      console.error("Erro ao atualizar evento:", err);
+      toast.error(err?.message || "Ocorreu um erro ao atualizar o evento. Tente novamente.");
     } finally {
       setIsSubmitting(false);
     }
   };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex flex-col bg-toca-background">
+        <Navbar isAuthenticated={!!user} />
+        <div className="flex items-center justify-center flex-1">
+          <Loader2 className="h-8 w-8 animate-spin text-toca-accent mr-2" />
+          <span className="text-toca-text-primary">Carregando evento...</span>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col bg-toca-background">
       <Navbar isAuthenticated={!!user} />
       
       <div className="container mx-auto px-4 py-8">
-        <h1 className="text-2xl font-bold mb-6 text-white">Criar Novo Evento</h1>
+        <h1 className="text-2xl font-bold mb-6 text-white">Editar Evento</h1>
         
         <Card className="bg-toca-card border-toca-border">
           <CardHeader>
@@ -113,7 +163,7 @@ const CreateEvent = () => {
             <form
               onSubmit={(e) => {
                 e.preventDefault();
-                handleCreateEvent();
+                handleUpdateEvent();
               }}
               className="space-y-4"
             >
@@ -123,12 +173,12 @@ const CreateEvent = () => {
                   currentImage={eventImage}
                   onImageChange={handleImageChange}
                   bucketName="event_images"
-                  objectPath={user ? `events/${user.id}-${Date.now()}.jpg` : undefined}
+                  objectPath={user ? `events/${user.id}-${eventId}-${Date.now()}.jpg` : undefined}
                   size="lg"
                   className="mb-4"
                 >
                   <p className="text-sm text-toca-text-secondary mt-2">
-                    Adicione uma imagem de capa para o seu evento (opcional)
+                    Altere a imagem de capa do seu evento (opcional)
                   </p>
                 </ImageUploader>
               </div>
@@ -210,7 +260,7 @@ const CreateEvent = () => {
                   className="bg-toca-accent hover:bg-toca-accent-hover"
                   disabled={isSubmitting}
                 >
-                  {isSubmitting ? "Criando Evento..." : "Criar Evento"}
+                  {isSubmitting ? "Atualizando..." : "Atualizar Evento"}
                 </Button>
               </div>
             </form>
@@ -221,4 +271,4 @@ const CreateEvent = () => {
   );
 };
 
-export default CreateEvent;
+export default EditEvent;
