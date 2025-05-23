@@ -281,8 +281,6 @@ const ProfessionalProfile = () => {
             <PortfolioSection 
               portfolioItems={portfolioItems || []}
               isLoading={isPortfolioLoading}
-              youtube={professional.youtube}
-              instagram={professional.instagram}
             />
             
             {/* Reviews card */}

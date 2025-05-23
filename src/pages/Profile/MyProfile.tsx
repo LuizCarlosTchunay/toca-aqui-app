@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "@/components/Navbar";
@@ -7,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { MapPin, Edit, Star, Calendar, Clock, Loader2, ExternalLink } from "lucide-react";
+import { MapPin, Edit, Star, Calendar, Clock, Loader2 } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -15,7 +14,6 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import ImageUploader from "@/components/ImageUploader";
 import { toast } from "sonner";
 import PortfolioManager from "@/components/PortfolioManager";
-import ProfileCardSocialLinks from "@/components/profile/ProfileCardSocialLinks";
 
 const MyProfile = () => {
   const navigate = useNavigate();

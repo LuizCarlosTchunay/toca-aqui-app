@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import ProfileCard from "@/components/ProfileCard";
 import { Button } from "@/components/ui/button";
@@ -98,8 +97,6 @@ const ExploreProfessionals = () => {
           city: item.cidade || "",
           state: item.estado || "",
           bio: item.bio || "",
-          instagram: item.instagram_url,
-          youtube: item.youtube_url,
         };
       });
     }
@@ -389,8 +386,6 @@ const ExploreProfessionals = () => {
                 city: professional.city || "",
                 state: professional.state || "",
                 bio: professional.bio || "",
-                instagram: professional.instagram,
-                youtube: professional.youtube,
               }}
               onClick={() => navigate(`/profissional/${professional.id}`)}
             />
