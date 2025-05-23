@@ -13,6 +13,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 import Navbar from "@/components/Navbar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import ImageUploader from "@/components/ImageUploader";
 
 const CreateEvent = () => {
   const navigate = useNavigate();
@@ -24,6 +25,8 @@ const CreateEvent = () => {
     location: "",
     requiredServices: "",
   });
+  const [eventImage, setEventImage] = useState<File | null>(null);
+  const [eventImageUrl, setEventImageUrl] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -42,6 +45,13 @@ const CreateEvent = () => {
     }
   };
 
+  const handleImageChange = (imageFile: File, imageUrl?: string) => {
+    setEventImage(imageFile);
+    if (imageUrl) {
+      setEventImageUrl(imageUrl);
+    }
+  };
+
   const handleCreateEvent = async () => {
     if (!user) {
       toast.error("Você precisa estar logado para criar um evento");
@@ -57,23 +67,65 @@ const CreateEvent = () => {
     try {
       setIsSubmitting(true);
       
+      let imageUrl = "";
+      
+      // Upload image if provided
+      if (eventImage) {
+        const fileExt = eventImage.name.split('.').pop();
+        const fileName = `event-${Date.now()}.${fileExt}`;
+        
+        // Create storage bucket if it doesn't exist
+        try {
+          await supabase.storage.createBucket('event_images', {
+            public: true
+          });
+        } catch (e) {
+          // Bucket likely already exists
+          console.log("Bucket may already exist");
+        }
+        
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from('event_images')
+          .upload(fileName, eventImage, {
+            upsert: true,
+            contentType: eventImage.type
+          });
+          
+        if (uploadError) {
+          console.error("Error uploading image:", uploadError);
+          toast.error("Erro ao fazer upload da imagem. Continuando sem imagem...");
+        } else {
+          // Get the public URL of the uploaded file
+          const { data: publicUrlData } = supabase.storage
+            .from('event_images')
+            .getPublicUrl(fileName);
+            
+          if (publicUrlData) {
+            imageUrl = publicUrlData.publicUrl;
+          }
+        }
+      }
+
       // Format date as ISO string for database compatibility
       const formattedDate = format(formData.date, "yyyy-MM-dd");
 
       // Convert comma-separated services to array
       const servicesArray = formData.requiredServices.split(",").map(item => item.trim()).filter(item => item);
       
+      const eventData = {
+        contratante_id: user.id,
+        titulo: formData.title,
+        descricao: formData.description,
+        data: formattedDate,
+        local: formData.location,
+        servicos_requeridos: servicesArray,
+        status: "aberto",
+        ...(imageUrl && { imagem_url: imageUrl })
+      };
+      
       const { data, error } = await supabase
         .from("eventos")
-        .insert({
-          contratante_id: user.id,
-          titulo: formData.title,
-          descricao: formData.description,
-          data: formattedDate,
-          local: formData.location,
-          servicos_requeridos: servicesArray,
-          status: "aberto"
-        })
+        .insert(eventData)
         .select("*")
         .single();
       
@@ -110,6 +162,21 @@ const CreateEvent = () => {
               }}
               className="space-y-4"
             >
+              <div className="space-y-2">
+                <Label>Imagem de Capa do Evento</Label>
+                <ImageUploader 
+                  currentImage={eventImageUrl}
+                  onImageChange={handleImageChange}
+                  size="lg"
+                  bucketName="event_images"
+                  className="mb-4"
+                >
+                  <p className="text-sm text-toca-text-secondary mt-2">
+                    Adicione uma imagem para a capa do seu evento (opcional)
+                  </p>
+                </ImageUploader>
+              </div>
+
               <div className="space-y-2">
                 <Label htmlFor="title">Título do Evento</Label>
                 <Input
