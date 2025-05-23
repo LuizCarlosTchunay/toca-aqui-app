@@ -75,7 +75,7 @@ const ContractorDashboard = () => {
     setIsDeleting(true);
 
     try {
-      // First, delete any applications (candidaturas) associated with this event
+      // Delete any applications (candidaturas) associated with this event
       const { error: applicationsError } = await supabase
         .from("candidaturas")
         .delete()
@@ -103,7 +103,7 @@ const ContractorDashboard = () => {
 
       toast.success("Evento excluído com sucesso!");
       
-      // Refresh the events list
+      // Update the UI by filtering out the deleted event
       refetchEvents();
     } catch (error) {
       console.error("Error deleting event:", error);
