@@ -10,10 +10,23 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
+import { 
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 const ContractorDashboard = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [eventToDelete, setEventToDelete] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Fetch upcoming events
   const { data: upcomingEvents = [], isLoading: eventsLoading, refetch: refetchEvents } = useQuery({
@@ -38,41 +51,67 @@ const ContractorDashboard = () => {
         name: event.titulo || "",
         description: event.descricao || "",
         date: event.data || "",
-        time: "", // Time is not stored separately in our schema
+        time: "", 
         location: event.local || "",
         city: event.local?.split(",")[0] || "",
         state: event.local?.split(",")[1] || "",
         services: event.servicos_requeridos || [],
-        image: event.imagem_url // Include the image URL
+        image: event.imagem_url
       }));
     },
     enabled: !!user
   });
 
+  // Function to handle the delete dialog opening
+  const handleOpenDeleteDialog = (eventId: string) => {
+    setEventToDelete(eventId);
+    setIsDeleteDialogOpen(true);
+  };
+
   // Function to delete an event
-  const handleDeleteEvent = async (eventId: string) => {
-    if (!confirm("Tem certeza que deseja excluir este evento? Esta ação não pode ser desfeita.")) {
-      return;
-    }
+  const handleDeleteEvent = async () => {
+    if (!eventToDelete) return;
+    
+    setIsDeleting(true);
 
     try {
+      // First, delete any applications (candidaturas) associated with this event
+      const { error: applicationsError } = await supabase
+        .from("candidaturas")
+        .delete()
+        .eq("evento_id", eventToDelete);
+
+      if (applicationsError) {
+        console.error("Error deleting applications:", applicationsError);
+        toast.error("Erro ao excluir candidaturas relacionadas. Por favor, tente novamente.");
+        setIsDeleting(false);
+        return;
+      }
+
+      // Now delete the event
       const { error } = await supabase
         .from("eventos")
         .delete()
-        .eq("id", eventId);
+        .eq("id", eventToDelete);
 
       if (error) {
         console.error("Error deleting event:", error);
         toast.error("Erro ao excluir evento. Por favor, tente novamente.");
+        setIsDeleting(false);
         return;
       }
 
       toast.success("Evento excluído com sucesso!");
+      
       // Refresh the events list
       refetchEvents();
     } catch (error) {
       console.error("Error deleting event:", error);
       toast.error("Erro ao excluir evento. Por favor, tente novamente.");
+    } finally {
+      setIsDeleting(false);
+      setIsDeleteDialogOpen(false);
+      setEventToDelete(null);
     }
   };
 
@@ -105,7 +144,7 @@ const ContractorDashboard = () => {
         name: pro.nome_artistico || "Profissional",
         artisticName: pro.nome_artistico || "Profissional",
         type: pro.tipo_profissional || "Músico",
-        rating: 4.7, // Default rating until we implement a rating system
+        rating: 4.7, 
         services: pro.instrumentos || [],
         hourlyRate: pro.cache_hora,
         eventRate: pro.cache_evento,
@@ -163,7 +202,7 @@ const ContractorDashboard = () => {
                           variant="ghost"
                           size="sm"
                           className="text-red-500 hover:bg-red-100 hover:bg-opacity-10"
-                          onClick={() => handleDeleteEvent(event.id)}
+                          onClick={() => handleOpenDeleteDialog(event.id)}
                         >
                           <Trash2 size={16} />
                         </Button>
@@ -307,6 +346,35 @@ const ContractorDashboard = () => {
           </Card>
         </div>
       </div>
+
+      {/* Delete Event Confirmation Dialog */}
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir este evento? Esta ação não pode ser desfeita e removerá todas as candidaturas associadas ao evento.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteEvent}
+              disabled={isDeleting}
+              className="bg-red-600 hover:bg-red-700 text-white"
+            >
+              {isDeleting ? (
+                <>
+                  <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-b-transparent"></div>
+                  Excluindo...
+                </>
+              ) : (
+                "Excluir evento"
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
