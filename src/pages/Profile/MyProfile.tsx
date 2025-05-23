@@ -301,15 +301,7 @@ const MyProfile = () => {
                     </div>
                   )}
                   
-                  {/* Add social media links */}
-                  {(professional?.youtube_url || professional?.instagram_url) && (
-                    <div className="mb-4">
-                      <ProfileCardSocialLinks
-                        youtube={professional.youtube_url || undefined}
-                        instagram={professional.instagram_url || undefined}
-                      />
-                    </div>
-                  )}
+                  
                   
                   <div className="grid grid-cols-2 gap-3 w-full mb-6">
                     <div className="text-center p-3 bg-toca-background rounded-md">
