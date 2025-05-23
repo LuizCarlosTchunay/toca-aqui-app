@@ -162,7 +162,6 @@ export type Database = {
           data: string | null
           descricao: string | null
           id: string
-          imagem_url: string | null
           local: string | null
           servicos_requeridos: string[] | null
           status: string | null
@@ -173,7 +172,6 @@ export type Database = {
           data?: string | null
           descricao?: string | null
           id?: string
-          imagem_url?: string | null
           local?: string | null
           servicos_requeridos?: string[] | null
           status?: string | null
@@ -184,7 +182,6 @@ export type Database = {
           data?: string | null
           descricao?: string | null
           id?: string
-          imagem_url?: string | null
           local?: string | null
           servicos_requeridos?: string[] | null
           status?: string | null

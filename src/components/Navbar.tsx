@@ -114,7 +114,7 @@ const Navbar: React.FC<NavbarProps> = ({
                   className="border-toca-accent text-toca-accent hover:bg-toca-accent hover:text-white"
                   asChild
                 >
-                  <Link to="/auth">Entrar</Link>
+                  <Link to="/login">Entrar</Link>
                 </Button>
                 
                 <Button
@@ -122,7 +122,7 @@ const Navbar: React.FC<NavbarProps> = ({
                   size="sm"
                   asChild
                 >
-                  <Link to="/auth">Cadastrar</Link>
+                  <Link to="/cadastro">Cadastrar</Link>
                 </Button>
               </>
             )}
@@ -218,14 +218,14 @@ const Navbar: React.FC<NavbarProps> = ({
                   Sobre
                 </Link>
                 <Link
-                  to="/auth"
+                  to="/login"
                   className="block px-4 py-2 text-toca-text-secondary hover:bg-toca-card"
                   onClick={() => setIsMenuOpen(false)}
                 >
                   Entrar
                 </Link>
                 <Link
-                  to="/auth"
+                  to="/cadastro"
                   className="block px-4 py-3 bg-toca-accent text-white font-medium"
                   onClick={() => setIsMenuOpen(false)}
                 >

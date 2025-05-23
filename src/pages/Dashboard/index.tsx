@@ -13,12 +13,8 @@ const Dashboard = () => {
   
   // Set mounted state after component mounts
   useEffect(() => {
-    // Fix para Chrome: delay no mount para garantir rendering
-    const timer = setTimeout(() => setIsMounted(true), 50);
-    return () => {
-      clearTimeout(timer);
-      setIsMounted(false);
-    };
+    setIsMounted(true);
+    return () => setIsMounted(false);
   }, []);
   
   const toggleRole = () => {
@@ -30,8 +26,7 @@ const Dashboard = () => {
   // When role changes, add a short delay before stopping transition state
   useEffect(() => {
     if (isTransitioning && isMounted) {
-      // Fix para Chrome: delay maior para transições
-      const timer = setTimeout(() => setIsTransitioning(false), 750);
+      const timer = setTimeout(() => setIsTransitioning(false), 500);
       return () => clearTimeout(timer);
     }
   }, [currentRole, isTransitioning, isMounted]);
@@ -39,7 +34,7 @@ const Dashboard = () => {
   // Show loading state if auth is loading or component is not mounted yet
   if (authLoading || !isMounted) {
     return (
-      <div className="min-h-screen flex flex-col bg-toca-background chrome-loading-fix">
+      <div className="min-h-screen flex flex-col bg-toca-background">
         <Navbar isAuthenticated={true} />
         <div className="flex items-center justify-center flex-1">
           <Loader2 className="h-8 w-8 animate-spin text-toca-accent mr-2" />
@@ -50,7 +45,7 @@ const Dashboard = () => {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-toca-background chrome-loading-fix">
+    <div className="min-h-screen flex flex-col bg-toca-background">
       <Navbar 
         isAuthenticated={true} 
         currentRole={currentRole}

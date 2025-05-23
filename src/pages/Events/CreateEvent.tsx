@@ -13,7 +13,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 import Navbar from "@/components/Navbar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import ImageUploader from "@/components/ImageUploader";
 
 const CreateEvent = () => {
   const navigate = useNavigate();
@@ -25,7 +24,6 @@ const CreateEvent = () => {
     location: "",
     requiredServices: "",
   });
-  const [eventImage, setEventImage] = useState<string | undefined>();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -42,10 +40,6 @@ const CreateEvent = () => {
         date: date,
       });
     }
-  };
-
-  const handleImageChange = (imageFile: File, imageUrl?: string) => {
-    setEventImage(imageUrl);
   };
 
   const handleCreateEvent = async () => {
@@ -78,7 +72,6 @@ const CreateEvent = () => {
           data: formattedDate,
           local: formData.location,
           servicos_requeridos: servicesArray,
-          imagem_url: eventImage,
           status: "aberto"
         })
         .select("*")
@@ -117,22 +110,6 @@ const CreateEvent = () => {
               }}
               className="space-y-4"
             >
-              <div className="space-y-2">
-                <Label htmlFor="eventImage">Imagem do Evento</Label>
-                <ImageUploader
-                  currentImage={eventImage}
-                  onImageChange={handleImageChange}
-                  bucketName="event_images"
-                  objectPath={user ? `events/${user.id}-${Date.now()}.jpg` : undefined}
-                  size="lg"
-                  className="mb-4"
-                >
-                  <p className="text-sm text-toca-text-secondary mt-2">
-                    Adicione uma imagem de capa para o seu evento (opcional)
-                  </p>
-                </ImageUploader>
-              </div>
-
               <div className="space-y-2">
                 <Label htmlFor="title">Título do Evento</Label>
                 <Input

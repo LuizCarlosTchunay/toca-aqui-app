@@ -1,5 +1,6 @@
+
 import React, { useState, useEffect } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import Logo from "../components/Logo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,10 +10,9 @@ import { useAuth } from "@/hooks/useAuth";
 
 type AuthMode = "login" | "register" | "reset-password";
 
-const AuthPage: React.FC = () => {
-  const location = useLocation();
-  // Set initial mode based on URL path
-  const initialMode: AuthMode = location.pathname === "/cadastro" ? "register" : "login";
+const AuthPage: React.FC<{ initialMode?: AuthMode }> = ({
+  initialMode = "login",
+}) => {
   const [mode, setMode] = useState<AuthMode>(initialMode);
   const navigate = useNavigate();
   const { signIn, signUp, resetPassword, user, loading } = useAuth();
@@ -25,21 +25,12 @@ const AuthPage: React.FC = () => {
     confirmPassword: "",
   });
 
-  // Redirect if already authenticated
+  // Redirecionar se já estiver autenticado
   useEffect(() => {
     if (user) {
       navigate("/dashboard");
     }
   }, [user, navigate]);
-
-  // Update mode if route changes
-  useEffect(() => {
-    if (location.pathname === "/cadastro") {
-      setMode("register");
-    } else if (location.pathname === "/auth") {
-      setMode("login");
-    }
-  }, [location.pathname]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({
@@ -72,8 +63,6 @@ const AuthPage: React.FC = () => {
 
   const toggleMode = (newMode: AuthMode) => {
     setMode(newMode);
-    // Update URL to match the mode
-    navigate(newMode === "register" ? "/cadastro" : "/auth");
   };
 
   return (

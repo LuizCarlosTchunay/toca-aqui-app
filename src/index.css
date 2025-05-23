@@ -70,30 +70,10 @@
 @layer base {
   * {
     @apply border-border;
-    /* Fix para Chrome: força hardware acceleration */
-    -webkit-transform: translateZ(0);
-    transform: translateZ(0);
-  }
-
-  html {
-    /* Fix para Chrome: previne zoom em inputs no mobile */
-    -webkit-text-size-adjust: 100%;
-    text-size-adjust: 100%;
   }
 
   body {
     @apply bg-toca-background text-white;
-    /* Fix para Chrome: força rendering consistente */
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-    /* Fix para Chrome: previne flash of unstyled content */
-    opacity: 1;
-    transition: opacity 0.1s ease-in-out;
-  }
-
-  /* Fix para Chrome: garante que dialogs e modals apareçam acima de tudo */
-  [data-radix-portal] {
-    z-index: 9999 !important;
   }
 
   /* Card title styling to ensure visibility */
@@ -119,37 +99,20 @@
   /* All form inputs should have white text */
   input, textarea, select {
     @apply text-white;
-    /* Fix para Chrome: garante que o texto seja visível */
-    -webkit-text-fill-color: white;
   }
 
   /* Style for select component content */
   .select-content {
     @apply bg-toca-background text-white border-toca-border;
-    /* Fix para Chrome: força z-index alto */
-    z-index: 9999 !important;
   }
 
   /* Style for placeholder text */
   ::placeholder {
     @apply text-gray-400;
-    /* Fix para Chrome: garante que placeholder seja visível */
-    -webkit-text-fill-color: rgb(156 163 175);
   }
 
   /* Neon button styles */
   .btn-neon {
     @apply relative overflow-hidden bg-transparent border border-toca-accent text-toca-accent font-semibold py-2 px-4 rounded transition-all duration-300 hover:bg-toca-accent hover:text-white hover:shadow-[0_0_10px_#ea384c,0_0_20px_#ea384c];
-    /* Fix para Chrome: força hardware acceleration em botões */
-    -webkit-transform: translateZ(0);
-    transform: translateZ(0);
-  }
-
-  /* Fix específico para Chrome: previne flash durante carregamento */
-  .chrome-loading-fix {
-    -webkit-backface-visibility: hidden;
-    backface-visibility: hidden;
-    -webkit-perspective: 1000;
-    perspective: 1000;
   }
 }
