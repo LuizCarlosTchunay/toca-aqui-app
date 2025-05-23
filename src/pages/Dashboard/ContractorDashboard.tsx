@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import ProfileCard from "@/components/ProfileCard";
 import EventCard from "@/components/EventCard";
 import { Button } from "@/components/ui/button";
-import { Plus, ChevronRight, Music, Film, Camera, Disc } from "lucide-react";
+import { Plus, ChevronRight, Music, Film, Camera, Disc, Trash2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -16,7 +16,7 @@ const ContractorDashboard = () => {
   const { user } = useAuth();
 
   // Fetch upcoming events
-  const { data: upcomingEvents = [], isLoading: eventsLoading } = useQuery({
+  const { data: upcomingEvents = [], isLoading: eventsLoading, refetch: refetchEvents } = useQuery({
     queryKey: ['userEvents', user?.id],
     queryFn: async () => {
       if (!user) return [];
@@ -47,6 +47,33 @@ const ContractorDashboard = () => {
     },
     enabled: !!user
   });
+
+  // Function to delete an event
+  const handleDeleteEvent = async (eventId: string) => {
+    if (!confirm("Tem certeza que deseja excluir este evento? Esta ação não pode ser desfeita.")) {
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from("eventos")
+        .delete()
+        .eq("id", eventId);
+
+      if (error) {
+        console.error("Error deleting event:", error);
+        toast.error("Erro ao excluir evento. Por favor, tente novamente.");
+        return;
+      }
+
+      toast.success("Evento excluído com sucesso!");
+      // Refresh the events list
+      refetchEvents();
+    } catch (error) {
+      console.error("Error deleting event:", error);
+      toast.error("Erro ao excluir evento. Por favor, tente novamente.");
+    }
+  };
 
   // Fetch recommended professionals
   const { data: recommendedProfessionals = [], isLoading: professionalsLoading } = useQuery({
@@ -123,13 +150,23 @@ const ContractorDashboard = () => {
                       <div className="text-sm text-toca-text-secondary mb-2">
                         {event.city}, {event.state}
                       </div>
-                      <Button 
-                        variant="link" 
-                        className="text-toca-accent p-0 h-auto" 
-                        onClick={() => navigate(`/eventos/${event.id}`)}
-                      >
-                        Ver detalhes <ChevronRight size={16} />
-                      </Button>
+                      <div className="flex justify-between items-center">
+                        <Button 
+                          variant="link" 
+                          className="text-toca-accent p-0 h-auto" 
+                          onClick={() => navigate(`/eventos/${event.id}`)}
+                        >
+                          Ver detalhes <ChevronRight size={16} />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-red-500 hover:bg-red-100 hover:bg-opacity-10"
+                          onClick={() => handleDeleteEvent(event.id)}
+                        >
+                          <Trash2 size={16} />
+                        </Button>
+                      </div>
                     </div>
                   ))}
                 </div>
