@@ -42,7 +42,8 @@ const ContractorDashboard = () => {
         location: event.local || "",
         city: event.local?.split(",")[0] || "",
         state: event.local?.split(",")[1] || "",
-        services: event.servicos_requeridos || []
+        services: event.servicos_requeridos || [],
+        image: event.imagem_url // Include the image URL
       }));
     },
     enabled: !!user
@@ -144,10 +145,10 @@ const ContractorDashboard = () => {
                   {upcomingEvents.map((event) => (
                     <div key={event.id} className="p-4 border border-toca-border rounded-md">
                       <div className="flex justify-between items-center mb-2">
-                        <h3 className="font-semibold">{event.name}</h3>
+                        <h3 className="font-semibold text-white">{event.name}</h3>
                         <span className="text-toca-accent text-sm">{event.date}</span>
                       </div>
-                      <div className="text-sm text-toca-text-secondary mb-2">
+                      <div className="text-sm text-white mb-2">
                         {event.city}, {event.state}
                       </div>
                       <div className="flex justify-between items-center">
@@ -172,7 +173,7 @@ const ContractorDashboard = () => {
                 </div>
               ) : (
                 <div className="text-center py-10">
-                  <p className="text-toca-text-secondary mb-4">Você ainda não tem eventos.</p>
+                  <p className="text-white mb-4">Você ainda não tem eventos.</p>
                   <Button 
                     className="bg-toca-accent hover:bg-toca-accent-hover"
                     onClick={() => navigate("/criar-evento")}

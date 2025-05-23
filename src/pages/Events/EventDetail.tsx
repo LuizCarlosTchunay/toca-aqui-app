@@ -62,7 +62,7 @@ const EventDetail = () => {
           state: data.local?.split(",")[1]?.trim() || "", 
           required_services: data.servicos_requeridos || [],
           contratante_id: data.contratante_id,
-          image: "https://images.unsplash.com/photo-1527576539890-dfa815648363" // Default image
+          image: data.imagem_url || "https://images.unsplash.com/photo-1527576539890-dfa815648363" // Use the stored image URL or default
         };
       } catch (error) {
         console.error("Error fetching event:", error);
@@ -237,12 +237,12 @@ const EventDetail = () => {
             {/* Event Details */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
               <div className="col-span-2">
-                <h2 className="text-xl font-bold mb-4">Descrição</h2>
-                <p className="text-toca-text-secondary whitespace-pre-line mb-6">
+                <h2 className="text-xl font-bold mb-4 text-white">Descrição</h2>
+                <p className="text-white whitespace-pre-line mb-6">
                   {event.description || "Nenhuma descrição disponível para este evento."}
                 </p>
                 
-                <h2 className="text-xl font-bold mb-4">Serviços Necessários</h2>
+                <h2 className="text-xl font-bold mb-4 text-white">Serviços Necessários</h2>
                 <div className="flex flex-wrap gap-2 mb-6">
                   {event.required_services && event.required_services.length > 0 ? (
                     event.required_services.map((service, i) => (
@@ -251,7 +251,7 @@ const EventDetail = () => {
                       </Badge>
                     ))
                   ) : (
-                    <p className="text-toca-text-secondary">Nenhum serviço especificado</p>
+                    <p className="text-white">Nenhum serviço especificado</p>
                   )}
                 </div>
               </div>
@@ -259,13 +259,13 @@ const EventDetail = () => {
               <div>
                 <Card className="bg-toca-background border-toca-border">
                   <CardContent className="p-4 space-y-4">
-                    <h3 className="text-lg font-semibold">Detalhes do Evento</h3>
+                    <h3 className="text-lg font-semibold text-white">Detalhes do Evento</h3>
                     
                     <div className="flex items-start gap-3">
                       <Calendar className="text-toca-accent mt-1" size={20} />
                       <div>
-                        <h4 className="font-medium">Data</h4>
-                        <p className="text-toca-text-secondary">{formatDate(event.date)}</p>
+                        <h4 className="font-medium text-white">Data</h4>
+                        <p className="text-white">{formatDate(event.date)}</p>
                       </div>
                     </div>
                     
@@ -273,8 +273,8 @@ const EventDetail = () => {
                       <div className="flex items-start gap-3">
                         <Clock className="text-toca-accent mt-1" size={20} />
                         <div>
-                          <h4 className="font-medium">Horário</h4>
-                          <p className="text-toca-text-secondary">{event.time}</p>
+                          <h4 className="font-medium text-white">Horário</h4>
+                          <p className="text-white">{event.time}</p>
                         </div>
                       </div>
                     )}
@@ -282,8 +282,8 @@ const EventDetail = () => {
                     <div className="flex items-start gap-3">
                       <MapPin className="text-toca-accent mt-1" size={20} />
                       <div>
-                        <h4 className="font-medium">Local</h4>
-                        <p className="text-toca-text-secondary">{event.location}</p>
+                        <h4 className="font-medium text-white">Local</h4>
+                        <p className="text-white">{event.location}</p>
                       </div>
                     </div>
                     

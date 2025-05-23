@@ -18,28 +18,28 @@ const EventCardDetails: React.FC<EventCardDetailsProps> = ({
 }) => {
   return (
     <div className="p-4">
-      <div className="flex items-center gap-2 text-sm text-toca-text-secondary mb-3">
+      <div className="flex items-center gap-2 text-sm text-white mb-3">
         <div className="flex items-center gap-1">
-          <Calendar size={14} />
+          <Calendar size={14} className="text-white" />
           <span>{formatDate(date)}</span>
         </div>
         {time && (
           <>
             <div className="w-1 h-1 rounded-full bg-toca-border"></div>
             <div className="flex items-center gap-1">
-              <Clock size={14} />
+              <Clock size={14} className="text-white" />
               <span>{time}</span>
             </div>
           </>
         )}
       </div>
       
-      <div className="flex items-center gap-1 text-sm text-toca-text-secondary mb-3">
-        <MapPin size={14} />
+      <div className="flex items-center gap-1 text-sm text-white mb-3">
+        <MapPin size={14} className="text-white" />
         <span>{city && state ? `${city}, ${state}` : location}</span>
       </div>
       
-      <p className="text-sm text-toca-text-secondary mb-3 line-clamp-2">
+      <p className="text-sm text-white mb-3 line-clamp-2">
         {description || "Sem descrição disponível"}
       </p>
       

@@ -11,7 +11,7 @@ const EventCard: React.FC<EventCardProps> = ({
   onClick,
   onApply,
 }) => {
-  // Default image if not provided
+  // Use the event image if available, otherwise use a default image
   const imageUrl = event.image || "https://images.unsplash.com/photo-1527576539890-dfa815648363";
 
   return (
