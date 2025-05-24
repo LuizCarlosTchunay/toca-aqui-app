@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import ProfileCard from "@/components/ProfileCard";
@@ -34,6 +33,8 @@ const ContractorDashboard = () => {
     queryFn: async () => {
       if (!user) return [];
       
+      console.log("Fetching events for user:", user.id);
+      
       const { data, error } = await supabase
         .from("eventos")
         .select("*")
@@ -46,18 +47,24 @@ const ContractorDashboard = () => {
         return [];
       }
       
-      return data.map(event => ({
-        id: event.id,
-        name: event.titulo || "",
-        description: event.descricao || "",
-        date: event.data || "",
-        time: "", 
-        location: event.local || "",
-        city: event.local?.split(",")[0] || "",
-        state: event.local?.split(",")[1] || "",
-        services: event.servicos_requeridos || [],
-        image: event.imagem_url
-      }));
+      console.log("Raw events data:", data);
+      
+      return data.map(event => {
+        const mappedEvent = {
+          id: event.id,
+          name: event.titulo || "",
+          description: event.descricao || "",
+          date: event.data || "",
+          time: "", 
+          location: event.local || "",
+          city: event.local?.split(",")[0] || "",
+          state: event.local?.split(",")[1] || "",
+          services: event.servicos_requeridos || [],
+          image: event.imagem_url
+        };
+        console.log("Mapped event:", mappedEvent);
+        return mappedEvent;
+      });
     },
     enabled: !!user
   });
@@ -182,32 +189,12 @@ const ContractorDashboard = () => {
               ) : upcomingEvents.length > 0 ? (
                 <div className="space-y-4">
                   {upcomingEvents.map((event) => (
-                    <div key={event.id} className="p-4 border border-toca-border rounded-md">
-                      <div className="flex justify-between items-center mb-2">
-                        <h3 className="font-semibold text-white">{event.name}</h3>
-                        <span className="text-toca-accent text-sm">{event.date}</span>
-                      </div>
-                      <div className="text-sm text-white mb-2">
-                        {event.city}, {event.state}
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <Button 
-                          variant="link" 
-                          className="text-toca-accent p-0 h-auto" 
-                          onClick={() => navigate(`/eventos/${event.id}`)}
-                        >
-                          Ver detalhes <ChevronRight size={16} />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="text-red-500 hover:bg-red-100 hover:bg-opacity-10"
-                          onClick={() => handleOpenDeleteDialog(event.id)}
-                        >
-                          <Trash2 size={16} />
-                        </Button>
-                      </div>
-                    </div>
+                    <EventCard
+                      key={event.id}
+                      event={event}
+                      className="cursor-pointer"
+                      onClick={() => navigate(`/eventos/${event.id}`)}
+                    />
                   ))}
                 </div>
               ) : (
