@@ -1,16 +1,28 @@
+
 import React, { useState } from "react";
 import Navbar from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useNavigate, useParams } from "react-router-dom";
-import { ChevronLeft, Calendar, MapPin, Clock, Users } from "lucide-react";
+import { ChevronLeft, Calendar, MapPin, Clock, Users, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { formatDate } from "@/lib/utils";
 import { createNotification } from "@/utils/notifications";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 interface Event {
   id: string;
@@ -31,19 +43,20 @@ const EventDetail = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [isApplying, setIsApplying] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Array de imagens específicas para eventos
   const eventImages = [
-    "https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?w=800&h=400&fit=crop", // Concerto com luzes
-    "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=800&h=400&fit=crop", // Festa com DJ
-    "https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=800&h=400&fit=crop", // Evento musical
-    "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=800&h=400&fit=crop", // Concerto ao vivo
-    "https://images.unsplash.com/photo-1501386761578-eac5c94b800a?w=800&h=400&fit=crop", // Festa com luzes coloridas
-    "https://images.unsplash.com/photo-1571266028243-d220bee1dfab?w=800&h=400&fit=crop", // Evento noturno
+    "https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?w=800&h=400&fit=crop",
+    "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=800&h=400&fit=crop",
+    "https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=800&h=400&fit=crop",
+    "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=800&h=400&fit=crop",
+    "https://images.unsplash.com/photo-1501386761578-eac5c94b800a?w=800&h=400&fit=crop",
+    "https://images.unsplash.com/photo-1571266028243-d220bee1dfab?w=800&h=400&fit=crop",
   ];
 
   // Fetch event details
-  const { data: event, isLoading, isError } = useQuery({
+  const { data: event, isLoading, isError, refetch } = useQuery({
     queryKey: ['event', id],
     queryFn: async () => {
       try {
@@ -76,7 +89,7 @@ const EventDetail = () => {
           name: data.titulo || "",
           description: data.descricao || "",
           date: data.data || "",
-          time: "", // Time is not stored separately in our schema
+          time: "",
           location: data.local || "",
           city: data.local?.split(",")[0]?.trim() || "", 
           state: data.local?.split(",")[1]?.trim() || "", 
@@ -105,7 +118,7 @@ const EventDetail = () => {
         .single();
         
       if (error) {
-        if (error.code !== 'PGRST116') { // PGRST116 is the "no rows returned" error
+        if (error.code !== 'PGRST116') {
           console.error('Error fetching professional profile:', error);
         }
         return null;
@@ -115,6 +128,50 @@ const EventDetail = () => {
     },
     enabled: !!user
   });
+
+  // Check if current user is the event owner
+  const isEventOwner = user && event && user.id === event.contratante_id;
+
+  // Handle delete event
+  const handleDeleteEvent = async () => {
+    if (!user || !event || !isEventOwner) {
+      toast.error("Você não tem permissão para excluir este evento");
+      return;
+    }
+
+    try {
+      setIsDeleting(true);
+      
+      // Delete related applications first
+      const { error: candidaturasError } = await supabase
+        .from("candidaturas")
+        .delete()
+        .eq("evento_id", event.id);
+        
+      if (candidaturasError) {
+        console.error("Error deleting applications:", candidaturasError);
+      }
+      
+      // Delete the event
+      const { error } = await supabase
+        .from("eventos")
+        .delete()
+        .eq("id", event.id);
+
+      if (error) {
+        console.error("Erro ao excluir evento:", error);
+        toast.error("Erro ao excluir evento");
+      } else {
+        toast.success("Evento excluído com sucesso!");
+        navigate("/dashboard");
+      }
+    } catch (error) {
+      console.error("Erro ao excluir evento:", error);
+      toast.error("Erro ao excluir evento");
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   // Handle apply to event
   const handleApply = async () => {
@@ -224,7 +281,7 @@ const EventDetail = () => {
       <Navbar isAuthenticated={!!user} />
       
       <div className="container mx-auto px-4 py-8">
-        <div className="mb-6">
+        <div className="mb-6 flex justify-between items-center">
           <Button 
             variant="ghost" 
             className="bg-toca-background/50 text-white hover:bg-toca-background/80 border border-toca-border"
@@ -232,6 +289,41 @@ const EventDetail = () => {
           >
             <ChevronLeft size={18} className="mr-1" /> Voltar
           </Button>
+          
+          {isEventOwner && (
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button 
+                  variant="destructive"
+                  className="bg-red-600 hover:bg-red-700"
+                  disabled={isDeleting}
+                >
+                  <Trash2 size={18} className="mr-2" />
+                  {isDeleting ? "Excluindo..." : "Excluir Evento"}
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent className="bg-toca-card border-toca-border">
+                <AlertDialogHeader>
+                  <AlertDialogTitle className="text-white">Excluir Evento</AlertDialogTitle>
+                  <AlertDialogDescription className="text-toca-text-secondary">
+                    Tem certeza que deseja excluir este evento? Esta ação não pode ser desfeita e todas as candidaturas relacionadas também serão removidas.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel className="bg-toca-background border-toca-border text-white hover:bg-toca-background/80">
+                    Cancelar
+                  </AlertDialogCancel>
+                  <AlertDialogAction 
+                    onClick={handleDeleteEvent}
+                    className="bg-red-600 hover:bg-red-700"
+                    disabled={isDeleting}
+                  >
+                    {isDeleting ? "Excluindo..." : "Excluir"}
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          )}
         </div>
         
         <Card className="bg-gradient-to-br from-toca-card to-toca-card/80 border-toca-border overflow-hidden shadow-2xl">
@@ -254,13 +346,11 @@ const EventDetail = () => {
               
               <h1 className="text-4xl font-bold text-white leading-tight mb-2">{event.name}</h1>
               
-              {/* Elemento decorativo */}
               <div className="absolute top-6 right-6 w-16 h-16 rounded-full bg-gradient-to-br from-toca-accent/30 to-toca-accent-hover/30 backdrop-blur-sm border border-white/20 flex items-center justify-center">
                 <div className="w-8 h-8 rounded-full bg-toca-accent animate-pulse"></div>
               </div>
             </div>
             
-            {/* Efeito de brilho */}
             <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent opacity-50 z-30"></div>
           </div>
           
@@ -335,20 +425,22 @@ const EventDetail = () => {
                       </div>
                     </div>
                     
-                    <Button 
-                      className="w-full bg-toca-accent hover:bg-toca-accent-hover text-white font-semibold py-4 rounded-lg transition-all duration-300 transform hover:scale-[1.02] shadow-lg hover:shadow-xl mt-6"
-                      onClick={handleApply}
-                      disabled={isApplying}
-                    >
-                      {isApplying ? (
-                        <>
-                          <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-b-transparent"></div>
-                          Processando...
-                        </>
-                      ) : (
-                        "🎯 Me candidatar ao evento"
-                      )}
-                    </Button>
+                    {!isEventOwner && (
+                      <Button 
+                        className="w-full bg-toca-accent hover:bg-toca-accent-hover text-white font-semibold py-4 rounded-lg transition-all duration-300 transform hover:scale-[1.02] shadow-lg hover:shadow-xl mt-6"
+                        onClick={handleApply}
+                        disabled={isApplying}
+                      >
+                        {isApplying ? (
+                          <>
+                            <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-b-transparent"></div>
+                            Processando...
+                          </>
+                        ) : (
+                          "🎯 Me candidatar ao evento"
+                        )}
+                      </Button>
+                    )}
                   </CardContent>
                 </Card>
               </div>

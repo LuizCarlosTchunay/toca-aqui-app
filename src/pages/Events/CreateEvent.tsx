@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Calendar } from "lucide-react";
@@ -46,9 +45,11 @@ const CreateEvent = () => {
   };
 
   const handleImageChange = (imageFile: File, imageUrl?: string) => {
+    console.log("Image changed:", { imageFile, imageUrl });
     setEventImage(imageFile);
     if (imageUrl) {
       setEventImageUrl(imageUrl);
+      console.log("Image URL set to:", imageUrl);
     }
   };
 
@@ -67,43 +68,59 @@ const CreateEvent = () => {
     try {
       setIsSubmitting(true);
       
-      let imageUrl = "";
+      let finalImageUrl = "";
       
       // Upload image if provided
       if (eventImage) {
-        const fileExt = eventImage.name.split('.').pop();
-        const fileName = `event-${Date.now()}.${fileExt}`;
+        console.log("Uploading event image:", eventImage);
         
-        // Create storage bucket if it doesn't exist
-        try {
-          await supabase.storage.createBucket('event_images', {
-            public: true
-          });
-        } catch (e) {
-          // Bucket likely already exists
-          console.log("Bucket may already exist");
+        // Validate file type and size
+        const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+        if (!allowedTypes.includes(eventImage.type)) {
+          toast.error("Formato de imagem não suportado. Use JPG, PNG ou WebP.");
+          setIsSubmitting(false);
+          return;
         }
+        
+        if (eventImage.size > 5 * 1024 * 1024) { // 5MB limit
+          toast.error("Imagem muito grande. Máximo 5MB.");
+          setIsSubmitting(false);
+          return;
+        }
+        
+        const fileExt = eventImage.name.split('.').pop()?.toLowerCase();
+        const fileName = `event-${user.id}-${Date.now()}.${fileExt}`;
+        
+        console.log("Uploading file:", fileName);
         
         const { data: uploadData, error: uploadError } = await supabase.storage
           .from('event_images')
           .upload(fileName, eventImage, {
-            upsert: true,
-            contentType: eventImage.type
+            cacheControl: '3600',
+            upsert: false,
           });
           
         if (uploadError) {
           console.error("Error uploading image:", uploadError);
-          toast.error("Erro ao fazer upload da imagem. Continuando sem imagem...");
+          // Continue without image instead of failing
+          toast.error("Erro ao fazer upload da imagem. Evento será criado sem imagem.");
         } else {
+          console.log("Upload successful:", uploadData);
+          
           // Get the public URL of the uploaded file
           const { data: publicUrlData } = supabase.storage
             .from('event_images')
             .getPublicUrl(fileName);
             
-          if (publicUrlData) {
-            imageUrl = publicUrlData.publicUrl;
+          if (publicUrlData?.publicUrl) {
+            finalImageUrl = publicUrlData.publicUrl;
+            console.log("Final image URL:", finalImageUrl);
           }
         }
+      } else if (eventImageUrl) {
+        // Use the URL if it was already uploaded through ImageUploader
+        finalImageUrl = eventImageUrl;
+        console.log("Using existing image URL:", finalImageUrl);
       }
 
       // Format date as ISO string for database compatibility
@@ -120,8 +137,10 @@ const CreateEvent = () => {
         local: formData.location,
         servicos_requeridos: servicesArray,
         status: "aberto",
-        ...(imageUrl && { imagem_url: imageUrl })
+        ...(finalImageUrl && { imagem_url: finalImageUrl })
       };
+      
+      console.log("Creating event with data:", eventData);
       
       const { data, error } = await supabase
         .from("eventos")
@@ -130,9 +149,11 @@ const CreateEvent = () => {
         .single();
       
       if (error) {
+        console.error("Error creating event:", error);
         throw error;
       }
       
+      console.log("Event created successfully:", data);
       toast.success("Evento criado com sucesso!");
       navigate("/dashboard");
     } catch (err: any) {
@@ -172,7 +193,7 @@ const CreateEvent = () => {
                   className="mb-4"
                 >
                   <p className="text-sm text-toca-text-secondary mt-2">
-                    Adicione uma imagem para a capa do seu evento (opcional)
+                    Adicione uma imagem para a capa do seu evento (JPG, PNG ou WebP - máx. 5MB)
                   </p>
                 </ImageUploader>
               </div>
