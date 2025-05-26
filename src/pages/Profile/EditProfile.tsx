@@ -30,11 +30,25 @@ const EditProfile = () => {
     saveProfileData,
   } = useProfessionalProfile();
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = React.useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
-    await saveProfileData();
-  };
+    try {
+      await saveProfileData();
+    } catch (error) {
+      console.error("Error saving profile:", error);
+    }
+  }, [saveProfileData]);
 
+  const handleCancel = React.useCallback(() => {
+    try {
+      handleNavigate("/dashboard");
+    } catch (error) {
+      console.error("Error navigating:", error);
+      window.location.href = "/dashboard";
+    }
+  }, [handleNavigate]);
+
+  // Enhanced loading state with better error handling
   if (isLoading && !loadedData) {
     return (
       <div className="min-h-screen flex flex-col bg-toca-background">
@@ -49,9 +63,23 @@ const EditProfile = () => {
     );
   }
 
+  // Ensure user is available before rendering
+  if (!user) {
+    return (
+      <div className="min-h-screen flex flex-col bg-toca-background">
+        <Navbar isAuthenticated={false} />
+        <div className="container mx-auto px-4 py-8 flex items-center justify-center">
+          <div className="text-center">
+            <p className="text-toca-text-secondary">Redirecionando...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen flex flex-col bg-toca-background">
-      <Navbar isAuthenticated={!!user} currentRole="profissional" />
+      <Navbar isAuthenticated={true} currentRole="profissional" />
       
       <div className="container mx-auto px-4 py-8">
         <h1 className="text-2xl font-bold mb-6 text-white">Editar Perfil Profissional</h1>
@@ -89,7 +117,7 @@ const EditProfile = () => {
                 isLoading={isLoading}
                 isSaving={isSaving}
                 isNavigating={isNavigating}
-                onCancel={() => handleNavigate("/dashboard")}
+                onCancel={handleCancel}
               />
             </form>
           </CardContent>
@@ -102,6 +130,7 @@ const EditProfile = () => {
               professionalId={existingProfessionalId} 
               onUpdate={() => {
                 // Optional callback when portfolio is updated
+                console.log("Portfolio updated");
               }}
             />
           </div>

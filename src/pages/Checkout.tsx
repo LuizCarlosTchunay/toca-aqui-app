@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from "react";
+
+import React, { useState, useEffect, useCallback } from "react";
 import Navbar from "@/components/Navbar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -14,6 +15,16 @@ import TermsAcceptanceDialog from "@/components/TermsAcceptanceDialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 
+interface CartItem {
+  id: string;
+  professional: string;
+  type: string;
+  event: string;
+  date: string;
+  price: number;
+  professionalId: string;
+}
+
 const Checkout = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -24,58 +35,125 @@ const Checkout = () => {
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [cartItems, setCartItems] = useState<CartItem[]>([]);
   
-  // Extract professional ID from location state
+  // Extract data from location state safely
   const professionalId = location.state?.professionalId;
   const bookingType = location.state?.bookingType || "event";
   const hours = location.state?.hours || 4;
   const bookingDetails = location.state?.bookingDetails || {};
-  
-  // State for cart items with professional data
-  const [cartItems, setCartItems] = useState<Array<{
-    id: string;
-    professional: string;
-    type: string;
-    event: string;
-    date: string;
-    price: number;
-    professionalId: string;
-  }>>([]);
-  
-  // Fetch professional data
-  useEffect(() => {
-    const fetchProfessionalData = async () => {
-      // If no professional ID is provided in state or URL, redirect back
-      if (!professionalId) {
-        // Check if we can get it from URL
-        const pathParts = window.location.pathname.split('/');
-        const possibleId = pathParts[pathParts.length - 1];
-        
-        // If ID is in a valid UUID format, we can try to use it
-        if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(possibleId)) {
-          toast({
-            title: "Erro",
-            description: "Não foi possível identificar o profissional selecionado.",
-            variant: "destructive",
-          });
-          
-          console.error("Professional ID missing:", { 
-            locationState: location.state,
-            pathParts: pathParts
-          });
-          
-          navigate(-1);
-          return;
-        }
+
+  const handleGoBack = useCallback(() => {
+    try {
+      navigate(-1);
+    } catch (error) {
+      console.error("Navigation error:", error);
+      window.history.back();
+    }
+  }, [navigate]);
+
+  const handleViewReservation = useCallback(() => {
+    try {
+      navigate("/dashboard");
+      toast({
+        title: "Reserva confirmada",
+        description: "Você receberá um e-mail com os detalhes.",
+      });
+    } catch (error) {
+      console.error("Navigation error:", error);
+      window.location.href = "/dashboard";
+    }
+  }, [navigate]);
+
+  const handleRemoveItem = useCallback((id: string) => {
+    setCartItems(prev => {
+      const newItems = prev.filter(item => item.id !== id);
+      
+      if (newItems.length === 0) {
+        // Use timeout to prevent immediate navigation issues
+        setTimeout(() => {
+          try {
+            navigate(-1);
+            toast({
+              title: "Carrinho vazio",
+              description: "Todos os itens foram removidos do carrinho.",
+            });
+          } catch (error) {
+            console.error("Navigation error:", error);
+            window.history.back();
+          }
+        }, 100);
       }
       
-      const idToUse = professionalId || window.location.pathname.split('/').pop();
-      
+      return newItems;
+    });
+  }, [navigate]);
+
+  const handleSubmit = useCallback((e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!termsAccepted) {
+      setShowTermsDialog(true);
+      toast({
+        title: "Atenção",
+        description: "Você precisa aceitar os termos de serviço para continuar.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    try {
+      // Simulate payment processing
+      setIsPaymentComplete(true);
+      toast({
+        title: "Sucesso",
+        description: "Pagamento processado com sucesso!",
+      });
+    } catch (error) {
+      console.error("Payment error:", error);
+      toast({
+        title: "Erro",
+        description: "Erro ao processar pagamento. Tente novamente.",
+        variant: "destructive",
+      });
+    }
+  }, [termsAccepted]);
+
+  const handleAcceptTerms = useCallback(() => {
+    setTermsAccepted(true);
+    setShowTermsDialog(false);
+  }, []);
+
+  // Fetch professional data with better error handling
+  useEffect(() => {
+    let isMounted = true;
+    
+    const fetchProfessionalData = async () => {
       try {
+        if (!isMounted) return;
+        
+        // Validate professional ID
+        if (!professionalId) {
+          const pathParts = window.location.pathname.split('/');
+          const possibleId = pathParts[pathParts.length - 1];
+          
+          if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(possibleId)) {
+            if (isMounted) {
+              setError("ID do profissional inválido.");
+              setIsLoading(false);
+            }
+            return;
+          }
+        }
+        
+        const idToUse = professionalId || window.location.pathname.split('/').pop();
+        
+        if (!isMounted) return;
+        
         setIsLoading(true);
         setError(null);
         
-        const { data, error } = await supabase
+        const { data, error: fetchError } = await supabase
           .from("profissionais")
           .select(`
             id,
@@ -87,9 +165,11 @@ const Checkout = () => {
           .eq("id", idToUse)
           .single();
         
-        if (error) {
-          console.error("Error fetching professional:", error);
-          setError("Não foi possível carregar os dados do profissional.");
+        if (!isMounted) return;
+        
+        if (fetchError) {
+          console.error("Error fetching professional:", fetchError);
+          setError("Erro ao carregar dados do profissional.");
           setIsLoading(false);
           return;
         }
@@ -106,7 +186,7 @@ const Checkout = () => {
           : data.cache_hora * hours;
         
         // Create cart item with professional data
-        setCartItems([{
+        const newCartItem: CartItem = {
           id: data.id,
           professional: data.nome_artistico || "Profissional",
           type: data.tipo_profissional || "Músico",
@@ -114,71 +194,48 @@ const Checkout = () => {
           date: bookingDetails.date || "Data a definir",
           price: price || 0,
           professionalId: data.id
-        }]);
+        };
         
-        setIsLoading(false);
+        if (isMounted) {
+          setCartItems([newCartItem]);
+          setIsLoading(false);
+        }
       } catch (err) {
         console.error("Error fetching data:", err);
-        setError("Ocorreu um erro ao carregar os dados.");
-        setIsLoading(false);
+        if (isMounted) {
+          setError("Ocorreu um erro ao carregar os dados.");
+          setIsLoading(false);
+        }
       }
     };
     
     fetchProfessionalData();
-  }, [professionalId, bookingType, hours, bookingDetails, navigate, location]);
-  
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
     
-    if (!termsAccepted) {
-      setShowTermsDialog(true);
-      toast({
-        title: "Atenção",
-        description: "Você precisa aceitar os termos de serviço para continuar.",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    // Simulate payment processing
-    setIsPaymentComplete(true);
-    toast({
-      title: "Sucesso",
-      description: "Pagamento processado com sucesso!",
-    });
-  };
-  
-  const handleAcceptTerms = () => {
-    setTermsAccepted(true);
-  };
-  
-  const handleViewReservation = () => {
-    navigate("/dashboard");
-    toast({
-      title: "Reserva confirmada",
-      description: "Você receberá um e-mail com os detalhes.",
-    });
-  };
-  
-  const handleRemoveItem = (id: string) => {
-    setCartItems(prev => prev.filter(item => item.id !== id));
-    
-    if (cartItems.length <= 1) {
-      navigate(-1);
-      toast({
-        title: "Carrinho vazio",
-        description: "Todos os itens foram removidos do carrinho.",
-      });
-    }
-  };
-  
+    return () => {
+      isMounted = false;
+    };
+  }, [professionalId, bookingType, hours, bookingDetails]);
+
   const subtotal = cartItems.reduce((sum, item) => sum + item.price, 0);
   const fee = subtotal * 0.0998; // 9.98% platform fee
   const total = subtotal + fee;
 
+  if (!user) {
+    return (
+      <div className="min-h-screen flex flex-col bg-toca-background">
+        <Navbar isAuthenticated={false} />
+        <div className="container mx-auto px-4 py-8">
+          <div className="text-center">
+            <p className="text-toca-text-secondary">Redirecionando para login...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen flex flex-col bg-toca-background">
-      <Navbar isAuthenticated={!!user} />
+      <Navbar isAuthenticated={true} />
       
       <TermsAcceptanceDialog 
         open={showTermsDialog} 
@@ -190,7 +247,7 @@ const Checkout = () => {
         <Button 
           variant="ghost" 
           className="mb-6 text-toca-text-secondary hover:text-white"
-          onClick={() => navigate(-1)}
+          onClick={handleGoBack}
           disabled={isPaymentComplete}
         >
           <ChevronLeft size={18} className="mr-1" /> Voltar
@@ -242,7 +299,7 @@ const Checkout = () => {
                       <Button 
                         variant="outline" 
                         className="mt-4"
-                        onClick={() => navigate(-1)}
+                        onClick={handleGoBack}
                       >
                         Voltar para seleção
                       </Button>
@@ -253,7 +310,7 @@ const Checkout = () => {
                       <Button 
                         variant="outline" 
                         className="mt-4"
-                        onClick={() => navigate(-1)}
+                        onClick={handleGoBack}
                       >
                         Voltar para seleção
                       </Button>

@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
@@ -15,7 +15,6 @@ export const useProfessionalProfileData = () => {
   const [activeTab, setActiveTab] = useState("profile");
   const [isProfessional, setIsProfessional] = useState(false);
   const [isNavigating, setIsNavigating] = useState(false);
-  const [isImgLoaded, setIsImgLoaded] = useState(false);
 
   // Fetch professional data if the user is a professional
   const { 
@@ -29,6 +28,7 @@ export const useProfessionalProfileData = () => {
 
       try {
         console.log("Fetching professional profile data");
+        
         // First check if user has a professional profile
         const { data: userData, error: userError } = await supabase
           .from('users')
@@ -59,7 +59,7 @@ export const useProfessionalProfileData = () => {
   
         if (profError) {
           console.error("Error fetching professional data:", profError);
-          throw profError;
+          return null; // Don't throw to prevent infinite retries
         }
         
         if (!profData) {
@@ -69,7 +69,7 @@ export const useProfessionalProfileData = () => {
 
         console.log("Professional data fetched successfully:", profData.id);
   
-        // Try to get the profile image
+        // Try to get the profile image with better error handling
         try {
           console.log("Fetching profile image");
           const { data: imageData } = await supabase.storage
@@ -80,88 +80,145 @@ export const useProfessionalProfileData = () => {
             // Add cache busting parameter
             const imageUrl = `${imageData.publicUrl}?t=${new Date().getTime()}`;
             
-            // Check if image exists by making a head request
-            const imgExists = await fetch(imageData.publicUrl, { method: 'HEAD' })
-              .then(res => res.ok)
-              .catch(() => false);
+            // Check if image exists by making a head request with timeout
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 5000);
+            
+            try {
+              const imgExists = await fetch(imageData.publicUrl, { 
+                method: 'HEAD',
+                signal: controller.signal 
+              }).then(res => res.ok).catch(() => false);
               
-            if (imgExists) {
-              console.log("Profile image found");
-              setProfileImage(imageUrl);
-            } else {
-              console.log("Profile image not found or not accessible");
+              clearTimeout(timeoutId);
+              
+              if (imgExists) {
+                console.log("Profile image found");
+                setProfileImage(imageUrl);
+              } else {
+                console.log("Profile image not found or not accessible");
+                setProfileImage(null);
+              }
+            } catch (fetchError) {
+              clearTimeout(timeoutId);
+              console.log("Image fetch failed, continuing without image");
+              setProfileImage(null);
             }
           }
         } catch (error) {
           console.error("Error fetching profile image:", error);
           // Continue without image - don't throw
+          setProfileImage(null);
         }
   
         return profData;
       } catch (error) {
         console.error("Error in professional profile query:", error);
-        // Don't throw the error to prevent React Query from retrying indefinitely
-        return null;
+        return null; // Return null instead of throwing to prevent infinite retries
       }
     },
     enabled: !!user?.id,
     staleTime: 10000, // 10 seconds
-    retry: 1,
-    refetchOnWindowFocus: false
+    retry: (failureCount, error) => {
+      // Only retry network errors, not data errors
+      if (failureCount >= 2) return false;
+      return error?.message?.includes('network') || error?.message?.includes('fetch');
+    },
+    refetchOnWindowFocus: false,
+    refetchOnMount: false
   });
 
   // Refresh data after any update
-  const refreshProfileData = () => {
+  const refreshProfileData = useCallback(() => {
     console.log("Refreshing profile data");
     setRefreshKey(prev => prev + 1);
     
     // Use a timeout to ensure the refetch happens after state update
-    setTimeout(() => {
+    const timeoutId = setTimeout(() => {
       refetch().catch(error => {
         console.error("Error refetching profile data:", error);
       });
     }, 100);
-  };
 
-  // Handle safe navigation
-  const handleNavigation = (path: string) => {
+    return () => clearTimeout(timeoutId);
+  }, [refetch]);
+
+  // Handle safe navigation with better error handling
+  const handleNavigation = useCallback((path: string) => {
     if (isNavigating) return; // Prevent multiple clicks
     
     setIsNavigating(true);
     console.log(`Navigating to ${path}`);
     
-    // Use setTimeout to ensure the UI stays responsive
-    setTimeout(() => {
-      navigate(path);
-    }, 50);
-  };
+    try {
+      // Use requestAnimationFrame for better browser compatibility
+      requestAnimationFrame(() => {
+        try {
+          navigate(path);
+        } catch (navError) {
+          console.error("Navigation error:", navError);
+          // Fallback to window.location
+          window.location.href = path;
+        } finally {
+          // Reset navigation state after a delay
+          setTimeout(() => setIsNavigating(false), 1000);
+        }
+      });
+    } catch (error) {
+      console.error("Animation frame error:", error);
+      // Direct fallback
+      try {
+        navigate(path);
+      } catch (navError) {
+        window.location.href = path;
+      }
+      setIsNavigating(false);
+    }
+  }, [isNavigating, navigate]);
 
   // Redirect to create professional profile if user is not a professional
   useEffect(() => {
     if (!user) return; // Wait for auth to complete
     
+    let timeoutId: NodeJS.Timeout;
+    
     if (!isLoading && !professional && !isProfessional) {
       console.log("User is not a professional, redirecting to edit profile");
-      // Use safer navigation approach
-      setIsNavigating(true);
-      setTimeout(() => {
-        navigate('/editar-perfil');
-      }, 50);
+      
+      timeoutId = setTimeout(() => {
+        try {
+          handleNavigation('/editar-perfil');
+        } catch (error) {
+          console.error("Redirect error:", error);
+          window.location.href = '/editar-perfil';
+        }
+      }, 100);
     }
-  }, [user, professional, isLoading, navigate, isProfessional]);
 
-  // Redirect to login if not authenticated
+    return () => {
+      if (timeoutId) clearTimeout(timeoutId);
+    };
+  }, [user, professional, isLoading, isProfessional, handleNavigation]);
+
+  // Redirect to login if not authenticated with better error handling
   useEffect(() => {
     if (!user && !isLoading) {
+      console.log("User not authenticated, redirecting to login");
+      
       toast.error("Você precisa estar logado para acessar esta página");
       
-      // Use safer navigation
-      setIsNavigating(true);
-      setTimeout(() => {
-        navigate("/login");
-      }, 50);
+      const timeoutId = setTimeout(() => {
+        try {
+          handleNavigation("/login");
+        } catch (error) {
+          console.error("Login redirect error:", error);
+          window.location.href = "/login";
+        }
+      }, 100);
+
+      return () => clearTimeout(timeoutId);
     }
-  }, [user, isLoading, navigate]);
+  }, [user, isLoading, handleNavigation]);
 
   // Clean up function to prevent memory leaks
   useEffect(() => {
@@ -169,6 +226,8 @@ export const useProfessionalProfileData = () => {
       // Cleanup any subscriptions or references
       queryClient.cancelQueries({
         queryKey: ['my-professional-profile']
+      }).catch(error => {
+        console.error("Error canceling queries:", error);
       });
     };
   }, [queryClient]);
