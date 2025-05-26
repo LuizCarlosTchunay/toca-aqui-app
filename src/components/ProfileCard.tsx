@@ -98,10 +98,10 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
       <ProfileCardNeonBorder position="left" isVisible={isHovered} />
       
       <div className="flex flex-col">
-        {/* Full-width avatar image */}
+        {/* Full-width avatar image with better framing */}
         <div 
           className={cn(
-            "w-full h-44 relative overflow-hidden",
+            "w-full h-44 relative overflow-hidden bg-gradient-to-br from-toca-background to-black",
             "transition-all duration-300",
             isHovered && "shadow-[0_0_15px_rgba(234,56,76,0.5)]"
           )}
@@ -111,8 +111,9 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
               src={imageUrl} 
               alt={professional.artisticName || professional.name}
               className={cn(
-                "w-full h-full object-cover transition-transform duration-500",
-                isHovered && "scale-110"
+                "w-full h-full object-contain transition-transform duration-500",
+                "bg-gradient-to-br from-toca-background/50 to-black/50",
+                isHovered && "scale-105"
               )}
               onLoad={() => setImageLoaded(true)}
               onError={() => {
@@ -122,7 +123,7 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
             />
           ) : (
             <div className={cn(
-              "w-full h-full flex items-center justify-center bg-black",
+              "w-full h-full flex items-center justify-center bg-gradient-to-br from-toca-background to-black",
               "text-toca-accent text-4xl font-bold"
             )}>
               {initials}
