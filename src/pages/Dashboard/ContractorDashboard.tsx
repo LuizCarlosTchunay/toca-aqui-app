@@ -33,6 +33,7 @@ const ContractorDashboard = () => {
     queryFn: async () => {
       if (!user) return [];
       
+      console.log("=== DEBUGGING EVENT IMAGES ===");
       console.log("Fetching events for user:", user.id);
       
       const { data, error } = await supabase
@@ -40,14 +41,27 @@ const ContractorDashboard = () => {
         .select("*")
         .eq("contratante_id", user.id)
         .order("data", { ascending: true })
-        .limit(3);
+        .limit(10); // Aumentando para ver mais eventos
       
       if (error) {
         console.error("Error fetching events:", error);
         return [];
       }
       
-      console.log("Raw events data:", data);
+      console.log("Raw events data from database:", data);
+      console.log("Number of events found:", data?.length || 0);
+      
+      if (data && data.length > 0) {
+        data.forEach((event, index) => {
+          console.log(`Event ${index + 1}:`, {
+            id: event.id,
+            titulo: event.titulo,
+            imagem_url: event.imagem_url,
+            hasImage: !!event.imagem_url,
+            imageType: typeof event.imagem_url
+          });
+        });
+      }
       
       return data.map(event => {
         console.log("Processing event:", event.id, "Image URL:", event.imagem_url);
@@ -67,12 +81,30 @@ const ContractorDashboard = () => {
         
         console.log("Mapped event:", mappedEvent);
         console.log("Final image URL for event", event.id, ":", mappedEvent.image);
+        console.log("Image is null/undefined:", mappedEvent.image === null || mappedEvent.image === undefined);
+        console.log("Image is empty string:", mappedEvent.image === "");
         
         return mappedEvent;
       });
     },
     enabled: !!user
   });
+
+  // Log quando os eventos são carregados
+  useEffect(() => {
+    if (upcomingEvents.length > 0) {
+      console.log("=== EVENTS LOADED IN COMPONENT ===");
+      console.log("Total events:", upcomingEvents.length);
+      upcomingEvents.forEach((event, index) => {
+        console.log(`Event ${index + 1} in component:`, {
+          id: event.id,
+          name: event.name,
+          image: event.image,
+          hasImage: !!event.image
+        });
+      });
+    }
+  }, [upcomingEvents]);
 
   // Function to handle the delete dialog opening
   const handleOpenDeleteDialog = (eventId: string) => {
@@ -194,7 +226,9 @@ const ContractorDashboard = () => {
               ) : upcomingEvents.length > 0 ? (
                 <div className="space-y-4">
                   {upcomingEvents.map((event) => {
+                    console.log("=== RENDERING EVENT CARD ===");
                     console.log("Rendering EventCard for event:", event.id, "with image:", event.image);
+                    console.log("Event object:", event);
                     return (
                       <EventCard
                         key={event.id}
