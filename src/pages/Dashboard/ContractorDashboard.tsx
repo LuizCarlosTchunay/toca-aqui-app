@@ -50,6 +50,8 @@ const ContractorDashboard = () => {
       console.log("Raw events data:", data);
       
       return data.map(event => {
+        console.log("Processing event:", event.id, "Image URL:", event.imagem_url);
+        
         const mappedEvent = {
           id: event.id,
           name: event.titulo || "",
@@ -62,7 +64,10 @@ const ContractorDashboard = () => {
           services: event.servicos_requeridos || [],
           image: event.imagem_url
         };
+        
         console.log("Mapped event:", mappedEvent);
+        console.log("Final image URL for event", event.id, ":", mappedEvent.image);
+        
         return mappedEvent;
       });
     },
@@ -188,14 +193,17 @@ const ContractorDashboard = () => {
                 </div>
               ) : upcomingEvents.length > 0 ? (
                 <div className="space-y-4">
-                  {upcomingEvents.map((event) => (
-                    <EventCard
-                      key={event.id}
-                      event={event}
-                      className="cursor-pointer"
-                      onClick={() => navigate(`/eventos/${event.id}`)}
-                    />
-                  ))}
+                  {upcomingEvents.map((event) => {
+                    console.log("Rendering EventCard for event:", event.id, "with image:", event.image);
+                    return (
+                      <EventCard
+                        key={event.id}
+                        event={event}
+                        className="cursor-pointer"
+                        onClick={() => navigate(`/eventos/${event.id}`)}
+                      />
+                    );
+                  })}
                 </div>
               ) : (
                 <div className="text-center py-10">

@@ -10,6 +10,8 @@ const EventCardImage: React.FC<EventCardImageProps> = ({
   imageUrl,
   onClick,
 }) => {
+  console.log("EventCardImage rendering with imageUrl:", imageUrl);
+  
   return (
     <div 
       className="aspect-[3/1] relative overflow-hidden cursor-pointer"
@@ -19,6 +21,11 @@ const EventCardImage: React.FC<EventCardImageProps> = ({
         src={imageUrl}
         alt={name}
         className="w-full h-full object-cover"
+        onLoad={() => console.log("Image loaded successfully:", imageUrl)}
+        onError={(e) => {
+          console.error("Image failed to load:", imageUrl);
+          console.error("Error details:", e);
+        }}
       />
       <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent flex flex-col justify-end p-4">
         <h3 className="text-xl font-bold text-white">{name}</h3>
