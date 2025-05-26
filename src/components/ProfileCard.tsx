@@ -98,11 +98,11 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
       <ProfileCardNeonBorder position="left" isVisible={isHovered} />
       
       <div className="flex flex-col">
-        {/* Full-width avatar image with better framing */}
+        {/* Optimized avatar image with perfect framing */}
         <div 
           className={cn(
-            "w-full h-44 relative overflow-hidden bg-gradient-to-br from-toca-background to-black",
-            "transition-all duration-300",
+            "w-full h-48 relative overflow-hidden bg-gradient-to-br from-toca-background to-black",
+            "transition-all duration-300 flex items-center justify-center",
             isHovered && "shadow-[0_0_15px_rgba(234,56,76,0.5)]"
           )}
         >
@@ -111,8 +111,8 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
               src={imageUrl} 
               alt={professional.artisticName || professional.name}
               className={cn(
-                "w-full h-full object-contain transition-transform duration-500",
-                "bg-gradient-to-br from-toca-background/50 to-black/50",
+                "max-w-full max-h-full object-contain transition-transform duration-500",
+                "rounded-md shadow-lg",
                 isHovered && "scale-105"
               )}
               onLoad={() => setImageLoaded(true)}
@@ -123,15 +123,15 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
             />
           ) : (
             <div className={cn(
-              "w-full h-full flex items-center justify-center bg-gradient-to-br from-toca-background to-black",
-              "text-toca-accent text-4xl font-bold"
+              "w-32 h-32 flex items-center justify-center bg-gradient-to-br from-toca-accent/20 to-toca-accent/10",
+              "text-toca-accent text-3xl font-bold rounded-full border-2 border-toca-accent/30"
             )}>
               {initials}
             </div>
           )}
           
-          {/* Overlay gradient at bottom of image */}
-          <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-black to-transparent" />
+          {/* Subtle overlay gradient at bottom of image area */}
+          <div className="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-black/40 to-transparent" />
         </div>
         
         <div className="p-4">
