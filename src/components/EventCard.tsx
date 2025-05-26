@@ -13,7 +13,7 @@ const EventCard: React.FC<EventCardProps> = ({
 }) => {
   return (
     <Card 
-      className={`bg-gradient-to-br from-toca-card to-toca-card/80 border-toca-border hover:border-purple-500/50 transition-all duration-300 overflow-hidden shadow-lg hover:shadow-2xl transform hover:scale-[1.02] ${className}`}
+      className={`bg-gradient-to-br from-toca-card to-toca-card/80 border-toca-border hover:border-toca-accent/50 transition-all duration-300 overflow-hidden shadow-lg hover:shadow-2xl transform hover:scale-[1.02] ${className}`}
     >
       <EventCardImage 
         name={event.name}

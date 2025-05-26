@@ -21,12 +21,12 @@ const EventCardDetails: React.FC<EventCardDetailsProps> = ({
       {/* Data e horário com ícones mais destacados */}
       <div className="flex items-center gap-4 text-sm text-white">
         <div className="flex items-center gap-2 bg-toca-background/50 rounded-full px-3 py-1">
-          <Calendar size={16} className="text-purple-400" />
+          <Calendar size={16} className="text-toca-accent" />
           <span className="font-medium">{formatDate(date)}</span>
         </div>
         {time && (
           <div className="flex items-center gap-2 bg-toca-background/50 rounded-full px-3 py-1">
-            <Clock size={16} className="text-blue-400" />
+            <Clock size={16} className="text-toca-accent" />
             <span className="font-medium">{time}</span>
           </div>
         )}
@@ -34,18 +34,18 @@ const EventCardDetails: React.FC<EventCardDetailsProps> = ({
       
       {/* Localização mais destacada */}
       <div className="flex items-center gap-2 text-sm text-white bg-toca-background/30 rounded-lg p-3">
-        <MapPin size={16} className="text-green-400 flex-shrink-0" />
+        <MapPin size={16} className="text-toca-accent flex-shrink-0" />
         <span className="font-medium">{city && state ? `${city}, ${state}` : location}</span>
       </div>
       
       {/* Descrição com melhor styling */}
-      <p className="text-sm text-gray-300 leading-relaxed line-clamp-2 bg-toca-background/20 rounded-lg p-3">
+      <p className="text-sm text-toca-text-secondary leading-relaxed line-clamp-2 bg-toca-background/20 rounded-lg p-3">
         {description || "Evento incrível esperando por você!"}
       </p>
       
       {/* Serviços com melhor visual */}
       <div className="space-y-2">
-        <div className="flex items-center gap-2 text-xs text-gray-400">
+        <div className="flex items-center gap-2 text-xs text-toca-text-secondary">
           <Users size={14} />
           <span>Serviços necessários</span>
         </div>
@@ -54,7 +54,7 @@ const EventCardDetails: React.FC<EventCardDetailsProps> = ({
             <Badge 
               key={i} 
               variant="outline" 
-              className="border-purple-500/50 text-purple-300 bg-purple-500/10 text-xs hover:bg-purple-500/20 transition-colors"
+              className="border-toca-accent/50 text-toca-accent bg-toca-accent/10 text-xs hover:bg-toca-accent/20 transition-colors"
             >
               {service}
             </Badge>
@@ -62,7 +62,7 @@ const EventCardDetails: React.FC<EventCardDetailsProps> = ({
           {services && services.length > 3 && (
             <Badge 
               variant="outline" 
-              className="border-pink-500/50 text-pink-300 bg-pink-500/10 text-xs"
+              className="border-toca-accent/50 text-toca-accent bg-toca-accent/10 text-xs"
             >
               +{services.length - 3} mais
             </Badge>
@@ -73,7 +73,7 @@ const EventCardDetails: React.FC<EventCardDetailsProps> = ({
       {/* Botão de candidatura com melhor design */}
       {onApply && (
         <Button 
-          className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-semibold py-3 rounded-lg transition-all duration-300 transform hover:scale-[1.02] shadow-lg hover:shadow-xl"
+          className="w-full bg-toca-accent hover:bg-toca-accent-hover text-white font-semibold py-3 rounded-lg transition-all duration-300 transform hover:scale-[1.02] shadow-lg hover:shadow-xl"
           onClick={(e) => {
             e.stopPropagation();
             onApply();

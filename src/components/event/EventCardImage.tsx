@@ -40,7 +40,7 @@ const EventCardImage: React.FC<EventCardImageProps> = ({
       className="aspect-[16/9] relative overflow-hidden cursor-pointer group"
       onClick={onClick}
     >
-      <div className="absolute inset-0 bg-gradient-to-br from-purple-600/20 to-pink-600/20 z-10"></div>
+      <div className="absolute inset-0 bg-gradient-to-br from-toca-accent/20 to-toca-accent/30 z-10"></div>
       
       <img
         src={finalImageUrl}
@@ -55,7 +55,7 @@ const EventCardImage: React.FC<EventCardImageProps> = ({
       
       <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent z-20 flex flex-col justify-end p-6">
         <div className="mb-3">
-          <Badge className="bg-gradient-to-r from-purple-500 to-pink-500 border-0 text-white font-semibold px-3 py-1">
+          <Badge className="bg-toca-accent hover:bg-toca-accent-hover border-0 text-white font-semibold px-3 py-1">
             {formatDate(date)}
           </Badge>
         </div>
@@ -63,8 +63,8 @@ const EventCardImage: React.FC<EventCardImageProps> = ({
         <h3 className="text-xl font-bold text-white leading-tight">{name}</h3>
         
         {/* Elemento decorativo para dar mais cara de evento */}
-        <div className="absolute top-4 right-4 w-12 h-12 rounded-full bg-gradient-to-br from-yellow-400/30 to-orange-500/30 backdrop-blur-sm border border-white/20 flex items-center justify-center">
-          <div className="w-6 h-6 rounded-full bg-gradient-to-br from-yellow-400 to-orange-500 animate-pulse"></div>
+        <div className="absolute top-4 right-4 w-12 h-12 rounded-full bg-gradient-to-br from-toca-accent/30 to-toca-accent-hover/30 backdrop-blur-sm border border-white/20 flex items-center justify-center">
+          <div className="w-6 h-6 rounded-full bg-toca-accent animate-pulse"></div>
         </div>
       </div>
       

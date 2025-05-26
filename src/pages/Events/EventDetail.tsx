@@ -237,7 +237,7 @@ const EventDetail = () => {
         <Card className="bg-gradient-to-br from-toca-card to-toca-card/80 border-toca-border overflow-hidden shadow-2xl">
           {/* Event Image Header com o novo design */}
           <div className="aspect-video relative overflow-hidden">
-            <div className="absolute inset-0 bg-gradient-to-br from-purple-600/20 to-pink-600/20 z-10"></div>
+            <div className="absolute inset-0 bg-gradient-to-br from-toca-accent/20 to-toca-accent-hover/30 z-10"></div>
             
             <img
               src={event.image}
@@ -247,7 +247,7 @@ const EventDetail = () => {
             
             <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent z-20 flex flex-col justify-end p-8">
               <div className="mb-4">
-                <Badge className="bg-gradient-to-r from-purple-500 to-pink-500 border-0 text-white font-semibold px-4 py-2 text-sm">
+                <Badge className="bg-toca-accent hover:bg-toca-accent-hover border-0 text-white font-semibold px-4 py-2 text-sm">
                   {formatDate(event.date)}
                 </Badge>
               </div>
@@ -255,8 +255,8 @@ const EventDetail = () => {
               <h1 className="text-4xl font-bold text-white leading-tight mb-2">{event.name}</h1>
               
               {/* Elemento decorativo */}
-              <div className="absolute top-6 right-6 w-16 h-16 rounded-full bg-gradient-to-br from-yellow-400/30 to-orange-500/30 backdrop-blur-sm border border-white/20 flex items-center justify-center">
-                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-yellow-400 to-orange-500 animate-pulse"></div>
+              <div className="absolute top-6 right-6 w-16 h-16 rounded-full bg-gradient-to-br from-toca-accent/30 to-toca-accent-hover/30 backdrop-blur-sm border border-white/20 flex items-center justify-center">
+                <div className="w-8 h-8 rounded-full bg-toca-accent animate-pulse"></div>
               </div>
             </div>
             
@@ -269,7 +269,7 @@ const EventDetail = () => {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
               <div className="lg:col-span-2">
                 <h2 className="text-2xl font-bold mb-6 text-white flex items-center gap-3">
-                  <div className="w-1 h-6 bg-gradient-to-b from-purple-500 to-pink-500 rounded-full"></div>
+                  <div className="w-1 h-6 bg-toca-accent rounded-full"></div>
                   Descrição do Evento
                 </h2>
                 <div className="bg-toca-background/30 rounded-lg p-6 mb-8">
@@ -279,7 +279,7 @@ const EventDetail = () => {
                 </div>
                 
                 <h2 className="text-2xl font-bold mb-6 text-white flex items-center gap-3">
-                  <Users size={24} className="text-purple-400" />
+                  <Users size={24} className="text-toca-accent" />
                   Serviços Necessários
                 </h2>
                 <div className="flex flex-wrap gap-3">
@@ -288,7 +288,7 @@ const EventDetail = () => {
                       <Badge 
                         key={i} 
                         variant="outline" 
-                        className="border-purple-500/50 text-purple-300 bg-purple-500/10 hover:bg-purple-500/20 transition-colors px-4 py-2"
+                        className="border-toca-accent/50 text-toca-accent bg-toca-accent/10 hover:bg-toca-accent/20 transition-colors px-4 py-2"
                       >
                         {service}
                       </Badge>
@@ -309,7 +309,7 @@ const EventDetail = () => {
                     
                     <div className="space-y-4">
                       <div className="flex items-center gap-4 bg-toca-background/50 rounded-lg p-4">
-                        <Calendar className="text-purple-400 flex-shrink-0" size={24} />
+                        <Calendar className="text-toca-accent flex-shrink-0" size={24} />
                         <div>
                           <h4 className="font-semibold text-white">Data</h4>
                           <p className="text-toca-text-secondary">{formatDate(event.date)}</p>
@@ -318,7 +318,7 @@ const EventDetail = () => {
                       
                       {event.time && (
                         <div className="flex items-center gap-4 bg-toca-background/50 rounded-lg p-4">
-                          <Clock className="text-blue-400 flex-shrink-0" size={24} />
+                          <Clock className="text-toca-accent flex-shrink-0" size={24} />
                           <div>
                             <h4 className="font-semibold text-white">Horário</h4>
                             <p className="text-toca-text-secondary">{event.time}</p>
@@ -327,7 +327,7 @@ const EventDetail = () => {
                       )}
                       
                       <div className="flex items-center gap-4 bg-toca-background/50 rounded-lg p-4">
-                        <MapPin className="text-green-400 flex-shrink-0" size={24} />
+                        <MapPin className="text-toca-accent flex-shrink-0" size={24} />
                         <div>
                           <h4 className="font-semibold text-white">Local</h4>
                           <p className="text-toca-text-secondary">{event.location}</p>
@@ -336,7 +336,7 @@ const EventDetail = () => {
                     </div>
                     
                     <Button 
-                      className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-semibold py-4 rounded-lg transition-all duration-300 transform hover:scale-[1.02] shadow-lg hover:shadow-xl mt-6"
+                      className="w-full bg-toca-accent hover:bg-toca-accent-hover text-white font-semibold py-4 rounded-lg transition-all duration-300 transform hover:scale-[1.02] shadow-lg hover:shadow-xl mt-6"
                       onClick={handleApply}
                       disabled={isApplying}
                     >
