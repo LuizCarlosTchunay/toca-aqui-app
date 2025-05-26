@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import Navbar from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
@@ -33,6 +32,16 @@ const EventDetail = () => {
   const { user } = useAuth();
   const [isApplying, setIsApplying] = useState(false);
 
+  // Array de imagens específicas para eventos
+  const eventImages = [
+    "https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?w=800&h=400&fit=crop", // Concerto com luzes
+    "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=800&h=400&fit=crop", // Festa com DJ
+    "https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=800&h=400&fit=crop", // Evento musical
+    "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=800&h=400&fit=crop", // Concerto ao vivo
+    "https://images.unsplash.com/photo-1501386761578-eac5c94b800a?w=800&h=400&fit=crop", // Festa com luzes coloridas
+    "https://images.unsplash.com/photo-1571266028243-d220bee1dfab?w=800&h=400&fit=crop", // Evento noturno
+  ];
+
   // Fetch event details
   const { data: event, isLoading, isError } = useQuery({
     queryKey: ['event', id],
@@ -51,6 +60,17 @@ const EventDetail = () => {
           throw error;
         }
 
+        // Se não há imagem definida, usar uma aleatória baseada no nome do evento
+        const getEventImage = () => {
+          if (data.imagem_url && data.imagem_url !== "https://images.unsplash.com/photo-1527576539890-dfa815648363") {
+            return data.imagem_url;
+          }
+          
+          // Usar hash simples do nome para ter consistência
+          const hash = data.titulo.split('').reduce((a, b) => a + b.charCodeAt(0), 0);
+          return eventImages[hash % eventImages.length];
+        };
+
         return {
           id: data.id,
           name: data.titulo || "",
@@ -62,7 +82,7 @@ const EventDetail = () => {
           state: data.local?.split(",")[1]?.trim() || "", 
           required_services: data.servicos_requeridos || [],
           contratante_id: data.contratante_id,
-          image: data.imagem_url || "https://images.unsplash.com/photo-1527576539890-dfa815648363" // Use the stored image URL or default
+          image: getEventImage()
         };
       } catch (error) {
         console.error("Error fetching event:", error);
@@ -206,89 +226,117 @@ const EventDetail = () => {
       <div className="container mx-auto px-4 py-8">
         <div className="mb-6">
           <Button 
-            variant="outline" 
-            className="bg-black text-toca-accent hover:bg-gray-800"
+            variant="ghost" 
+            className="bg-toca-background/50 text-white hover:bg-toca-background/80 border border-toca-border"
             onClick={() => navigate(-1)}
           >
             <ChevronLeft size={18} className="mr-1" /> Voltar
           </Button>
         </div>
         
-        <Card className="bg-toca-card border-toca-border overflow-hidden">
-          {/* Event Image Header */}
+        <Card className="bg-gradient-to-br from-toca-card to-toca-card/80 border-toca-border overflow-hidden shadow-2xl">
+          {/* Event Image Header com o novo design */}
           <div className="aspect-video relative overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-br from-purple-600/20 to-pink-600/20 z-10"></div>
+            
             <img
               src={event.image}
               alt={event.name}
-              className="w-full h-full object-cover"
+              className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent flex flex-col justify-end p-8">
-              <h1 className="text-3xl font-bold text-white mb-2">{event.name}</h1>
-              
-              <div className="flex items-center gap-2 mt-2">
-                <Badge className="bg-toca-accent border-toca-accent text-white">
+            
+            <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent z-20 flex flex-col justify-end p-8">
+              <div className="mb-4">
+                <Badge className="bg-gradient-to-r from-purple-500 to-pink-500 border-0 text-white font-semibold px-4 py-2 text-sm">
                   {formatDate(event.date)}
                 </Badge>
               </div>
+              
+              <h1 className="text-4xl font-bold text-white leading-tight mb-2">{event.name}</h1>
+              
+              {/* Elemento decorativo */}
+              <div className="absolute top-6 right-6 w-16 h-16 rounded-full bg-gradient-to-br from-yellow-400/30 to-orange-500/30 backdrop-blur-sm border border-white/20 flex items-center justify-center">
+                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-yellow-400 to-orange-500 animate-pulse"></div>
+              </div>
             </div>
+            
+            {/* Efeito de brilho */}
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent opacity-50 z-30"></div>
           </div>
           
-          <CardContent className="p-6">
-            {/* Event Details */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-              <div className="col-span-2">
-                <h2 className="text-xl font-bold mb-4 text-white">Descrição</h2>
-                <p className="text-white whitespace-pre-line mb-6">
-                  {event.description || "Nenhuma descrição disponível para este evento."}
-                </p>
+          <CardContent className="p-8">
+            {/* Event Details com novo design */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+              <div className="lg:col-span-2">
+                <h2 className="text-2xl font-bold mb-6 text-white flex items-center gap-3">
+                  <div className="w-1 h-6 bg-gradient-to-b from-purple-500 to-pink-500 rounded-full"></div>
+                  Descrição do Evento
+                </h2>
+                <div className="bg-toca-background/30 rounded-lg p-6 mb-8">
+                  <p className="text-white whitespace-pre-line leading-relaxed">
+                    {event.description || "Nenhuma descrição disponível para este evento."}
+                  </p>
+                </div>
                 
-                <h2 className="text-xl font-bold mb-4 text-white">Serviços Necessários</h2>
-                <div className="flex flex-wrap gap-2 mb-6">
+                <h2 className="text-2xl font-bold mb-6 text-white flex items-center gap-3">
+                  <Users size={24} className="text-purple-400" />
+                  Serviços Necessários
+                </h2>
+                <div className="flex flex-wrap gap-3">
                   {event.required_services && event.required_services.length > 0 ? (
                     event.required_services.map((service, i) => (
-                      <Badge key={i} variant="outline" className="border-toca-border text-white">
+                      <Badge 
+                        key={i} 
+                        variant="outline" 
+                        className="border-purple-500/50 text-purple-300 bg-purple-500/10 hover:bg-purple-500/20 transition-colors px-4 py-2"
+                      >
                         {service}
                       </Badge>
                     ))
                   ) : (
-                    <p className="text-white">Nenhum serviço especificado</p>
+                    <p className="text-toca-text-secondary">Nenhum serviço especificado</p>
                   )}
                 </div>
               </div>
               
               <div>
-                <Card className="bg-toca-background border-toca-border">
-                  <CardContent className="p-4 space-y-4">
-                    <h3 className="text-lg font-semibold text-white">Detalhes do Evento</h3>
+                <Card className="bg-gradient-to-br from-toca-background to-toca-background/80 border-toca-border shadow-lg sticky top-8">
+                  <CardContent className="p-6 space-y-6">
+                    <h3 className="text-xl font-bold text-white flex items-center gap-2">
+                      <div className="w-2 h-2 bg-toca-accent rounded-full animate-pulse"></div>
+                      Detalhes do Evento
+                    </h3>
                     
-                    <div className="flex items-start gap-3">
-                      <Calendar className="text-toca-accent mt-1" size={20} />
-                      <div>
-                        <h4 className="font-medium text-white">Data</h4>
-                        <p className="text-white">{formatDate(event.date)}</p>
-                      </div>
-                    </div>
-                    
-                    {event.time && (
-                      <div className="flex items-start gap-3">
-                        <Clock className="text-toca-accent mt-1" size={20} />
+                    <div className="space-y-4">
+                      <div className="flex items-center gap-4 bg-toca-background/50 rounded-lg p-4">
+                        <Calendar className="text-purple-400 flex-shrink-0" size={24} />
                         <div>
-                          <h4 className="font-medium text-white">Horário</h4>
-                          <p className="text-white">{event.time}</p>
+                          <h4 className="font-semibold text-white">Data</h4>
+                          <p className="text-toca-text-secondary">{formatDate(event.date)}</p>
                         </div>
                       </div>
-                    )}
-                    
-                    <div className="flex items-start gap-3">
-                      <MapPin className="text-toca-accent mt-1" size={20} />
-                      <div>
-                        <h4 className="font-medium text-white">Local</h4>
-                        <p className="text-white">{event.location}</p>
+                      
+                      {event.time && (
+                        <div className="flex items-center gap-4 bg-toca-background/50 rounded-lg p-4">
+                          <Clock className="text-blue-400 flex-shrink-0" size={24} />
+                          <div>
+                            <h4 className="font-semibold text-white">Horário</h4>
+                            <p className="text-toca-text-secondary">{event.time}</p>
+                          </div>
+                        </div>
+                      )}
+                      
+                      <div className="flex items-center gap-4 bg-toca-background/50 rounded-lg p-4">
+                        <MapPin className="text-green-400 flex-shrink-0" size={24} />
+                        <div>
+                          <h4 className="font-semibold text-white">Local</h4>
+                          <p className="text-toca-text-secondary">{event.location}</p>
+                        </div>
                       </div>
                     </div>
                     
                     <Button 
-                      className="w-full bg-toca-accent hover:bg-toca-accent-hover mt-4"
+                      className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-semibold py-4 rounded-lg transition-all duration-300 transform hover:scale-[1.02] shadow-lg hover:shadow-xl mt-6"
                       onClick={handleApply}
                       disabled={isApplying}
                     >
@@ -298,7 +346,7 @@ const EventDetail = () => {
                           Processando...
                         </>
                       ) : (
-                        "Me candidatar"
+                        "🎯 Me candidatar ao evento"
                       )}
                     </Button>
                   </CardContent>
