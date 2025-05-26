@@ -12,30 +12,64 @@ const EventCardImage: React.FC<EventCardImageProps> = ({
 }) => {
   console.log("EventCardImage rendering with imageUrl:", imageUrl);
   
+  // Array de imagens específicas para eventos
+  const eventImages = [
+    "https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?w=800&h=400&fit=crop", // Concerto com luzes
+    "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=800&h=400&fit=crop", // Festa com DJ
+    "https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=800&h=400&fit=crop", // Evento musical
+    "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=800&h=400&fit=crop", // Concerto ao vivo
+    "https://images.unsplash.com/photo-1501386761578-eac5c94b800a?w=800&h=400&fit=crop", // Festa com luzes coloridas
+    "https://images.unsplash.com/photo-1571266028243-d220bee1dfab?w=800&h=400&fit=crop", // Evento noturno
+  ];
+  
+  // Se não há imagem definida, usar uma aleatória baseada no nome do evento
+  const getEventImage = () => {
+    if (imageUrl && imageUrl !== "https://images.unsplash.com/photo-1527576539890-dfa815648363") {
+      return imageUrl;
+    }
+    
+    // Usar hash simples do nome para ter consistência
+    const hash = name.split('').reduce((a, b) => a + b.charCodeAt(0), 0);
+    return eventImages[hash % eventImages.length];
+  };
+
+  const finalImageUrl = getEventImage();
+  
   return (
     <div 
-      className="aspect-[3/1] relative overflow-hidden cursor-pointer"
+      className="aspect-[16/9] relative overflow-hidden cursor-pointer group"
       onClick={onClick}
     >
+      <div className="absolute inset-0 bg-gradient-to-br from-purple-600/20 to-pink-600/20 z-10"></div>
+      
       <img
-        src={imageUrl}
+        src={finalImageUrl}
         alt={name}
-        className="w-full h-full object-cover"
-        onLoad={() => console.log("Image loaded successfully:", imageUrl)}
+        className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+        onLoad={() => console.log("Image loaded successfully:", finalImageUrl)}
         onError={(e) => {
-          console.error("Image failed to load:", imageUrl);
+          console.error("Image failed to load:", finalImageUrl);
           console.error("Error details:", e);
         }}
       />
-      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent flex flex-col justify-end p-4">
-        <h3 className="text-xl font-bold text-white">{name}</h3>
-        
-        <div className="flex items-center gap-2 mt-2">
-          <Badge className="bg-toca-accent border-toca-accent text-white">
+      
+      <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent z-20 flex flex-col justify-end p-6">
+        <div className="mb-3">
+          <Badge className="bg-gradient-to-r from-purple-500 to-pink-500 border-0 text-white font-semibold px-3 py-1">
             {formatDate(date)}
           </Badge>
         </div>
+        
+        <h3 className="text-xl font-bold text-white leading-tight">{name}</h3>
+        
+        {/* Elemento decorativo para dar mais cara de evento */}
+        <div className="absolute top-4 right-4 w-12 h-12 rounded-full bg-gradient-to-br from-yellow-400/30 to-orange-500/30 backdrop-blur-sm border border-white/20 flex items-center justify-center">
+          <div className="w-6 h-6 rounded-full bg-gradient-to-br from-yellow-400 to-orange-500 animate-pulse"></div>
+        </div>
       </div>
+      
+      {/* Efeito de brilho no hover */}
+      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 transform translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700 z-30"></div>
     </div>
   );
 };

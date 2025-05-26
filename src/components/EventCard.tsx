@@ -11,17 +11,14 @@ const EventCard: React.FC<EventCardProps> = ({
   onClick,
   onApply,
 }) => {
-  // Use the event image if available, otherwise use a default image
-  const imageUrl = event.image || "https://images.unsplash.com/photo-1527576539890-dfa815648363";
-
   return (
     <Card 
-      className={`bg-toca-card border-toca-border hover:border-toca-accent transition-all overflow-hidden ${className}`}
+      className={`bg-gradient-to-br from-toca-card to-toca-card/80 border-toca-border hover:border-purple-500/50 transition-all duration-300 overflow-hidden shadow-lg hover:shadow-2xl transform hover:scale-[1.02] ${className}`}
     >
       <EventCardImage 
         name={event.name}
         date={event.date}
-        imageUrl={imageUrl}
+        imageUrl={event.image}
         onClick={onClick}
       />
       
