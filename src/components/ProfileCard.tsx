@@ -98,11 +98,11 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
       <ProfileCardNeonBorder position="left" isVisible={isHovered} />
       
       <div className="flex flex-col">
-        {/* Optimized avatar image with perfect framing */}
+        {/* Optimized avatar image with better side fitting */}
         <div 
           className={cn(
             "w-full h-48 relative overflow-hidden bg-gradient-to-br from-toca-background to-black",
-            "transition-all duration-300 flex items-center justify-center",
+            "transition-all duration-300",
             isHovered && "shadow-[0_0_15px_rgba(234,56,76,0.5)]"
           )}
         >
@@ -111,8 +111,8 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
               src={imageUrl} 
               alt={professional.artisticName || professional.name}
               className={cn(
-                "max-w-full max-h-full object-contain transition-transform duration-500",
-                "rounded-md shadow-lg",
+                "w-full h-full object-cover transition-transform duration-500",
+                "rounded-none",
                 isHovered && "scale-105"
               )}
               onLoad={() => setImageLoaded(true)}
@@ -123,8 +123,8 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
             />
           ) : (
             <div className={cn(
-              "w-32 h-32 flex items-center justify-center bg-gradient-to-br from-toca-accent/20 to-toca-accent/10",
-              "text-toca-accent text-3xl font-bold rounded-full border-2 border-toca-accent/30"
+              "w-full h-full flex items-center justify-center bg-gradient-to-br from-toca-accent/20 to-toca-accent/10",
+              "text-toca-accent text-4xl font-bold"
             )}>
               {initials}
             </div>
