@@ -2,7 +2,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 
 export interface ProfileData {
@@ -16,7 +15,6 @@ export interface ProfileData {
 }
 
 export const useProfessionalProfile = () => {
-  const navigate = useNavigate();
   const { user } = useAuth();
   const [profileImage, setProfileImage] = useState<File | null>(null);
   const [profileImageUrl, setProfileImageUrl] = useState<string | undefined>(undefined);
@@ -28,7 +26,6 @@ export const useProfessionalProfile = () => {
   const [loadedData, setLoadedData] = useState(false);
   const [profileSaved, setProfileSaved] = useState(false);
   
-  // State for services management
   const [services, setServices] = useState<string[]>([]);
   
   const [profileData, setProfileData] = useState<ProfileData>({
@@ -41,34 +38,17 @@ export const useProfessionalProfile = () => {
     eventRate: "",
   });
   
-  // Enhanced fetchProfileData with Chrome compatibility
+  // Enhanced fetchProfileData
   const fetchProfileData = useCallback(async () => {
     if (!user) {
-      console.log("No user found, redirecting to home");
-      
-      // Chrome-safe timeout handling
-      const timeoutId = setTimeout(() => {
-        toast.error("Você precisa estar logado para editar seu perfil");
-        setIsNavigating(true);
-        
-        // Chrome-compatible navigation
-        setTimeout(() => {
-          try {
-            navigate("/");
-          } catch (error) {
-            console.error("Navigation error:", error);
-            window.location.href = "/";
-          }
-        }, 100);
-      }, 50);
-
-      return () => clearTimeout(timeoutId);
+      console.log("[Profile] No user found");
+      return;
     }
     
     setIsLoading(true);
     
     try {
-      console.log("Fetching professional profile data for editing");
+      console.log("[Profile] Fetching professional profile data");
       
       const { data, error } = await supabase
         .from('profissionais')
@@ -77,12 +57,12 @@ export const useProfessionalProfile = () => {
         .maybeSingle();
       
       if (error) {
-        console.error("Error fetching professional profile:", error);
+        console.error("[Profile] Error fetching professional profile:", error);
         throw error;
       }
       
       if (data) {
-        console.log("Found professional profile:", data.id);
+        console.log("[Profile] Found professional profile:", data.id);
         setExistingProfessionalId(data.id);
         
         const predefinedTypes = ["dj", "musico", "duo", "trio", "banda", "fotografo", "filmmaker", "tecnico_som", "tecnico_luz"];
@@ -104,9 +84,9 @@ export const useProfessionalProfile = () => {
           setOtherType(data.tipo_profissional);
         }
         
-        // Enhanced image fetching with Chrome compatibility
+        // Enhanced image fetching
         try {
-          console.log("Fetching profile image");
+          console.log("[Profile] Fetching profile image");
           const { data: imageData } = supabase.storage
             .from('profile_images')
             .getPublicUrl(`professionals/${data.id}`);
@@ -114,47 +94,39 @@ export const useProfessionalProfile = () => {
           if (imageData?.publicUrl) {
             const imageUrl = imageData.publicUrl + '?t=' + new Date().getTime();
             
-            // Chrome-compatible image check with timeout
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 3000);
-            
             try {
-              const checkImage = await fetch(imageData.publicUrl, { 
-                method: 'HEAD',
-                signal: controller.signal 
-              }).then(res => res.ok).catch(() => false);
-              
-              clearTimeout(timeoutId);
+              const checkImage = await fetch(imageData.publicUrl, { method: 'HEAD' })
+                .then(res => res.ok)
+                .catch(() => false);
               
               if (checkImage) {
-                console.log("Profile image found");
+                console.log("[Profile] Profile image found");
                 setProfileImageUrl(imageUrl);
               } else {
-                console.log("Profile image not found or not accessible");
+                console.log("[Profile] Profile image not found");
               }
             } catch (fetchError) {
-              clearTimeout(timeoutId);
-              console.log("Image fetch failed, continuing without image");
+              console.log("[Profile] Image fetch failed, continuing without image");
             }
           }
         } catch (imgError) {
-          console.error("Error fetching profile image:", imgError);
+          console.error("[Profile] Error fetching profile image:", imgError);
         }
       } else {
-        console.log("No professional profile found, creating new");
+        console.log("[Profile] No professional profile found");
       }
       
       setLoadedData(true);
     } catch (error: any) {
-      console.error("Error loading profile data:", error);
+      console.error("[Profile] Error loading profile data:", error);
       toast.error("Erro ao carregar dados do perfil: " + (error.message || "Tente novamente"));
     } finally {
       setIsLoading(false);
     }
-  }, [user, navigate]);
+  }, [user]);
 
   const handleImageChange = useCallback((imageFile: File, imageUrl?: string) => {
-    console.log("Profile image selected");
+    console.log("[Profile] Image selected");
     setProfileImage(imageFile);
     if (imageUrl) {
       setProfileImageUrl(imageUrl);
@@ -168,34 +140,7 @@ export const useProfessionalProfile = () => {
     }));
   }, []);
 
-  // Chrome-compatible navigation handler
-  const handleNavigate = useCallback((path: string) => {
-    if (isNavigating) return;
-    
-    setIsNavigating(true);
-    console.log(`Navigating to ${path}`);
-    
-    // Chrome-specific handling with fallbacks
-    try {
-      // Use setTimeout for better Chrome compatibility
-      setTimeout(() => {
-        try {
-          navigate(path, { replace: true });
-        } catch (navError) {
-          console.error("Navigation error:", navError);
-          window.location.href = path;
-        } finally {
-          setTimeout(() => setIsNavigating(false), 1000);
-        }
-      }, 50);
-    } catch (error) {
-      console.error("Navigation setup error:", error);
-      window.location.href = path;
-      setIsNavigating(false);
-    }
-  }, [isNavigating, navigate]);
-
-  // Enhanced save profile data with Chrome compatibility
+  // Enhanced save profile data
   const saveProfileData = useCallback(async () => {
     if (!user) {
       toast.error("Você precisa estar logado para salvar seu perfil");
@@ -208,7 +153,7 @@ export const useProfessionalProfile = () => {
     }
     
     if (isSaving || isNavigating) {
-      console.log("Already saving or navigating, preventing duplicate submission");
+      console.log("[Profile] Already saving or navigating");
       return false;
     }
     
@@ -216,7 +161,7 @@ export const useProfessionalProfile = () => {
     setIsSaving(true);
     
     try {
-      console.log("Saving profile data");
+      console.log("[Profile] Saving profile data");
       let professionalId = existingProfessionalId;
       let finalProfileType = profileData.profileType === "outro" ? otherType : profileData.profileType;
       
@@ -233,7 +178,7 @@ export const useProfessionalProfile = () => {
       };
       
       if (existingProfessionalId) {
-        console.log("Updating existing profile:", existingProfessionalId);
+        console.log("[Profile] Updating existing profile:", existingProfessionalId);
         const { error: updateError } = await supabase
           .from('profissionais')
           .update(profileDataToSave)
@@ -241,7 +186,7 @@ export const useProfessionalProfile = () => {
         
         if (updateError) throw updateError;
       } else {
-        console.log("Creating new professional profile");
+        console.log("[Profile] Creating new professional profile");
         const { data: newProfile, error: insertError } = await supabase
           .from('profissionais')
           .insert({
@@ -258,7 +203,7 @@ export const useProfessionalProfile = () => {
           throw new Error("Falha ao obter o ID do perfil criado");
         }
         
-        console.log("Created new profile:", professionalId);
+        console.log("[Profile] Created new profile:", professionalId);
         setExistingProfessionalId(professionalId);
         
         const { error: userUpdateError } = await supabase
@@ -269,10 +214,10 @@ export const useProfessionalProfile = () => {
         if (userUpdateError) throw userUpdateError;
       }
       
-      // Enhanced image upload with Chrome compatibility
+      // Image upload
       if (profileImage && professionalId) {
         try {
-          console.log("Uploading profile image");
+          console.log("[Profile] Uploading profile image");
           
           const fileName = `professionals/${professionalId}`;
           
@@ -284,21 +229,21 @@ export const useProfessionalProfile = () => {
             });
           
           if (uploadError) throw uploadError;
-          console.log("Profile image uploaded successfully");
+          console.log("[Profile] Profile image uploaded successfully");
         } catch (imageError) {
-          console.error("Error uploading image:", imageError);
+          console.error("[Profile] Error uploading image:", imageError);
           toast.error("Erro ao fazer upload da imagem, mas o perfil foi salvo");
         }
       }
       
-      console.log("Profile saved successfully");
+      console.log("[Profile] Profile saved successfully");
       toast.success("Perfil atualizado com sucesso!");
       
       setProfileSaved(true);
       return true;
       
     } catch (error: any) {
-      console.error("Error saving profile:", error);
+      console.error("[Profile] Error saving profile:", error);
       toast.error("Erro ao salvar o perfil: " + (error.message || "Tente novamente"));
       return false;
     } finally {
@@ -307,52 +252,18 @@ export const useProfessionalProfile = () => {
     }
   }, [user, profileData, otherType, services, existingProfessionalId, profileImage, isSaving, isNavigating]);
 
-  // Effect to load profile data with cleanup
+  // Load profile data
   useEffect(() => {
-    let cleanup: (() => void) | undefined;
-    
-    const loadData = async () => {
-      cleanup = await fetchProfileData();
-    };
-    
-    loadData();
-    
-    return () => {
-      if (cleanup) cleanup();
-      setIsLoading(false);
-      setIsSaving(false);
-      setIsNavigating(false);
-    };
+    fetchProfileData();
   }, [fetchProfileData]);
 
-  // Enhanced auth check with Chrome compatibility
+  // Auth check
   useEffect(() => {
     if (!user && loadedData) {
-      console.log("No authenticated user found, redirecting to login");
+      console.log("[Profile] No authenticated user found");
       toast.error("Você precisa estar logado para acessar esta página");
-      
-      const timeoutId = setTimeout(() => {
-        setIsNavigating(true);
-        setTimeout(() => {
-          try {
-            navigate("/login");
-          } catch (error) {
-            console.error("Login redirect error:", error);
-            window.location.href = "/login";
-          }
-        }, 100);
-      }, 50);
-
-      return () => clearTimeout(timeoutId);
     }
-  }, [user, navigate, loadedData]);
-
-  // Portfolio manager update effect
-  useEffect(() => {
-    if (profileSaved && existingProfessionalId) {
-      setProfileSaved(false);
-    }
-  }, [profileSaved, existingProfessionalId]);
+  }, [user, loadedData]);
 
   return {
     user,
@@ -372,7 +283,6 @@ export const useProfessionalProfile = () => {
     setOtherType,
     handleChange,
     handleImageChange,
-    handleNavigate,
     saveProfileData,
   };
 };
