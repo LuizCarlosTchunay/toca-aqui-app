@@ -1,11 +1,12 @@
 
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Camera, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
+import { useSafeState } from "@/hooks/useSafeState";
 
 interface ImageUploaderProps {
   currentImage?: string;
@@ -15,7 +16,6 @@ interface ImageUploaderProps {
   bucketName?: string;
   objectPath?: string;
   children?: React.ReactNode;
-  // Add onImageUpload as an alias for onImageChange for backward compatibility
   onImageUpload?: (imageFile: File, imageUrl?: string) => void;
 }
 
@@ -30,57 +30,70 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
   children
 }) => {
   const { user } = useAuth();
-  const [previewUrl, setPreviewUrl] = useState<string | undefined>(currentImage);
-  const [isLoading, setIsLoading] = useState(false);
-  const [imageChecked, setImageChecked] = useState(false);
+  const [previewUrl, setPreviewUrl] = useSafeState<string | undefined>(currentImage);
+  const [isLoading, setIsLoading] = useSafeState(false);
+  const [imageChecked, setImageChecked] = useSafeState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const mountedRef = useRef(true);
 
   // Use the onImageUpload prop as a fallback if onImageChange is not provided
   const handleImageChange = onImageChange || onImageUpload;
 
-  // Fetch image from Supabase storage if objectPath is provided
-  useEffect(() => {
-    const fetchImage = async () => {
-      if (!objectPath || !bucketName || imageChecked) return;
+  // Stable fetch function to prevent re-creation
+  const fetchImage = useCallback(async () => {
+    if (!objectPath || !bucketName || imageChecked || !mountedRef.current) return;
+    
+    try {
+      console.log("Checking for existing image:", objectPath);
       
-      try {
-        console.log("Checking for existing image:", objectPath);
-        
-        // Get public URL directly (bucket already exists)
-        const { data } = supabase.storage
-          .from(bucketName)
-          .getPublicUrl(objectPath);
-        
-        if (data && data.publicUrl) {
-          // Check if the image exists by making a HEAD request
-          try {
-            const response = await fetch(data.publicUrl, { method: 'HEAD' });
-            if (response.ok) {
-              const imageUrl = data.publicUrl + '?t=' + new Date().getTime();
-              console.log("Image found, setting preview URL");
-              setPreviewUrl(imageUrl);
-            } else {
-              console.log("No image found at path");
-            }
-          } catch (error) {
-            console.log('Image does not exist yet', error);
+      const { data } = supabase.storage
+        .from(bucketName)
+        .getPublicUrl(objectPath);
+      
+      if (data && data.publicUrl && mountedRef.current) {
+        try {
+          const response = await fetch(data.publicUrl, { method: 'HEAD' });
+          if (response.ok && mountedRef.current) {
+            const imageUrl = data.publicUrl + '?t=' + new Date().getTime();
+            console.log("Image found, setting preview URL");
+            setPreviewUrl(imageUrl);
+          } else {
+            console.log("No image found at path");
           }
+        } catch (error) {
+          console.log('Image does not exist yet', error);
         }
-      } catch (error) {
-        console.error("Error fetching image:", error);
-      } finally {
+      }
+    } catch (error) {
+      console.error("Error fetching image:", error);
+    } finally {
+      if (mountedRef.current) {
         setImageChecked(true);
       }
-    };
-    
-    if (bucketName && objectPath && !imageChecked) {
-      fetchImage();
-    } else if (currentImage && !imageChecked) {
-      // Add cache busting to prevent stale images
-      setPreviewUrl(currentImage.includes('?') ? currentImage : `${currentImage}?t=${new Date().getTime()}`);
-      setImageChecked(true);
     }
-  }, [bucketName, objectPath, currentImage, imageChecked]);
+  }, [bucketName, objectPath, imageChecked, setPreviewUrl, setImageChecked]);
+
+  // Fetch image from Supabase storage if objectPath is provided
+  useEffect(() => {
+    if (!imageChecked && mountedRef.current) {
+      if (bucketName && objectPath) {
+        fetchImage();
+      } else if (currentImage) {
+        const cachedImage = currentImage.includes('?') ? currentImage : `${currentImage}?t=${new Date().getTime()}`;
+        setPreviewUrl(cachedImage);
+        setImageChecked(true);
+      } else {
+        setImageChecked(true);
+      }
+    }
+  }, [bucketName, objectPath, currentImage, imageChecked, fetchImage, setPreviewUrl, setImageChecked]);
+
+  // Cleanup effect
+  useEffect(() => {
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
 
   const sizeClasses = {
     sm: "w-24 h-24",
@@ -88,22 +101,23 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
     lg: "w-40 h-40",
   };
 
-  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (!file) return;
+    if (!file || !mountedRef.current) return;
     
     setIsLoading(true);
 
     try {
       // Create a preview URL
       const fileUrl = URL.createObjectURL(file);
-      setPreviewUrl(fileUrl);
+      if (mountedRef.current) {
+        setPreviewUrl(fileUrl);
+      }
       
       // If we have a user and objectPath, upload the file
-      if (user && objectPath && bucketName) {
+      if (user && objectPath && bucketName && mountedRef.current) {
         console.log("Uploading image to", bucketName, objectPath);
         
-        // Upload to the specified path directly (bucket already exists)
         const { error } = await supabase.storage
           .from(bucketName)
           .upload(objectPath, file, {
@@ -115,20 +129,20 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
           throw error;
         }
         
-        // Get the public URL of the uploaded file with cache busting
-        const { data: publicUrlData } = supabase.storage
-          .from(bucketName)
-          .getPublicUrl(objectPath);
-          
-        if (publicUrlData && handleImageChange) {
-          // Pass both the file and the public URL to the parent component
-          const cachedBustedUrl = publicUrlData.publicUrl + '?t=' + new Date().getTime();
-          handleImageChange(file, cachedBustedUrl);
-          toast.success("Imagem atualizada com sucesso!");
-        } else if (handleImageChange) {
-          handleImageChange(file);
+        if (mountedRef.current) {
+          const { data: publicUrlData } = supabase.storage
+            .from(bucketName)
+            .getPublicUrl(objectPath);
+            
+          if (publicUrlData && handleImageChange) {
+            const cachedBustedUrl = publicUrlData.publicUrl + '?t=' + new Date().getTime();
+            handleImageChange(file, cachedBustedUrl);
+            toast.success("Imagem atualizada com sucesso!");
+          } else if (handleImageChange) {
+            handleImageChange(file);
+          }
         }
-      } else if (user) {
+      } else if (user && mountedRef.current) {
         // Generate a path based on the user ID if objectPath wasn't provided
         const fileExt = file.name.split('.').pop();
         const fileName = `${user.id}-${Date.now()}.${fileExt}`;
@@ -144,34 +158,44 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
           throw error;
         }
         
-        // Get the public URL of the uploaded file with cache busting
-        const { data: publicUrlData } = supabase.storage
-          .from(bucketName)
-          .getPublicUrl(fileName);
-          
-        if (publicUrlData && handleImageChange) {
-          // Pass both the file and the public URL to the parent component
-          const cachedBustedUrl = publicUrlData.publicUrl + '?t=' + new Date().getTime();
-          handleImageChange(file, cachedBustedUrl);
-          toast.success("Imagem atualizada com sucesso!");
-        } else if (handleImageChange) {
-          handleImageChange(file);
+        if (mountedRef.current) {
+          const { data: publicUrlData } = supabase.storage
+            .from(bucketName)
+            .getPublicUrl(fileName);
+            
+          if (publicUrlData && handleImageChange) {
+            const cachedBustedUrl = publicUrlData.publicUrl + '?t=' + new Date().getTime();
+            handleImageChange(file, cachedBustedUrl);
+            toast.success("Imagem atualizada com sucesso!");
+          } else if (handleImageChange) {
+            handleImageChange(file);
+          }
         }
-      } else if (handleImageChange) {
+      } else if (handleImageChange && mountedRef.current) {
         // If no user, just pass the file
         handleImageChange(file);
       }
     } catch (error: any) {
       console.error("Error handling image:", error);
-      toast.error("Erro ao processar imagem: " + (error.message || "Tente novamente"));
+      if (mountedRef.current) {
+        toast.error("Erro ao processar imagem: " + (error.message || "Tente novamente"));
+      }
     } finally {
-      setIsLoading(false);
+      if (mountedRef.current) {
+        setIsLoading(false);
+      }
     }
-  };
+  }, [user, objectPath, bucketName, handleImageChange, setIsLoading, setPreviewUrl]);
 
-  const handleButtonClick = () => {
-    fileInputRef.current?.click();
-  };
+  const handleButtonClick = useCallback(() => {
+    if (mountedRef.current) {
+      fileInputRef.current?.click();
+    }
+  }, []);
+
+  if (!mountedRef.current) {
+    return null;
+  }
 
   return (
     <div className={cn("flex flex-col items-center", className)}>
@@ -187,6 +211,12 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
             src={previewUrl} 
             alt="Profile" 
             className="w-full h-full object-cover"
+            onError={() => {
+              console.log("Image failed to load");
+              if (mountedRef.current) {
+                setPreviewUrl(undefined);
+              }
+            }}
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center bg-toca-background">
