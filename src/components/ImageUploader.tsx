@@ -32,6 +32,7 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
   const { user } = useAuth();
   const [previewUrl, setPreviewUrl] = useState<string | undefined>(currentImage);
   const [isLoading, setIsLoading] = useState(false);
+  const [imageChecked, setImageChecked] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Use the onImageUpload prop as a fallback if onImageChange is not provided
@@ -40,50 +41,46 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
   // Fetch image from Supabase storage if objectPath is provided
   useEffect(() => {
     const fetchImage = async () => {
-      if (!objectPath || !bucketName) return;
+      if (!objectPath || !bucketName || imageChecked) return;
       
       try {
-        // Ensure the bucket exists first
-        try {
-          await supabase.storage.createBucket(bucketName, {
-            public: true
-          });
-        } catch (e) {
-          // Bucket likely already exists
-          console.log("Bucket may already exist");
-        }
-
-        // Try to get public URL
+        console.log("Checking for existing image:", objectPath);
+        
+        // Get public URL directly (bucket already exists)
         const { data } = supabase.storage
           .from(bucketName)
           .getPublicUrl(objectPath);
         
         if (data && data.publicUrl) {
-          // Add cache-busting parameter
-          const imageUrl = data.publicUrl + '?t=' + new Date().getTime();
-          
           // Check if the image exists by making a HEAD request
           try {
             const response = await fetch(data.publicUrl, { method: 'HEAD' });
             if (response.ok) {
+              const imageUrl = data.publicUrl + '?t=' + new Date().getTime();
+              console.log("Image found, setting preview URL");
               setPreviewUrl(imageUrl);
+            } else {
+              console.log("No image found at path");
             }
           } catch (error) {
-            console.log('Image may not exist yet', error);
+            console.log('Image does not exist yet', error);
           }
         }
       } catch (error) {
         console.error("Error fetching image:", error);
+      } finally {
+        setImageChecked(true);
       }
     };
     
-    if (bucketName && objectPath) {
+    if (bucketName && objectPath && !imageChecked) {
       fetchImage();
-    } else if (currentImage) {
+    } else if (currentImage && !imageChecked) {
       // Add cache busting to prevent stale images
       setPreviewUrl(currentImage.includes('?') ? currentImage : `${currentImage}?t=${new Date().getTime()}`);
+      setImageChecked(true);
     }
-  }, [bucketName, objectPath, currentImage]);
+  }, [bucketName, objectPath, currentImage, imageChecked]);
 
   const sizeClasses = {
     sm: "w-24 h-24",
@@ -102,20 +99,11 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
       const fileUrl = URL.createObjectURL(file);
       setPreviewUrl(fileUrl);
       
-      // If we have a user and objectPath, try to upload the file immediately
+      // If we have a user and objectPath, upload the file
       if (user && objectPath && bucketName) {
         console.log("Uploading image to", bucketName, objectPath);
         
-        // Create storage bucket if it doesn't exist (this will fail silently if it exists)
-        try {
-          await supabase.storage.createBucket(bucketName, {
-            public: true
-          });
-        } catch (e) {
-          console.log("Bucket already exists or could not be created");
-        }
-        
-        // Upload to the specified path directly
+        // Upload to the specified path directly (bucket already exists)
         const { error } = await supabase.storage
           .from(bucketName)
           .upload(objectPath, file, {
@@ -124,29 +112,7 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
           });
           
         if (error) {
-          if (error.message.includes('does not exist')) {
-            console.log("Bucket does not exist, attempting to create it...");
-            try {
-              // Try creating the bucket again with a different approach
-              await supabase.storage.createBucket(bucketName, {
-                public: true
-              });
-              
-              // Try uploading again
-              const { error: retryError } = await supabase.storage
-                .from(bucketName)
-                .upload(objectPath, file, {
-                  upsert: true,
-                  contentType: file.type
-                });
-                
-              if (retryError) throw retryError;
-            } catch (bucketError) {
-              throw error; // If still failing, throw the original error
-            }
-          } else {
-            throw error;
-          }
+          throw error;
         }
         
         // Get the public URL of the uploaded file with cache busting
@@ -166,15 +132,6 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
         // Generate a path based on the user ID if objectPath wasn't provided
         const fileExt = file.name.split('.').pop();
         const fileName = `${user.id}-${Date.now()}.${fileExt}`;
-        
-        // Create storage bucket if it doesn't exist
-        try {
-          await supabase.storage.createBucket(bucketName, {
-            public: true
-          });
-        } catch (e) {
-          console.log("Bucket already exists or could not be created");
-        }
         
         const { data, error } = await supabase.storage
           .from(bucketName)
