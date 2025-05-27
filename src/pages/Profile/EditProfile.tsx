@@ -32,6 +32,8 @@ const EditProfile = () => {
 
   const handleSubmit = React.useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
+    e.stopPropagation();
+    
     try {
       await saveProfileData();
     } catch (error) {
@@ -39,16 +41,24 @@ const EditProfile = () => {
     }
   }, [saveProfileData]);
 
-  const handleCancel = React.useCallback(() => {
+  const handleCancel = React.useCallback((e?: React.MouseEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    
     try {
       handleNavigate("/dashboard");
     } catch (error) {
       console.error("Error navigating:", error);
-      window.location.href = "/dashboard";
+      // Fallback navigation for Chrome compatibility
+      setTimeout(() => {
+        window.location.href = "/dashboard";
+      }, 100);
     }
   }, [handleNavigate]);
 
-  // Enhanced loading state with better error handling
+  // Enhanced loading state with Chrome compatibility
   if (isLoading && !loadedData) {
     return (
       <div className="min-h-screen flex flex-col bg-toca-background">
@@ -63,14 +73,14 @@ const EditProfile = () => {
     );
   }
 
-  // Ensure user is available before rendering
+  // Ensure user is available before rendering with Chrome fallback
   if (!user) {
     return (
       <div className="min-h-screen flex flex-col bg-toca-background">
         <Navbar isAuthenticated={false} />
         <div className="container mx-auto px-4 py-8 flex items-center justify-center">
           <div className="text-center">
-            <p className="text-toca-text-secondary">Redirecionando...</p>
+            <p className="text-toca-text-secondary">Verificando autenticação...</p>
           </div>
         </div>
       </div>
@@ -129,7 +139,6 @@ const EditProfile = () => {
             <PortfolioManager 
               professionalId={existingProfessionalId} 
               onUpdate={() => {
-                // Optional callback when portfolio is updated
                 console.log("Portfolio updated");
               }}
             />
