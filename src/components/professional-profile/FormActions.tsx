@@ -2,7 +2,6 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
-import { useChromeCompatibleNavigation } from "@/hooks/useChromeCompatibleNavigation";
 
 interface FormActionsProps {
   isLoading: boolean;
@@ -12,52 +11,38 @@ interface FormActionsProps {
 }
 
 const FormActions = ({ isLoading, isSaving, isNavigating, onCancel }: FormActionsProps) => {
-  const { debugLog } = useChromeCompatibleNavigation();
-
   const handleCancelClick = React.useCallback((e: React.MouseEvent<HTMLButtonElement>) => {
-    debugLog('Cancel button clicked');
+    console.log('[FormActions] Cancel button clicked');
     
-    try {
-      e.preventDefault();
-      e.stopPropagation();
-      
-      // Add a small delay for Chrome compatibility
-      setTimeout(() => {
-        try {
-          if (typeof onCancel === 'function') {
-            debugLog('Calling onCancel function');
-            onCancel(e);
-          } else {
-            debugLog('onCancel is not a function');
-          }
-        } catch (error) {
-          debugLog('Error in onCancel callback', error);
+    e.preventDefault();
+    e.stopPropagation();
+    
+    // Use requestAnimationFrame for better Chrome compatibility
+    requestAnimationFrame(() => {
+      try {
+        if (typeof onCancel === 'function') {
+          console.log('[FormActions] Calling onCancel function');
+          onCancel(e);
         }
-      }, 10);
-      
-    } catch (error) {
-      debugLog('Error in handleCancelClick', error);
-    }
-  }, [onCancel, debugLog]);
+      } catch (error) {
+        console.error('[FormActions] Error in onCancel callback', error);
+      }
+    });
+  }, [onCancel]);
 
   const handleSubmitClick = React.useCallback((e: React.MouseEvent<HTMLButtonElement>) => {
-    debugLog('Submit button clicked', { isLoading, isSaving, isNavigating });
+    console.log('[FormActions] Submit button clicked', { isLoading, isSaving, isNavigating });
     
-    try {
-      // Only prevent if we're in a loading state
-      if (isLoading || isSaving || isNavigating) {
-        debugLog('Preventing submit due to loading state');
-        e.preventDefault();
-        e.stopPropagation();
-        return;
-      }
-      
-      debugLog('Allowing form submission');
-    } catch (error) {
-      debugLog('Error in handleSubmitClick', error);
+    // Only prevent if we're in a loading state
+    if (isLoading || isSaving || isNavigating) {
+      console.log('[FormActions] Preventing submit due to loading state');
       e.preventDefault();
+      e.stopPropagation();
+      return;
     }
-  }, [isLoading, isSaving, isNavigating, debugLog]);
+    
+    console.log('[FormActions] Allowing form submission');
+  }, [isLoading, isSaving, isNavigating]);
 
   const isDisabled = isLoading || isSaving || isNavigating;
 

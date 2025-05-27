@@ -2,6 +2,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useSafeState } from "@/hooks/useSafeState";
 import { toast } from "sonner";
 
 export interface ProfileData {
@@ -17,13 +18,13 @@ export interface ProfileData {
 export const useProfessionalProfile = () => {
   const { user } = useAuth();
   const [profileImage, setProfileImage] = useState<File | null>(null);
-  const [profileImageUrl, setProfileImageUrl] = useState<string | undefined>(undefined);
-  const [isLoading, setIsLoading] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
-  const [isNavigating, setIsNavigating] = useState(false);
+  const [profileImageUrl, safeSetProfileImageUrl] = useSafeState<string | undefined>(undefined);
+  const [isLoading, safeSetIsLoading] = useSafeState(false);
+  const [isSaving, safeSetIsSaving] = useSafeState(false);
+  const [isNavigating, safeSetIsNavigating] = useSafeState(false);
   const [existingProfessionalId, setExistingProfessionalId] = useState<string | null>(null);
   const [otherType, setOtherType] = useState<string>("");
-  const [loadedData, setLoadedData] = useState(false);
+  const [loadedData, safeSetLoadedData] = useSafeState(false);
   const [profileSaved, setProfileSaved] = useState(false);
   
   const [services, setServices] = useState<string[]>([]);
@@ -45,7 +46,7 @@ export const useProfessionalProfile = () => {
       return;
     }
     
-    setIsLoading(true);
+    safeSetIsLoading(true);
     
     try {
       console.log("[Profile] Fetching professional profile data");
@@ -101,7 +102,7 @@ export const useProfessionalProfile = () => {
               
               if (checkImage) {
                 console.log("[Profile] Profile image found");
-                setProfileImageUrl(imageUrl);
+                safeSetProfileImageUrl(imageUrl);
               } else {
                 console.log("[Profile] Profile image not found");
               }
@@ -116,22 +117,22 @@ export const useProfessionalProfile = () => {
         console.log("[Profile] No professional profile found");
       }
       
-      setLoadedData(true);
+      safeSetLoadedData(true);
     } catch (error: any) {
       console.error("[Profile] Error loading profile data:", error);
       toast.error("Erro ao carregar dados do perfil: " + (error.message || "Tente novamente"));
     } finally {
-      setIsLoading(false);
+      safeSetIsLoading(false);
     }
-  }, [user]);
+  }, [user, safeSetIsLoading, safeSetProfileImageUrl, safeSetLoadedData]);
 
   const handleImageChange = useCallback((imageFile: File, imageUrl?: string) => {
     console.log("[Profile] Image selected");
     setProfileImage(imageFile);
     if (imageUrl) {
-      setProfileImageUrl(imageUrl);
+      safeSetProfileImageUrl(imageUrl);
     }
-  }, []);
+  }, [safeSetProfileImageUrl]);
 
   const handleChange = useCallback((field: string, value: string) => {
     setProfileData(prev => ({
@@ -157,8 +158,8 @@ export const useProfessionalProfile = () => {
       return false;
     }
     
-    setIsLoading(true);
-    setIsSaving(true);
+    safeSetIsLoading(true);
+    safeSetIsSaving(true);
     
     try {
       console.log("[Profile] Saving profile data");
@@ -247,10 +248,10 @@ export const useProfessionalProfile = () => {
       toast.error("Erro ao salvar o perfil: " + (error.message || "Tente novamente"));
       return false;
     } finally {
-      setIsLoading(false);
-      setIsSaving(false);
+      safeSetIsLoading(false);
+      safeSetIsSaving(false);
     }
-  }, [user, profileData, otherType, services, existingProfessionalId, profileImage, isSaving, isNavigating]);
+  }, [user, profileData, otherType, services, existingProfessionalId, profileImage, isSaving, isNavigating, safeSetIsLoading, safeSetIsSaving]);
 
   // Load profile data
   useEffect(() => {

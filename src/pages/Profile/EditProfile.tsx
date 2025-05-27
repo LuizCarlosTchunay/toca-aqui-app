@@ -38,19 +38,21 @@ const EditProfile = () => {
   const handleSubmit = React.useCallback(async (e: React.FormEvent) => {
     debugLog('Form submit started');
     
+    e.preventDefault();
+    e.stopPropagation();
+    
     try {
-      e.preventDefault();
-      e.stopPropagation();
-      
       debugLog('Calling saveProfileData');
       const success = await saveProfileData();
       
       if (success) {
         debugLog('Profile saved successfully, navigating to dashboard');
-        // Navigate after successful save
-        setTimeout(() => {
-          safeNavigate("/dashboard", { replace: true });
-        }, 1000);
+        // Use requestAnimationFrame for better Chrome compatibility
+        requestAnimationFrame(() => {
+          setTimeout(() => {
+            safeNavigate("/dashboard", { replace: true });
+          }, 1000);
+        });
       } else {
         debugLog('Profile save failed');
       }
@@ -63,18 +65,21 @@ const EditProfile = () => {
   const handleCancel = React.useCallback((e?: React.MouseEvent) => {
     debugLog('Cancel action started');
     
-    try {
-      if (e) {
-        e.preventDefault();
-        e.stopPropagation();
-      }
-      
-      debugLog('Navigating to dashboard');
-      safeNavigate("/dashboard", { replace: true });
-    } catch (error) {
-      debugLog('Error in cancel action', error);
-      console.error("Error navigating:", error);
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
     }
+    
+    // Use requestAnimationFrame for better Chrome compatibility
+    requestAnimationFrame(() => {
+      try {
+        debugLog('Navigating to dashboard');
+        safeNavigate("/dashboard", { replace: true });
+      } catch (error) {
+        debugLog('Error in cancel action', error);
+        console.error("Error navigating:", error);
+      }
+    });
   }, [safeNavigate, debugLog]);
 
   // Enhanced loading state
