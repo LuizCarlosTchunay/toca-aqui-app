@@ -1,287 +1,259 @@
+
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Calendar } from "lucide-react";
-import { DatePicker } from "@/components/ui/date-picker";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { toast } from "sonner";
-import { useAuth } from "@/hooks/useAuth";
-import { supabase } from "@/integrations/supabase/client";
-import { format } from "date-fns";
-import Navbar from "@/components/Navbar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Calendar, Clock, MapPin, Users, ArrowLeft, Image as ImageIcon } from "lucide-react";
+import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 import ImageUploader from "@/components/ImageUploader";
 
 const CreateEvent = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const [isLoading, setIsLoading] = useState(false);
+  const [imageUrl, setImageUrl] = useState<string>("");
+  
   const [formData, setFormData] = useState({
     title: "",
     description: "",
-    date: new Date(),
+    date: "",
     location: "",
-    requiredServices: "",
+    services: [] as string[],
   });
-  const [eventImage, setEventImage] = useState<File | null>(null);
-  const [eventImageUrl, setEventImageUrl] = useState<string>("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
+  console.log("CreateEvent - Current imageUrl state:", imageUrl);
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
   };
 
-  const handleDateChange = (date: Date | undefined) => {
-    if (date) {
-      setFormData({
-        ...formData,
-        date: date,
-      });
-    }
+  const handleServiceToggle = (service: string) => {
+    setFormData(prev => ({
+      ...prev,
+      services: prev.services.includes(service)
+        ? prev.services.filter(s => s !== service)
+        : [...prev.services, service]
+    }));
   };
 
-  const handleImageChange = (imageFile: File, imageUrl?: string) => {
-    console.log("Image changed:", { imageFile, imageUrl });
-    setEventImage(imageFile);
-    if (imageUrl) {
-      setEventImageUrl(imageUrl);
-      console.log("Image URL set to:", imageUrl);
-    }
+  const handleImageUpload = (url: string) => {
+    console.log("CreateEvent - Image uploaded, received URL:", url);
+    setImageUrl(url);
   };
 
-  const handleCreateEvent = async () => {
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
     if (!user) {
       toast.error("Você precisa estar logado para criar um evento");
       return;
     }
-    
-    // Validation
-    if (!formData.title || !formData.description || !formData.location || !formData.requiredServices) {
+
+    if (!formData.title || !formData.date || !formData.location) {
       toast.error("Por favor, preencha todos os campos obrigatórios");
       return;
     }
-    
+
+    setIsLoading(true);
+
     try {
-      setIsSubmitting(true);
-      
-      let finalImageUrl = "";
-      
-      // Upload image if provided
-      if (eventImage) {
-        console.log("Uploading event image:", eventImage);
-        
-        // Validate file type and size
-        const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
-        if (!allowedTypes.includes(eventImage.type)) {
-          toast.error("Formato de imagem não suportado. Use JPG, PNG ou WebP.");
-          setIsSubmitting(false);
-          return;
-        }
-        
-        if (eventImage.size > 5 * 1024 * 1024) { // 5MB limit
-          toast.error("Imagem muito grande. Máximo 5MB.");
-          setIsSubmitting(false);
-          return;
-        }
-        
-        const fileExt = eventImage.name.split('.').pop()?.toLowerCase();
-        const fileName = `event-${user.id}-${Date.now()}.${fileExt}`;
-        
-        console.log("Uploading file:", fileName);
-        
-        const { data: uploadData, error: uploadError } = await supabase.storage
-          .from('event_images')
-          .upload(fileName, eventImage, {
-            cacheControl: '3600',
-            upsert: false,
-          });
-          
-        if (uploadError) {
-          console.error("Error uploading image:", uploadError);
-          // Continue without image instead of failing
-          toast.error("Erro ao fazer upload da imagem. Evento será criado sem imagem.");
-        } else {
-          console.log("Upload successful:", uploadData);
-          
-          // Get the public URL of the uploaded file
-          const { data: publicUrlData } = supabase.storage
-            .from('event_images')
-            .getPublicUrl(fileName);
-            
-          if (publicUrlData?.publicUrl) {
-            finalImageUrl = publicUrlData.publicUrl;
-            console.log("Final image URL:", finalImageUrl);
-          }
-        }
-      } else if (eventImageUrl) {
-        // Use the URL if it was already uploaded through ImageUploader
-        finalImageUrl = eventImageUrl;
-        console.log("Using existing image URL:", finalImageUrl);
-      }
+      console.log("CreateEvent - Submitting event with imageUrl:", imageUrl);
+      console.log("CreateEvent - Full form data:", formData);
 
-      // Format date as ISO string for database compatibility
-      const formattedDate = format(formData.date, "yyyy-MM-dd");
-
-      // Convert comma-separated services to array
-      const servicesArray = formData.requiredServices.split(",").map(item => item.trim()).filter(item => item);
-      
-      const eventData = {
-        contratante_id: user.id,
-        titulo: formData.title,
-        descricao: formData.description,
-        data: formattedDate,
-        local: formData.location,
-        servicos_requeridos: servicesArray,
-        status: "aberto",
-        ...(finalImageUrl && { imagem_url: finalImageUrl })
-      };
-      
-      console.log("Creating event with data:", eventData);
-      
       const { data, error } = await supabase
         .from("eventos")
-        .insert(eventData)
-        .select("*")
+        .insert({
+          titulo: formData.title,
+          descricao: formData.description,
+          data: formData.date,
+          local: formData.location,
+          servicos_requeridos: formData.services,
+          contratante_id: user.id,
+          imagem_url: imageUrl || null, // Explicitly setting the image URL
+        })
+        .select()
         .single();
-      
+
       if (error) {
-        console.error("Error creating event:", error);
+        console.error("CreateEvent - Error creating event:", error);
         throw error;
       }
-      
-      console.log("Event created successfully:", data);
+
+      console.log("CreateEvent - Event created successfully:", data);
+      console.log("CreateEvent - Event saved with imagem_url:", data.imagem_url);
+
       toast.success("Evento criado com sucesso!");
       navigate("/dashboard");
-    } catch (err: any) {
-      console.error("Erro ao criar evento:", err);
-      toast.error(err?.message || "Ocorreu um erro ao criar o evento. Tente novamente.");
+    } catch (error) {
+      console.error("CreateEvent - Error:", error);
+      toast.error("Erro ao criar evento. Tente novamente.");
     } finally {
-      setIsSubmitting(false);
+      setIsLoading(false);
     }
   };
 
-  return (
-    <div className="min-h-screen flex flex-col bg-toca-background">
-      <Navbar isAuthenticated={!!user} />
-      
-      <div className="container mx-auto px-4 py-8">
-        <h1 className="text-2xl font-bold mb-6 text-white">Criar Novo Evento</h1>
-        
-        <Card className="bg-toca-card border-toca-border">
-          <CardHeader>
-            <CardTitle className="text-white">Informações do Evento</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                handleCreateEvent();
-              }}
-              className="space-y-4"
-            >
-              <div className="space-y-2">
-                <Label>Imagem de Capa do Evento</Label>
-                <ImageUploader 
-                  currentImage={eventImageUrl}
-                  onImageChange={handleImageChange}
-                  size="lg"
-                  bucketName="event_images"
-                  className="mb-4"
-                >
-                  <p className="text-sm text-toca-text-secondary mt-2">
-                    Adicione uma imagem para a capa do seu evento (JPG, PNG ou WebP - máx. 5MB)
-                  </p>
-                </ImageUploader>
-              </div>
+  const availableServices = [
+    "DJ", "Músico", "Fotógrafo", "Filmmaker", "Técnico de Som", "Iluminação"
+  ];
 
-              <div className="space-y-2">
-                <Label htmlFor="title">Título do Evento</Label>
+  return (
+    <div className="container mx-auto px-4 py-8 max-w-2xl">
+      <div className="mb-6">
+        <Button 
+          variant="outline" 
+          onClick={() => navigate("/dashboard")}
+          className="mb-4 bg-black text-toca-accent hover:bg-gray-800"
+        >
+          <ArrowLeft size={18} className="mr-2" />
+          Voltar ao Dashboard
+        </Button>
+        
+        <h1 className="text-3xl font-bold text-white mb-2">Criar Novo Evento</h1>
+        <p className="text-toca-text-secondary">Preencha as informações do seu evento</p>
+      </div>
+
+      <Card className="bg-toca-card border-toca-border">
+        <CardHeader>
+          <CardTitle className="text-white">Detalhes do Evento</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="title" className="text-white">
+                  Título do Evento *
+                </Label>
                 <Input
                   id="title"
                   name="title"
-                  placeholder="Digite o título do evento"
                   value={formData.title}
-                  onChange={handleChange}
-                  required
+                  onChange={handleInputChange}
                   className="bg-toca-background border-toca-border text-white"
+                  placeholder="Digite o título do evento"
+                  required
                 />
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="description">Descrição do Evento</Label>
+              <div>
+                <Label htmlFor="description" className="text-white">
+                  Descrição
+                </Label>
                 <Textarea
                   id="description"
                   name="description"
-                  placeholder="Descreva os detalhes do evento"
                   value={formData.description}
-                  onChange={handleChange}
-                  required
-                  className="bg-toca-background border-toca-border text-white resize-none"
+                  onChange={handleInputChange}
+                  className="bg-toca-background border-toca-border text-white min-h-[100px]"
+                  placeholder="Descreva seu evento..."
                 />
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="date">Data do Evento</Label>
-                <DatePicker
-                  id="date"
-                  onSelect={handleDateChange}
-                  defaultDate={formData.date}
-                  required
-                />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="date" className="text-white flex items-center gap-2">
+                    <Calendar size={16} />
+                    Data do Evento *
+                  </Label>
+                  <Input
+                    id="date"
+                    name="date"
+                    type="date"
+                    value={formData.date}
+                    onChange={handleInputChange}
+                    className="bg-toca-background border-toca-border text-white"
+                    required
+                  />
+                </div>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="location">Local do Evento</Label>
+              <div>
+                <Label htmlFor="location" className="text-white flex items-center gap-2">
+                  <MapPin size={16} />
+                  Local *
+                </Label>
                 <Input
                   id="location"
                   name="location"
-                  placeholder="Onde o evento acontecerá?"
                   value={formData.location}
-                  onChange={handleChange}
-                  required
+                  onChange={handleInputChange}
                   className="bg-toca-background border-toca-border text-white"
+                  placeholder="Cidade, Estado"
+                  required
                 />
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="requiredServices">Serviços Requeridos</Label>
-                <Input
-                  id="requiredServices"
-                  name="requiredServices"
-                  placeholder="Quais serviços você precisa? (separados por vírgula)"
-                  value={formData.requiredServices}
-                  onChange={handleChange}
-                  required
-                  className="bg-toca-background border-toca-border text-white"
+              <div>
+                <Label className="text-white flex items-center gap-2 mb-3">
+                  <ImageIcon size={16} />
+                  Imagem de Capa do Evento
+                </Label>
+                <ImageUploader
+                  onImageUpload={handleImageUpload}
+                  bucket="event_images"
+                  className="w-full"
                 />
+                {imageUrl && (
+                  <div className="mt-2 p-2 bg-toca-background rounded border border-toca-border">
+                    <p className="text-sm text-toca-text-secondary">
+                      Imagem carregada: {imageUrl.substring(imageUrl.lastIndexOf('/') + 1)}
+                    </p>
+                  </div>
+                )}
               </div>
 
-              <div className="flex justify-end gap-4 pt-4">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => navigate("/dashboard")}
-                  className="border-toca-border text-white"
-                  disabled={isSubmitting}
-                >
-                  Cancelar
-                </Button>
-                <Button
-                  type="submit"
-                  className="bg-toca-accent hover:bg-toca-accent-hover"
-                  disabled={isSubmitting}
-                >
-                  {isSubmitting ? "Criando Evento..." : "Criar Evento"}
-                </Button>
+              <div>
+                <Label className="text-white flex items-center gap-2 mb-3">
+                  <Users size={16} />
+                  Serviços Necessários
+                </Label>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                  {availableServices.map((service) => (
+                    <button
+                      key={service}
+                      type="button"
+                      onClick={() => handleServiceToggle(service)}
+                      className={`p-3 text-sm rounded-md border transition-all ${
+                        formData.services.includes(service)
+                          ? "bg-toca-accent text-white border-toca-accent"
+                          : "bg-toca-background text-toca-text-secondary border-toca-border hover:border-toca-accent"
+                      }`}
+                    >
+                      {service}
+                    </button>
+                  ))}
+                </div>
               </div>
-            </form>
-          </CardContent>
-        </Card>
-      </div>
+            </div>
+
+            <div className="flex gap-4 pt-4">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => navigate("/dashboard")}
+                className="flex-1 bg-black text-white hover:bg-gray-800"
+              >
+                Cancelar
+              </Button>
+              <Button
+                type="submit"
+                disabled={isLoading}
+                className="flex-1 bg-toca-accent hover:bg-toca-accent-hover text-white"
+              >
+                {isLoading ? "Criando..." : "Criar Evento"}
+              </Button>
+            </div>
+          </form>
+        </CardContent>
+      </Card>
     </div>
   );
 };
