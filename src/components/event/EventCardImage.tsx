@@ -13,7 +13,7 @@ const EventCardImage: React.FC<EventCardImageProps> = ({
   console.log("EventCardImage rendering for event:", name);
   console.log("EventCardImage imageUrl received:", imageUrl);
   
-  // Array de imagens específicas para eventos
+  // Array de imagens específicas para eventos (fallback apenas)
   const eventImages = [
     "https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?w=800&h=400&fit=crop", // Concerto com luzes
     "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=800&h=400&fit=crop", // Festa com DJ
@@ -23,31 +23,29 @@ const EventCardImage: React.FC<EventCardImageProps> = ({
     "https://images.unsplash.com/photo-1571266028243-d220bee1dfab?w=800&h=400&fit=crop", // Evento noturno
   ];
   
-  // Verificar se há uma imagem personalizada válida
+  // Verificar se há uma imagem personalizada válida do evento
   const hasValidCustomImage = imageUrl && 
     imageUrl.trim() !== "" && 
-    imageUrl !== "https://images.unsplash.com/photo-1527576539890-dfa815648363" &&
-    !imageUrl.includes("placeholder") &&
-    !imageUrl.includes("data:image") && // Remove data URLs
-    imageUrl.startsWith("http"); // Ensure it's a valid HTTP URL
+    (imageUrl.includes('supabase.co') || imageUrl.startsWith('http')); // Aceitar URLs do Supabase ou outras URLs válidas
 
   console.log("EventCardImage hasValidCustomImage:", hasValidCustomImage);
+  console.log("EventCardImage imageUrl content:", imageUrl);
   
   const getEventImage = () => {
     if (hasValidCustomImage) {
-      console.log("EventCardImage using custom image:", imageUrl);
+      console.log("EventCardImage using CUSTOM uploaded image:", imageUrl);
       return imageUrl;
     }
     
-    // Usar hash simples do nome para ter consistência nas imagens aleatórias
+    // Usar hash simples do nome para ter consistência nas imagens aleatórias (apenas como fallback)
     const hash = name.split('').reduce((a, b) => a + b.charCodeAt(0), 0);
     const randomImage = eventImages[hash % eventImages.length];
-    console.log("EventCardImage using fallback image for event:", name, "->", randomImage);
+    console.log("EventCardImage using FALLBACK random image for event:", name, "->", randomImage);
     return randomImage;
   };
 
   const finalImageUrl = getEventImage();
-  console.log("EventCardImage final image URL:", finalImageUrl);
+  console.log("EventCardImage FINAL image URL used:", finalImageUrl);
   
   return (
     <div 
@@ -60,16 +58,21 @@ const EventCardImage: React.FC<EventCardImageProps> = ({
         src={finalImageUrl}
         alt={name}
         className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-        onLoad={() => console.log("EventCardImage image loaded successfully:", finalImageUrl)}
+        onLoad={() => {
+          console.log("EventCardImage image loaded successfully:", finalImageUrl);
+          if (hasValidCustomImage) {
+            console.log("✅ SUCCESS: Custom image loaded for event:", name);
+          }
+        }}
         onError={(e) => {
-          console.error("EventCardImage image failed to load:", finalImageUrl);
+          console.error("❌ EventCardImage image failed to load:", finalImageUrl);
           console.error("EventCardImage error details:", e);
           // Se a imagem personalizada falhar, tentar uma das imagens padrão
           if (hasValidCustomImage && finalImageUrl === imageUrl) {
             const hash = name.split('').reduce((a, b) => a + b.charCodeAt(0), 0);
             const fallbackImage = eventImages[hash % eventImages.length];
             (e.target as HTMLImageElement).src = fallbackImage;
-            console.log("EventCardImage falling back to random image:", fallbackImage);
+            console.log("EventCardImage falling back to random image after custom failed:", fallbackImage);
           }
         }}
       />
@@ -83,10 +86,17 @@ const EventCardImage: React.FC<EventCardImageProps> = ({
         
         <h3 className="text-xl font-bold text-white leading-tight">{name}</h3>
         
-        {/* Elemento decorativo para dar mais cara de evento */}
+        {/* Indicador visual se a imagem é personalizada */}
         <div className="absolute top-4 right-4 w-12 h-12 rounded-full bg-gradient-to-br from-toca-accent/30 to-toca-accent-hover/30 backdrop-blur-sm border border-white/20 flex items-center justify-center">
-          <div className="w-6 h-6 rounded-full bg-toca-accent animate-pulse"></div>
+          <div className={`w-6 h-6 rounded-full ${hasValidCustomImage ? 'bg-green-500' : 'bg-toca-accent'} animate-pulse`}></div>
         </div>
+        
+        {/* Mostrar indicador se é imagem personalizada */}
+        {hasValidCustomImage && (
+          <div className="absolute top-4 left-4 bg-green-500/80 text-white text-xs px-2 py-1 rounded">
+            Imagem personalizada
+          </div>
+        )}
       </div>
       
       {/* Efeito de brilho no hover */}

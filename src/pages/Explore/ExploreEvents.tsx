@@ -40,18 +40,18 @@ const ExploreEvents = () => {
     queryKey: ['events'],
     queryFn: async () => {
       try {
-        console.log("Fetching events with image URLs...");
+        console.log("🔍 Fetching events with image URLs from database...");
         const { data, error } = await supabase
           .from("eventos")
           .select("*")
           .eq("status", "aberto");
 
         if (error) {
-          console.error("Erro ao buscar eventos:", error);
+          console.error("❌ Erro ao buscar eventos:", error);
           throw error;
         }
 
-        console.log("Events fetched from database:", data);
+        console.log("📊 Raw events data from database:", data);
 
         return data.map((event) => {
           const mappedEvent = {
@@ -64,14 +64,16 @@ const ExploreEvents = () => {
             city: event.local?.split(",")[0]?.trim() || "", 
             state: event.local?.split(",")[1]?.trim() || "", 
             required_services: event.servicos_requeridos || [],
-            image: event.imagem_url || "" // FIXED: Now using imagem_url from database
+            image: event.imagem_url || "" // Getting the uploaded image URL
           };
           
-          console.log(`Event ${event.titulo} mapped with image:`, mappedEvent.image);
+          console.log(`📸 Event "${event.titulo}" image URL from DB:`, event.imagem_url);
+          console.log(`📸 Event "${event.titulo}" mapped image:`, mappedEvent.image);
+          
           return mappedEvent;
         });
       } catch (error) {
-        console.error("Error fetching events:", error);
+        console.error("❌ Error fetching events:", error);
         throw error;
       }
     },
@@ -322,7 +324,8 @@ const ExploreEvents = () => {
           </div>
         ) : filteredEvents.length > 0 ? (
           filteredEvents.map((event) => {
-            console.log(`Rendering event ${event.name} with image:`, event.image);
+            console.log(`🎯 Rendering event "${event.name}" with image URL:`, event.image);
+            console.log(`🎯 Event image is ${event.image ? 'CUSTOM' : 'FALLBACK'}`);
             return (
               <EventCard
                 key={event.id}
@@ -336,7 +339,7 @@ const ExploreEvents = () => {
                   city: event.city,
                   state: event.state,
                   services: event.required_services,
-                  image: event.image // Now this will have the actual uploaded image URL
+                  image: event.image // This should now have the actual uploaded image URL
                 }}
                 onClick={() => navigate(`/eventos/${event.id}`)}
                 onApply={() => handleApply(event.id)}
