@@ -40,6 +40,7 @@ const ExploreEvents = () => {
     queryKey: ['events'],
     queryFn: async () => {
       try {
+        console.log("Fetching events with image URLs...");
         const { data, error } = await supabase
           .from("eventos")
           .select("*")
@@ -50,18 +51,25 @@ const ExploreEvents = () => {
           throw error;
         }
 
-        return data.map((event) => ({
-          id: event.id,
-          name: event.titulo || "",
-          description: event.descricao || "",
-          date: event.data || "",
-          time: "", // Time is not stored separately in our schema
-          location: event.local || "",
-          city: event.local?.split(",")[0]?.trim() || "", 
-          state: event.local?.split(",")[1]?.trim() || "", 
-          required_services: event.servicos_requeridos || [],
-          image: "" // Will be handled by the EventCard component
-        }));
+        console.log("Events fetched from database:", data);
+
+        return data.map((event) => {
+          const mappedEvent = {
+            id: event.id,
+            name: event.titulo || "",
+            description: event.descricao || "",
+            date: event.data || "",
+            time: "", // Time is not stored separately in our schema
+            location: event.local || "",
+            city: event.local?.split(",")[0]?.trim() || "", 
+            state: event.local?.split(",")[1]?.trim() || "", 
+            required_services: event.servicos_requeridos || [],
+            image: event.imagem_url || "" // FIXED: Now using imagem_url from database
+          };
+          
+          console.log(`Event ${event.titulo} mapped with image:`, mappedEvent.image);
+          return mappedEvent;
+        });
       } catch (error) {
         console.error("Error fetching events:", error);
         throw error;
@@ -313,25 +321,28 @@ const ExploreEvents = () => {
             <p className="text-toca-text-secondary">Erro ao carregar eventos. Tente novamente mais tarde.</p>
           </div>
         ) : filteredEvents.length > 0 ? (
-          filteredEvents.map((event) => (
-            <EventCard
-              key={event.id}
-              event={{
-                id: event.id,
-                name: event.name,
-                description: event.description,
-                date: event.date,
-                time: event.time,
-                location: event.location,
-                city: event.city,
-                state: event.state,
-                services: event.required_services,
-                image: event.image || "https://images.unsplash.com/photo-1527576539890-dfa815648363" // Default image
-              }}
-              onClick={() => navigate(`/eventos/${event.id}`)}
-              onApply={() => handleApply(event.id)}
-            />
-          ))
+          filteredEvents.map((event) => {
+            console.log(`Rendering event ${event.name} with image:`, event.image);
+            return (
+              <EventCard
+                key={event.id}
+                event={{
+                  id: event.id,
+                  name: event.name,
+                  description: event.description,
+                  date: event.date,
+                  time: event.time,
+                  location: event.location,
+                  city: event.city,
+                  state: event.state,
+                  services: event.required_services,
+                  image: event.image // Now this will have the actual uploaded image URL
+                }}
+                onClick={() => navigate(`/eventos/${event.id}`)}
+                onApply={() => handleApply(event.id)}
+              />
+            );
+          })
         ) : (
           <div className="col-span-full text-center py-16">
             <p className="text-toca-text-secondary mb-4">Nenhum evento encontrado com os filtros atuais.</p>

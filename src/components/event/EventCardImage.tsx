@@ -22,15 +22,22 @@ const EventCardImage: React.FC<EventCardImageProps> = ({
     "https://images.unsplash.com/photo-1571266028243-d220bee1dfab?w=800&h=400&fit=crop", // Evento noturno
   ];
   
-  // Se não há imagem definida, usar uma aleatória baseada no nome do evento
+  // Se há uma imagem personalizada válida, usar ela. Caso contrário, usar uma aleatória
   const getEventImage = () => {
-    if (imageUrl && imageUrl !== "https://images.unsplash.com/photo-1527576539890-dfa815648363") {
+    // Verificar se há uma imagem personalizada válida
+    if (imageUrl && 
+        imageUrl.trim() !== "" && 
+        imageUrl !== "https://images.unsplash.com/photo-1527576539890-dfa815648363" &&
+        !imageUrl.includes("placeholder")) {
+      console.log("Using custom image:", imageUrl);
       return imageUrl;
     }
     
-    // Usar hash simples do nome para ter consistência
+    // Usar hash simples do nome para ter consistência nas imagens aleatórias
     const hash = name.split('').reduce((a, b) => a + b.charCodeAt(0), 0);
-    return eventImages[hash % eventImages.length];
+    const randomImage = eventImages[hash % eventImages.length];
+    console.log("Using random image for event:", name, "->", randomImage);
+    return randomImage;
   };
 
   const finalImageUrl = getEventImage();
@@ -50,6 +57,13 @@ const EventCardImage: React.FC<EventCardImageProps> = ({
         onError={(e) => {
           console.error("Image failed to load:", finalImageUrl);
           console.error("Error details:", e);
+          // Se a imagem personalizada falhar, tentar uma das imagens padrão
+          if (imageUrl && finalImageUrl === imageUrl) {
+            const hash = name.split('').reduce((a, b) => a + b.charCodeAt(0), 0);
+            const fallbackImage = eventImages[hash % eventImages.length];
+            (e.target as HTMLImageElement).src = fallbackImage;
+            console.log("Falling back to random image:", fallbackImage);
+          }
         }}
       />
       
