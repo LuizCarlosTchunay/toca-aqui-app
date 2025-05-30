@@ -85,18 +85,6 @@ const EventCardImage: React.FC<EventCardImageProps> = ({
         </div>
         
         <h3 className="text-xl font-bold text-white leading-tight">{name}</h3>
-        
-        {/* Indicador visual se a imagem é personalizada */}
-        <div className="absolute top-4 right-4 w-12 h-12 rounded-full bg-gradient-to-br from-toca-accent/30 to-toca-accent-hover/30 backdrop-blur-sm border border-white/20 flex items-center justify-center">
-          <div className={`w-6 h-6 rounded-full ${hasValidCustomImage ? 'bg-green-500' : 'bg-toca-accent'} animate-pulse`}></div>
-        </div>
-        
-        {/* Mostrar indicador se é imagem personalizada */}
-        {hasValidCustomImage && (
-          <div className="absolute top-4 left-4 bg-green-500/80 text-white text-xs px-2 py-1 rounded">
-            Imagem personalizada
-          </div>
-        )}
       </div>
       
       {/* Efeito de brilho no hover */}
