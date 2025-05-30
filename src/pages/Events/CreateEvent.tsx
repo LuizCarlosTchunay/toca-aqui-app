@@ -45,9 +45,12 @@ const CreateEvent = () => {
     }));
   };
 
-  const handleImageUpload = (url: string) => {
-    console.log("CreateEvent - Image uploaded, received URL:", url);
-    setImageUrl(url);
+  const handleImageUpload = (imageFile: File, imageUrl?: string) => {
+    console.log("CreateEvent - Image uploaded, received file:", imageFile.name);
+    console.log("CreateEvent - Image uploaded, received URL:", imageUrl);
+    if (imageUrl) {
+      setImageUrl(imageUrl);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -198,7 +201,7 @@ const CreateEvent = () => {
                 </Label>
                 <ImageUploader
                   onImageUpload={handleImageUpload}
-                  bucket="event_images"
+                  bucketName="event_images"
                   className="w-full"
                 />
                 {imageUrl && (
