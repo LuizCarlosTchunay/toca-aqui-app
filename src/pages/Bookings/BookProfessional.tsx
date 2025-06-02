@@ -1,9 +1,10 @@
+
 import React, { useState, useEffect } from "react";
 import Navbar from "@/components/Navbar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useNavigate, useParams } from "react-router-dom";
-import { ChevronLeft, Calendar, Clock, MapPin, CircleDollarSign, Plus } from "lucide-react";
+import { ChevronLeft, Calendar, Clock, MapPin, CircleDollarSign, Plus, Users } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -23,6 +24,7 @@ const BookProfessional = () => {
   const [bookingType, setBookingType] = useState("event");
   const [selectedEvent, setSelectedEvent] = useState("new");
   const [hours, setHours] = useState(4);
+  const [isAddingToExistingReservation, setIsAddingToExistingReservation] = useState(false);
   const [bookingDetails, setBookingDetails] = useState({
     date: "",
     time: "",
@@ -31,6 +33,26 @@ const BookProfessional = () => {
     state: "",
     details: ""
   });
+  
+  // Check if we're adding to an existing reservation
+  useEffect(() => {
+    const savedBookingDetails = localStorage.getItem('currentBookingDetails');
+    if (savedBookingDetails) {
+      try {
+        const parsed = JSON.parse(savedBookingDetails);
+        setBookingDetails(parsed.bookingDetails);
+        setBookingType(parsed.bookingType);
+        setHours(parsed.hours);
+        setSelectedEvent(parsed.selectedEvent);
+        setIsAddingToExistingReservation(true);
+        
+        toast.info("Adicionando profissional à reserva existente");
+      } catch (error) {
+        console.error("Error parsing saved booking details:", error);
+        localStorage.removeItem('currentBookingDetails');
+      }
+    }
+  }, []);
   
   // Fetch professional data
   const { data: professional, isLoading, error } = useQuery({
@@ -103,16 +125,16 @@ const BookProfessional = () => {
     enabled: !!user,
   });
   
-  // Update city/state with professional's data when it loads
+  // Update city/state with professional's data when it loads (only if not adding to existing reservation)
   useEffect(() => {
-    if (professional) {
+    if (professional && !isAddingToExistingReservation) {
       setBookingDetails(prev => ({
         ...prev,
         city: professional.city,
         state: professional.state
       }));
     }
-  }, [professional]);
+  }, [professional, isAddingToExistingReservation]);
   
   // Handle input changes
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -161,7 +183,14 @@ const BookProfessional = () => {
       }
     });
     
-    toast.success("Reserva adicionada ao carrinho!");
+    // Clear saved booking details since we're going to checkout
+    localStorage.removeItem('currentBookingDetails');
+    
+    if (isAddingToExistingReservation) {
+      toast.success("Profissional adicionado à reserva existente!");
+    } else {
+      toast.success("Reserva adicionada ao carrinho!");
+    }
   };
 
   const handleAddMoreProfessionals = () => {
@@ -180,6 +209,28 @@ const BookProfessional = () => {
     
     toast.success("Dados salvos! Agora você pode escolher outro profissional");
     navigate("/explorar");
+  };
+
+  const handleCancelAddingToReservation = () => {
+    localStorage.removeItem('currentBookingDetails');
+    setIsAddingToExistingReservation(false);
+    
+    // Reset form to professional's default data
+    if (professional) {
+      setBookingDetails({
+        date: "",
+        time: "",
+        location: "",
+        city: professional.city,
+        state: professional.state,
+        details: ""
+      });
+      setBookingType("event");
+      setHours(4);
+      setSelectedEvent("new");
+    }
+    
+    toast.info("Cancelado. Agora você pode criar uma nova reserva");
   };
 
   // Calculate the estimated price based on booking type and hours
@@ -238,8 +289,34 @@ const BookProfessional = () => {
           <ChevronLeft size={18} className="mr-1" /> Voltar
         </Button>
         
+        {isAddingToExistingReservation && (
+          <Card className="bg-toca-accent/10 border-toca-accent mb-6">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <Users className="text-toca-accent" size={20} />
+                  <div>
+                    <p className="text-white font-medium">Adicionando à reserva existente</p>
+                    <p className="text-toca-text-secondary text-sm">
+                      Os dados da reserva foram preenchidos automaticamente
+                    </p>
+                  </div>
+                </div>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={handleCancelAddingToReservation}
+                  className="border-toca-accent text-toca-accent hover:bg-toca-accent hover:text-white"
+                >
+                  Cancelar
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+        
         <h1 className="text-2xl font-bold mb-6 text-white">
-          Reservar: {professional?.artisticName}
+          {isAddingToExistingReservation ? "Adicionar à Reserva: " : "Reservar: "}{professional?.artisticName}
         </h1>
         
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -253,9 +330,10 @@ const BookProfessional = () => {
                   <div className="space-y-2">
                     <Label className="text-white">Tipo de Reserva</Label>
                     <RadioGroup 
-                      defaultValue="event" 
+                      value={bookingType}
                       className="flex flex-col sm:flex-row gap-4"
                       onValueChange={setBookingType}
+                      disabled={isAddingToExistingReservation}
                     >
                       <div className="flex items-center space-x-2">
                         <RadioGroupItem value="event" id="event" />
@@ -278,6 +356,7 @@ const BookProfessional = () => {
                         value={hours}
                         onChange={(e) => setHours(parseInt(e.target.value) || 1)}
                         className="bg-toca-background border-toca-border text-white w-32"
+                        disabled={isAddingToExistingReservation}
                       />
                     </div>
                   )}
@@ -287,6 +366,7 @@ const BookProfessional = () => {
                     <Select 
                       value={selectedEvent} 
                       onValueChange={setSelectedEvent}
+                      disabled={isAddingToExistingReservation}
                     >
                       <SelectTrigger className="bg-toca-background border-toca-border text-white">
                         <SelectValue placeholder="Selecione um evento ou crie um novo" />
@@ -314,6 +394,7 @@ const BookProfessional = () => {
                           value={bookingDetails.date}
                           onChange={handleInputChange}
                           required
+                          disabled={isAddingToExistingReservation}
                         />
                       </div>
                     </div>
@@ -328,6 +409,7 @@ const BookProfessional = () => {
                           value={bookingDetails.time}
                           onChange={handleInputChange}
                           required
+                          disabled={isAddingToExistingReservation}
                         />
                       </div>
                     </div>
@@ -344,6 +426,7 @@ const BookProfessional = () => {
                         value={bookingDetails.location}
                         onChange={handleInputChange}
                         required
+                        disabled={isAddingToExistingReservation}
                       />
                     </div>
                   </div>
@@ -357,6 +440,7 @@ const BookProfessional = () => {
                         onChange={handleInputChange}
                         className="bg-toca-background border-toca-border text-white"
                         required
+                        disabled={isAddingToExistingReservation}
                       />
                     </div>
                     <div className="space-y-2">
@@ -364,6 +448,7 @@ const BookProfessional = () => {
                       <Select 
                         value={bookingDetails.state} 
                         onValueChange={(value) => setBookingDetails(prev => ({ ...prev, state: value }))}
+                        disabled={isAddingToExistingReservation}
                       >
                         <SelectTrigger className="bg-toca-background border-toca-border text-white">
                           <SelectValue placeholder="Selecione o estado" />
@@ -405,21 +490,23 @@ const BookProfessional = () => {
                       Cancelar
                     </Button>
                     
-                    <Button 
-                      type="button"
-                      variant="outline"
-                      onClick={handleAddMoreProfessionals}
-                      className="border-toca-accent text-toca-accent hover:bg-toca-accent hover:text-white"
-                    >
-                      <Plus size={18} className="mr-1" />
-                      Contratar Mais Profissionais
-                    </Button>
+                    {!isAddingToExistingReservation && (
+                      <Button 
+                        type="button"
+                        variant="outline"
+                        onClick={handleAddMoreProfessionals}
+                        className="border-toca-accent text-toca-accent hover:bg-toca-accent hover:text-white"
+                      >
+                        <Plus size={18} className="mr-1" />
+                        Contratar Mais Profissionais
+                      </Button>
+                    )}
                     
                     <Button 
                       type="submit"
                       className="bg-toca-accent hover:bg-toca-accent-hover"
                     >
-                      Adicionar ao Carrinho
+                      {isAddingToExistingReservation ? "Adicionar à Reserva" : "Adicionar ao Carrinho"}
                     </Button>
                   </div>
                 </form>

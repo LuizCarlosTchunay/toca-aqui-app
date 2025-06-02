@@ -1,13 +1,15 @@
-import React, { useState } from "react";
+
+import React, { useState, useEffect } from "react";
 import ProfileCard from "@/components/ProfileCard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, Filter, Music, Film, Camera, Disc, Users, ChevronLeft, MapPin } from "lucide-react";
+import { Search, Filter, Music, Film, Camera, Disc, Users, ChevronLeft, MapPin, AlertCircle } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
+import { Card, CardContent } from "@/components/ui/card";
 
 interface Professional {
   id: string;
@@ -34,6 +36,7 @@ const ExploreProfessionals = () => {
   const [showFilters, setShowFilters] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [activeType, setActiveType] = useState(initialType);
+  const [hasOngoingReservation, setHasOngoingReservation] = useState(false);
   const [filters, setFilters] = useState({
     city: "",
     state: "",
@@ -41,6 +44,14 @@ const ExploreProfessionals = () => {
     maxPrice: "",
     rating: "",
   });
+
+  // Check if there's an ongoing reservation
+  useEffect(() => {
+    const savedBookingDetails = localStorage.getItem('currentBookingDetails');
+    if (savedBookingDetails) {
+      setHasOngoingReservation(true);
+    }
+  }, []);
 
   const { data: professionals = [], isLoading, isError } = useQuery({
     queryKey: ['professionals', activeType],
@@ -104,6 +115,11 @@ const ExploreProfessionals = () => {
 
   const toggleFilters = () => {
     setShowFilters(!showFilters);
+  };
+
+  const handleClearOngoingReservation = () => {
+    localStorage.removeItem('currentBookingDetails');
+    setHasOngoingReservation(false);
   };
 
   // Filter professionals based on search term and filters
@@ -207,6 +223,32 @@ const ExploreProfessionals = () => {
         <h1 className="text-2xl font-bold">Explorar Profissionais</h1>
         <div className="w-[80px]"></div> {/* Spacer for alignment */}
       </div>
+
+      {hasOngoingReservation && (
+        <Card className="bg-toca-accent/10 border-toca-accent mb-6">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <AlertCircle className="text-toca-accent" size={20} />
+                <div>
+                  <p className="text-white font-medium">Reserva em andamento</p>
+                  <p className="text-toca-text-secondary text-sm">
+                    Você pode adicionar profissionais à reserva existente ou começar uma nova
+                  </p>
+                </div>
+              </div>
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={handleClearOngoingReservation}
+                className="border-toca-accent text-toca-accent hover:bg-toca-accent hover:text-white"
+              >
+                Cancelar Reserva
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       <div className="mb-6">
         <div className="flex overflow-x-auto scrollbar-hide pb-4 gap-2 mb-4">
