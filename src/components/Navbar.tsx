@@ -214,6 +214,13 @@ const Navbar: React.FC<NavbarProps> = ({
                         Eventos
                       </Link>
                       <Link
+                        to="/carrinho"
+                        className="block px-4 py-2 text-toca-text-secondary hover:bg-toca-card"
+                        onClick={() => setIsMenuOpen(false)}
+                      >
+                        Carrinho
+                      </Link>
+                      <Link
                         to="/configuracoes"
                         className="block px-4 py-2 text-toca-text-secondary hover:bg-toca-card"
                         onClick={() => setIsMenuOpen(false)}
