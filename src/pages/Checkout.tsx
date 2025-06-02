@@ -46,7 +46,7 @@ const Checkout = () => {
   // Extract data from location state or localStorage
   const professionalsFromState = location.state?.professionals || [];
   const bookingDetailsFromState = location.state?.bookingDetails || {};
-  
+
   const handleGoBack = useCallback(() => {
     try {
       navigate(-1);
@@ -189,7 +189,10 @@ const Checkout = () => {
         
         // Fetch data for all professionals
         const professionalPromises = professionalsToLoad.map(async (prof: any) => {
-          if (!prof.id) {
+          // Fix: Use professionalId instead of id for the navigation state data
+          const professionalId = prof.professionalId || prof.id;
+          
+          if (!professionalId) {
             console.error("Professional without ID:", prof);
             return null;
           }
@@ -203,11 +206,11 @@ const Checkout = () => {
               cache_hora,
               cache_evento
             `)
-            .eq("id", prof.id)
+            .eq("id", professionalId)
             .single();
             
           if (error) {
-            console.error(`Error fetching professional ${prof.id}:`, error);
+            console.error(`Error fetching professional ${professionalId}:`, error);
             return null;
           }
           
