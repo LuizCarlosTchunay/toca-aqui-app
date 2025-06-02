@@ -37,12 +37,10 @@ const Checkout = () => {
   const [error, setError] = useState<string | null>(null);
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   
-  // Extract data from location state safely
-  const professionalId = location.state?.professionalId;
-  const bookingType = location.state?.bookingType || "event";
-  const hours = location.state?.hours || 4;
-  const bookingDetails = location.state?.bookingDetails || {};
-
+  // Extract data from location state or localStorage
+  const professionalsFromState = location.state?.professionals || [];
+  const bookingDetailsFromState = location.state?.bookingDetails || {};
+  
   const handleGoBack = useCallback(() => {
     try {
       navigate(-1);
@@ -54,6 +52,10 @@ const Checkout = () => {
 
   const handleViewReservation = useCallback(() => {
     try {
+      // Clear localStorage when completing payment
+      localStorage.removeItem('currentBookingDetails');
+      localStorage.removeItem('selectedProfessionals');
+      
       navigate("/dashboard");
       toast({
         title: "Reserva confirmada",
@@ -70,7 +72,10 @@ const Checkout = () => {
       const newItems = prev.filter(item => item.id !== id);
       
       if (newItems.length === 0) {
-        // Use timeout to prevent immediate navigation issues
+        // Clear localStorage if all items removed
+        localStorage.removeItem('currentBookingDetails');
+        localStorage.removeItem('selectedProfessionals');
+        
         setTimeout(() => {
           try {
             navigate(-1);
@@ -124,84 +129,109 @@ const Checkout = () => {
     setShowTermsDialog(false);
   }, []);
 
-  // Fetch professional data with better error handling
+  // Load professionals data
   useEffect(() => {
     let isMounted = true;
     
-    const fetchProfessionalData = async () => {
+    const loadProfessionalsData = async () => {
       try {
-        if (!isMounted) return;
-        
-        // Validate professional ID
-        if (!professionalId) {
-          const pathParts = window.location.pathname.split('/');
-          const possibleId = pathParts[pathParts.length - 1];
-          
-          if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(possibleId)) {
-            if (isMounted) {
-              setError("ID do profissional inválido.");
-              setIsLoading(false);
-            }
-            return;
-          }
-        }
-        
-        const idToUse = professionalId || window.location.pathname.split('/').pop();
-        
         if (!isMounted) return;
         
         setIsLoading(true);
         setError(null);
         
-        const { data, error: fetchError } = await supabase
-          .from("profissionais")
-          .select(`
-            id,
-            nome_artistico,
-            tipo_profissional,
-            cache_hora,
-            cache_evento
-          `)
-          .eq("id", idToUse)
-          .single();
+        let professionalsToLoad = [];
+        let bookingDetails = {};
+        
+        // First, try to get data from navigation state
+        if (professionalsFromState && professionalsFromState.length > 0) {
+          professionalsToLoad = professionalsFromState;
+          bookingDetails = bookingDetailsFromState;
+          console.log("Using professionals from navigation state:", professionalsToLoad);
+        } else {
+          // Fallback to localStorage
+          const savedBookingDetails = localStorage.getItem('currentBookingDetails');
+          const savedProfessionals = localStorage.getItem('selectedProfessionals');
+          
+          if (savedBookingDetails) {
+            bookingDetails = JSON.parse(savedBookingDetails);
+          }
+          
+          if (savedProfessionals) {
+            professionalsToLoad = JSON.parse(savedProfessionals);
+            console.log("Using professionals from localStorage:", professionalsToLoad);
+          }
+        }
+        
+        if (!professionalsToLoad || professionalsToLoad.length === 0) {
+          if (isMounted) {
+            setError("Nenhum profissional encontrado para reserva.");
+            setIsLoading(false);
+          }
+          return;
+        }
+        
+        // Fetch data for all professionals
+        const professionalPromises = professionalsToLoad.map(async (prof: any) => {
+          const { data, error } = await supabase
+            .from("profissionais")
+            .select(`
+              id,
+              nome_artistico,
+              tipo_profissional,
+              cache_hora,
+              cache_evento
+            `)
+            .eq("id", prof.id)
+            .single();
+            
+          if (error) {
+            console.error(`Error fetching professional ${prof.id}:`, error);
+            return null;
+          }
+          
+          return {
+            ...data,
+            bookingType: prof.bookingType || 'event',
+            hours: prof.hours || 4
+          };
+        });
+        
+        const professionalResults = await Promise.all(professionalPromises);
+        const validProfessionals = professionalResults.filter(p => p !== null);
         
         if (!isMounted) return;
         
-        if (fetchError) {
-          console.error("Error fetching professional:", fetchError);
-          setError("Erro ao carregar dados do profissional.");
+        if (validProfessionals.length === 0) {
+          setError("Erro ao carregar dados dos profissionais.");
           setIsLoading(false);
           return;
         }
         
-        if (!data) {
-          setError("Profissional não encontrado.");
-          setIsLoading(false);
-          return;
-        }
-        
-        // Calculate price based on booking type
-        const price = bookingType === "event" 
-          ? data.cache_evento 
-          : data.cache_hora * hours;
-        
-        // Create cart item with professional data
-        const newCartItem: CartItem = {
-          id: data.id,
-          professional: data.nome_artistico || "Profissional",
-          type: data.tipo_profissional || "Músico",
-          event: bookingDetails.eventName || "Evento",
-          date: bookingDetails.date || "Data a definir",
-          price: price || 0,
-          professionalId: data.id
-        };
+        // Create cart items
+        const newCartItems: CartItem[] = validProfessionals.map((prof, index) => {
+          const price = prof.bookingType === "event" 
+            ? prof.cache_evento 
+            : prof.cache_hora * prof.hours;
+            
+          return {
+            id: prof.id,
+            professional: prof.nome_artistico || "Profissional",
+            type: prof.tipo_profissional || "Músico",
+            event: bookingDetails.eventName || "Evento",
+            date: bookingDetails.date || "Data a definir",
+            price: price || 0,
+            professionalId: prof.id
+          };
+        });
         
         if (isMounted) {
-          setCartItems([newCartItem]);
+          setCartItems(newCartItems);
           setIsLoading(false);
+          console.log("Cart items loaded:", newCartItems);
         }
       } catch (err) {
-        console.error("Error fetching data:", err);
+        console.error("Error loading professionals data:", err);
         if (isMounted) {
           setError("Ocorreu um erro ao carregar os dados.");
           setIsLoading(false);
@@ -209,12 +239,12 @@ const Checkout = () => {
       }
     };
     
-    fetchProfessionalData();
+    loadProfessionalsData();
     
     return () => {
       isMounted = false;
     };
-  }, [professionalId, bookingType, hours, bookingDetails]);
+  }, [professionalsFromState, bookingDetailsFromState]);
 
   const subtotal = cartItems.reduce((sum, item) => sum + item.price, 0);
   const fee = subtotal * 0.0998; // 9.98% platform fee
@@ -290,7 +320,7 @@ const Checkout = () => {
                   {isLoading ? (
                     <div className="flex items-center justify-center py-8">
                       <Loader2 className="h-8 w-8 animate-spin text-toca-accent" />
-                      <span className="ml-2 text-white">Carregando dados do profissional...</span>
+                      <span className="ml-2 text-white">Carregando dados dos profissionais...</span>
                     </div>
                   ) : error ? (
                     <div className="text-center py-8">
@@ -317,8 +347,8 @@ const Checkout = () => {
                     </div>
                   ) : (
                     <div className="space-y-4">
-                      {cartItems.map((item) => (
-                        <div key={item.id} className="flex items-start justify-between border-b border-toca-border pb-4">
+                      {cartItems.map((item, index) => (
+                        <div key={`${item.id}-${index}`} className="flex items-start justify-between border-b border-toca-border pb-4">
                           <div>
                             <h3 className="font-semibold text-white">{item.professional}</h3>
                             <p className="text-sm text-toca-text-secondary mb-1">{item.type}</p>
