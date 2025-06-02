@@ -1,10 +1,9 @@
-
 import React, { useState, useEffect } from "react";
 import Navbar from "@/components/Navbar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useNavigate, useParams } from "react-router-dom";
-import { ChevronLeft, Calendar, Clock, MapPin, CircleDollarSign } from "lucide-react";
+import { ChevronLeft, Calendar, Clock, MapPin, CircleDollarSign, Plus } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -163,6 +162,24 @@ const BookProfessional = () => {
     });
     
     toast.success("Reserva adicionada ao carrinho!");
+  };
+
+  const handleAddMoreProfessionals = () => {
+    if (!bookingDetails.date || !bookingDetails.time || !bookingDetails.location) {
+      toast.error("Por favor, preencha os dados da reserva antes de adicionar mais profissionais");
+      return;
+    }
+    
+    // Save current booking details to localStorage for maintaining context
+    localStorage.setItem('currentBookingDetails', JSON.stringify({
+      bookingDetails,
+      bookingType,
+      hours,
+      selectedEvent
+    }));
+    
+    toast.success("Dados salvos! Agora você pode escolher outro profissional");
+    navigate("/explorar");
   };
 
   // Calculate the estimated price based on booking type and hours
@@ -378,15 +395,26 @@ const BookProfessional = () => {
                     />
                   </div>
                   
-                  <div className="flex justify-end gap-4 pt-4">
+                  <div className="flex flex-col sm:flex-row justify-end gap-4 pt-4">
                     <Button 
                       type="button" 
                       variant="outline" 
                       onClick={() => navigate(-1)}
-                      className="border-toca-border text-white"
+                      className="border-toca-border text-white order-last sm:order-first"
                     >
                       Cancelar
                     </Button>
+                    
+                    <Button 
+                      type="button"
+                      variant="outline"
+                      onClick={handleAddMoreProfessionals}
+                      className="border-toca-accent text-toca-accent hover:bg-toca-accent hover:text-white"
+                    >
+                      <Plus size={18} className="mr-1" />
+                      Contratar Mais Profissionais
+                    </Button>
+                    
                     <Button 
                       type="submit"
                       className="bg-toca-accent hover:bg-toca-accent-hover"
