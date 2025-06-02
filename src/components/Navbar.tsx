@@ -1,13 +1,27 @@
+
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Menu, X, User, Search, Bell } from "lucide-react";
+import { Menu, X, User, Search, Bell, Settings, LogOut } from "lucide-react";
 import Logo from "./Logo";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import UserAvatar from "./UserAvatar";
 import { useAuth } from "@/hooks/useAuth";
 import CartIcon from "@/components/CartIcon";
-import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, Sheet, SheetTrigger, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/dropdown-menu";
+import { 
+  DropdownMenu, 
+  DropdownMenuTrigger, 
+  DropdownMenuContent, 
+  DropdownMenuItem, 
+  DropdownMenuSeparator 
+} from "@/components/ui/dropdown-menu";
+import { 
+  Sheet, 
+  SheetTrigger, 
+  SheetContent, 
+  SheetHeader, 
+  SheetTitle 
+} from "@/components/ui/sheet";
 
 interface NavbarProps {
   isAuthenticated?: boolean;
@@ -127,7 +141,7 @@ const Navbar: React.FC<NavbarProps> = ({
                       </Link>
                     </DropdownMenuItem>
                     <DropdownMenuSeparator className="bg-toca-border" />
-                    <DropdownMenuItem onClick={handleLogout} className="cursor-pointer text-white hover:text-toca-accent">
+                    <DropdownMenuItem onClick={handleSignOut} className="cursor-pointer text-white hover:text-toca-accent">
                       <LogOut className="mr-2 h-4 w-4" />
                       Sair
                     </DropdownMenuItem>

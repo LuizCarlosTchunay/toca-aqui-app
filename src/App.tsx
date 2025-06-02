@@ -1,16 +1,16 @@
+
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
-import Login from './pages/Login';
-import Register from './pages/Register';
-import Home from './pages/Home';
+import AuthPage from './pages/AuthPage';
+import Index from './pages/Index';
 import Dashboard from './pages/Dashboard';
-import Profile from './pages/Profile/Profile';
+import Profile from './pages/Profile/MyProfile';
 import EditProfile from './pages/Profile/EditProfile';
 import Settings from './pages/Settings';
 import Notifications from './pages/Notifications';
 import ExploreEvents from './pages/Explore/ExploreEvents';
 import CreateEvent from './pages/Events/CreateEvent';
-import EventDetails from './pages/Events/EventDetails';
+import EventDetails from './pages/Events/EventDetail';
 import ProfessionalProfile from './pages/Profile/ProfessionalProfile';
 import BookProfessional from './pages/Bookings/BookProfessional';
 import Checkout from './pages/Checkout';
@@ -23,7 +23,7 @@ import Cart from "@/pages/Cart";
 const queryClient = new QueryClient();
 
 function App() {
-  const { authState, loading } = useAuth();
+  const { user, loading } = useAuth();
   const [showSplash, setShowSplash] = useState(true);
 
   useEffect(() => {
@@ -38,10 +38,14 @@ function App() {
     if (loading) {
       return <div className="flex items-center justify-center min-h-screen">Carregando...</div>;
     }
-    if (!authState) {
+    if (!user) {
       return <Navigate to="/login" />;
     }
     return <>{children}</>;
+  };
+
+  const handleSplashComplete = () => {
+    setShowSplash(false);
   };
 
   return (
@@ -49,9 +53,9 @@ function App() {
       <div className="min-h-screen bg-toca-background">
         <Router>
           <Routes>
-            <Route path="/login" element={<Login />} />
-            <Route path="/register" element={<Register />} />
-            <Route path="/" element={<Home />} />
+            <Route path="/login" element={<AuthPage />} />
+            <Route path="/register" element={<AuthPage />} />
+            <Route path="/" element={<Index />} />
             <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
             <Route path="/meu-perfil" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
             <Route path="/editar-perfil" element={<ProtectedRoute><EditProfile /></ProtectedRoute>} />
@@ -77,7 +81,7 @@ function App() {
           </Routes>
         </Router>
         <Toaster />
-        <SplashScreen />
+        {showSplash && <SplashScreen onComplete={handleSplashComplete} />}
       </div>
     </QueryClientProvider>
   );
