@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
+import { Route, Routes, Navigate } from 'react-router-dom';
 import AuthPage from './pages/AuthPage';
 import Index from './pages/Index';
 import Dashboard from './pages/Dashboard';
@@ -51,35 +51,33 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <div className="min-h-screen bg-toca-background">
-        <Router>
-          <Routes>
-            <Route path="/login" element={<AuthPage />} />
-            <Route path="/register" element={<AuthPage />} />
-            <Route path="/" element={<Index />} />
-            <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-            <Route path="/meu-perfil" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
-            <Route path="/editar-perfil" element={<ProtectedRoute><EditProfile /></ProtectedRoute>} />
-            <Route path="/configuracoes" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
-            <Route path="/notificacoes" element={<ProtectedRoute><Notifications /></ProtectedRoute>} />
-            <Route path="/explorar" element={<ExploreEvents />} />
-            <Route path="/eventos" element={<ProtectedRoute><CreateEvent /></ProtectedRoute>} />
-            <Route path="/eventos/:id" element={<ProtectedRoute><EventDetails /></ProtectedRoute>} />
-            <Route path="/profissional/:id" element={<ProtectedRoute><ProfessionalProfile /></ProtectedRoute>} />
-            <Route path="/reservar/:id" element={<ProtectedRoute><BookProfessional /></ProtectedRoute>} />
-            <Route path="/checkout" element={<ProtectedRoute><Checkout /></ProtectedRoute>} />
-            
-            {/* Cart route */}
-            <Route 
-              path="/carrinho" 
-              element={
-                <ProtectedRoute>
-                  <Cart />
-                </ProtectedRoute>
-              } 
-            />
-            
-          </Routes>
-        </Router>
+        <Routes>
+          <Route path="/login" element={<AuthPage />} />
+          <Route path="/register" element={<AuthPage />} />
+          <Route path="/" element={<Index />} />
+          <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+          <Route path="/meu-perfil" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+          <Route path="/editar-perfil" element={<ProtectedRoute><EditProfile /></ProtectedRoute>} />
+          <Route path="/configuracoes" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
+          <Route path="/notificacoes" element={<ProtectedRoute><Notifications /></ProtectedRoute>} />
+          <Route path="/explorar" element={<ExploreEvents />} />
+          <Route path="/eventos" element={<ProtectedRoute><CreateEvent /></ProtectedRoute>} />
+          <Route path="/eventos/:id" element={<ProtectedRoute><EventDetails /></ProtectedRoute>} />
+          <Route path="/profissional/:id" element={<ProtectedRoute><ProfessionalProfile /></ProtectedRoute>} />
+          <Route path="/reservar/:id" element={<ProtectedRoute><BookProfessional /></ProtectedRoute>} />
+          <Route path="/checkout" element={<ProtectedRoute><Checkout /></ProtectedRoute>} />
+          
+          {/* Cart route */}
+          <Route 
+            path="/carrinho" 
+            element={
+              <ProtectedRoute>
+                <Cart />
+              </ProtectedRoute>
+            } 
+          />
+          
+        </Routes>
         <Toaster />
         {showSplash && <SplashScreen onComplete={handleSplashComplete} />}
       </div>
