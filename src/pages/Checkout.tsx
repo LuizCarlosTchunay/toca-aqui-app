@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback } from "react";
 import Navbar from "@/components/Navbar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -13,7 +14,6 @@ import { ChevronLeft, CreditCard, QrCode, CheckCircle2, Trash2, AlertTriangle, L
 import TermsAcceptanceDialog from "@/components/TermsAcceptanceDialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { useCart } from "@/hooks/useCart";
 
 interface CartItem {
   id: string;
@@ -23,16 +23,12 @@ interface CartItem {
   date: string;
   price: number;
   professionalId: string;
-  booking_type?: string;
-  hours?: number;
 }
 
 const Checkout = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user } = useAuth();
-  const { cart, updateCartStatus } = useCart();
-  
   const [paymentMethod, setPaymentMethod] = useState<"credit" | "pix" | "debit">("credit");
   const [isPaymentComplete, setIsPaymentComplete] = useState(false);
   const [showTermsDialog, setShowTermsDialog] = useState(true);
@@ -40,10 +36,6 @@ const Checkout = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
-  
-  // Check if we have cart data or individual professional data
-  const cartData = location.state?.cartData || cart;
-  const isFromCart = !!cartData && cartData.items && cartData.items.length > 0;
   
   // Extract data from location state safely
   const professionalId = location.state?.professionalId;
@@ -97,8 +89,7 @@ const Checkout = () => {
     });
   }, [navigate]);
 
-  // Update handleSubmit to work with cart
-  const handleSubmit = useCallback(async (e: React.FormEvent) => {
+  const handleSubmit = useCallback((e: React.FormEvent) => {
     e.preventDefault();
     
     if (!termsAccepted) {
@@ -112,22 +103,12 @@ const Checkout = () => {
     }
     
     try {
-      // Update cart status if processing from cart
-      if (isFromCart && cartData) {
-        await updateCartStatus("processando");
-      }
-      
       // Simulate payment processing
       setIsPaymentComplete(true);
       toast({
         title: "Sucesso",
         description: "Pagamento processado com sucesso!",
       });
-      
-      // Mark cart as completed
-      if (isFromCart && cartData) {
-        await updateCartStatus("concluido");
-      }
     } catch (error) {
       console.error("Payment error:", error);
       toast({
@@ -136,7 +117,7 @@ const Checkout = () => {
         variant: "destructive",
       });
     }
-  }, [termsAccepted, isFromCart, cartData, updateCartStatus]);
+  }, [termsAccepted]);
 
   const handleAcceptTerms = useCallback(() => {
     setTermsAccepted(true);
@@ -147,121 +128,80 @@ const Checkout = () => {
   useEffect(() => {
     let isMounted = true;
     
-    const processCheckoutData = async () => {
+    const fetchProfessionalData = async () => {
       try {
         if (!isMounted) return;
         
-        setIsLoading(true);
-        setError(null);
-
-        let items: CartItem[] = [];
-
-        if (isFromCart && cartData) {
-          // Process cart data
-          items = cartData.items.map((item: any) => ({
-            id: item.id,
-            professional: item.professional_name,
-            type: item.professional_type,
-            event: item.event_details?.name || "Evento",
-            date: item.event_details?.date || "Data a definir",
-            price: item.price,
-            professionalId: item.professional_id,
-            booking_type: item.booking_type,
-            hours: item.hours
-          }));
-        } else {
-          // Handle single professional booking (existing logic)
-          const professionalId = location.state?.professionalId;
-          const bookingType = location.state?.bookingType || "event";
-          const hours = location.state?.hours || 4;
-          const bookingDetails = location.state?.bookingDetails || {};
-
-          if (!professionalId) {
+        // Validate professional ID
+        if (!professionalId) {
+          const pathParts = window.location.pathname.split('/');
+          const possibleId = pathParts[pathParts.length - 1];
+          
+          if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(possibleId)) {
             if (isMounted) {
-              setError("Dados de reserva não encontrados.");
+              setError("ID do profissional inválido.");
               setIsLoading(false);
             }
             return;
           }
-
-          // Validate professional ID
-          if (!professionalId) {
-            const pathParts = window.location.pathname.split('/');
-            const possibleId = pathParts[pathParts.length - 1];
-            
-            if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(possibleId)) {
-              if (isMounted) {
-                setError("ID do profissional inválido.");
-                setIsLoading(false);
-              }
-              return;
-            }
-          }
-          
-          const idToUse = professionalId || window.location.pathname.split('/').pop();
-          
-          if (!isMounted) return;
-          
-          setIsLoading(true);
-          setError(null);
-          
-          const { data, error: fetchError } = await supabase
-            .from("profissionais")
-            .select(`
-              id,
-              nome_artistico,
-              tipo_profissional,
-              cache_hora,
-              cache_evento
-            `)
-            .eq("id", idToUse)
-            .single();
-          
-          if (!isMounted) return;
-          
-          if (fetchError) {
-            console.error("Error fetching professional:", fetchError);
-            setError("Erro ao carregar dados do profissional.");
-            setIsLoading(false);
-            return;
-          }
-          
-          if (!data) {
-            setError("Profissional não encontrado.");
-            setIsLoading(false);
-            return;
-          }
-          
-          // Calculate price based on booking type
-          const price = bookingType === "event" 
-            ? data.cache_evento 
-            : data.cache_hora * hours;
-          
-          // Create cart item with professional data
-          const newCartItem: CartItem = {
-            id: data.id,
-            professional: data.nome_artistico || "Profissional",
-            type: data.tipo_profissional || "Músico",
-            event: bookingDetails.eventName || "Evento",
-            date: bookingDetails.date || "Data a definir",
-            price: price || 0,
-            professionalId: data.id,
-            booking_type: bookingType,
-            hours: hours
-          };
-          
-          if (isMounted) {
-            setCartItems([newCartItem]);
-            setIsLoading(false);
-          }
         }
-
+        
+        const idToUse = professionalId || window.location.pathname.split('/').pop();
+        
+        if (!isMounted) return;
+        
+        setIsLoading(true);
+        setError(null);
+        
+        const { data, error: fetchError } = await supabase
+          .from("profissionais")
+          .select(`
+            id,
+            nome_artistico,
+            tipo_profissional,
+            cache_hora,
+            cache_evento
+          `)
+          .eq("id", idToUse)
+          .single();
+        
+        if (!isMounted) return;
+        
+        if (fetchError) {
+          console.error("Error fetching professional:", fetchError);
+          setError("Erro ao carregar dados do profissional.");
+          setIsLoading(false);
+          return;
+        }
+        
+        if (!data) {
+          setError("Profissional não encontrado.");
+          setIsLoading(false);
+          return;
+        }
+        
+        // Calculate price based on booking type
+        const price = bookingType === "event" 
+          ? data.cache_evento 
+          : data.cache_hora * hours;
+        
+        // Create cart item with professional data
+        const newCartItem: CartItem = {
+          id: data.id,
+          professional: data.nome_artistico || "Profissional",
+          type: data.tipo_profissional || "Músico",
+          event: bookingDetails.eventName || "Evento",
+          date: bookingDetails.date || "Data a definir",
+          price: price || 0,
+          professionalId: data.id
+        };
+        
         if (isMounted) {
-          setCartItems(items);
+          setCartItems([newCartItem]);
           setIsLoading(false);
         }
       } catch (err) {
-        console.error("Error processing checkout data:", err);
+        console.error("Error fetching data:", err);
         if (isMounted) {
           setError("Ocorreu um erro ao carregar os dados.");
           setIsLoading(false);
@@ -269,24 +209,16 @@ const Checkout = () => {
       }
     };
     
-    processCheckoutData();
+    fetchProfessionalData();
     
     return () => {
       isMounted = false;
     };
-  }, [isFromCart, cartData, location.state]);
+  }, [professionalId, bookingType, hours, bookingDetails]);
 
-  const subtotal = isFromCart && cartData 
-    ? cartData.total 
-    : cartItems.reduce((sum, item) => sum + item.price, 0);
-  
-  const fee = isFromCart && cartData 
-    ? cartData.fee 
-    : subtotal * 0.0998;
-  
-  const total = isFromCart && cartData 
-    ? cartData.finalTotal 
-    : subtotal + fee;
+  const subtotal = cartItems.reduce((sum, item) => sum + item.price, 0);
+  const fee = subtotal * 0.0998; // 9.98% platform fee
+  const total = subtotal + fee;
 
   if (!user) {
     return (

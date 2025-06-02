@@ -99,42 +99,24 @@ export type Database = {
       carrinho_itens: {
         Row: {
           carrinho_id: string | null
-          created_at: string | null
-          data_evento: string | null
-          detalhes_evento: Json | null
-          horas: number | null
           id: string
-          local_evento: string | null
           preco: number | null
           profissional_id: string | null
           servico: string | null
-          tipo_contratacao: string | null
         }
         Insert: {
           carrinho_id?: string | null
-          created_at?: string | null
-          data_evento?: string | null
-          detalhes_evento?: Json | null
-          horas?: number | null
           id?: string
-          local_evento?: string | null
           preco?: number | null
           profissional_id?: string | null
           servico?: string | null
-          tipo_contratacao?: string | null
         }
         Update: {
           carrinho_id?: string | null
-          created_at?: string | null
-          data_evento?: string | null
-          detalhes_evento?: Json | null
-          horas?: number | null
           id?: string
-          local_evento?: string | null
           preco?: number | null
           profissional_id?: string | null
           servico?: string | null
-          tipo_contratacao?: string | null
         }
         Relationships: [
           {
@@ -156,21 +138,18 @@ export type Database = {
       carrinhos: {
         Row: {
           contratante_id: string | null
-          created_at: string | null
           data_atualizacao: string | null
           id: string
           status: string | null
         }
         Insert: {
           contratante_id?: string | null
-          created_at?: string | null
           data_atualizacao?: string | null
           id?: string
           status?: string | null
         }
         Update: {
           contratante_id?: string | null
-          created_at?: string | null
           data_atualizacao?: string | null
           id?: string
           status?: string | null
