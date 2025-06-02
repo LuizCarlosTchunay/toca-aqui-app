@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import Navbar from "@/components/Navbar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -16,11 +15,14 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import ProfessionalTypeIcon from "@/components/profile/ProfessionalTypeIcon";
+import { useCart } from "@/hooks/useCart";
 
 const BookProfessional = () => {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
+  const { addToCart } = useCart();
+  const [isAddingToCart, setIsAddingToCart] = useState(false);
   const [bookingType, setBookingType] = useState("event");
   const [selectedEvent, setSelectedEvent] = useState("new");
   const [hours, setHours] = useState(4);
@@ -176,6 +178,76 @@ const BookProfessional = () => {
     }
   };
   
+  const handleAddToCart = async () => {
+    if (!professional) return;
+
+    setIsAddingToCart(true);
+    
+    const eventDetails = {
+      name: eventName,
+      date: date,
+      location: location
+    };
+
+    const success = await addToCart(
+      professional.id,
+      bookingType,
+      hours,
+      eventDetails
+    );
+
+    if (success) {
+      // Option to continue shopping or go to cart
+      toast.success("Profissional adicionado ao carrinho!", {
+        action: {
+          label: "Ver Carrinho",
+          onClick: () => navigate("/carrinho")
+        }
+      });
+    }
+    
+    setIsAddingToCart(false);
+  };
+
+  const handleBooking = () => {
+    if (!user) {
+      toast.error("Você precisa estar logado para reservar um profissional");
+      navigate("/login", { state: { redirectBack: `/reservar/${id}` } });
+      return;
+    }
+    
+    if (!bookingDetails.date || !bookingDetails.time || !bookingDetails.location) {
+      toast.error("Por favor, preencha todos os campos obrigatórios");
+      return;
+    }
+    
+    if (!professional) {
+      toast.error("Não foi possível identificar o profissional selecionado");
+      return;
+    }
+    
+    // Create event name from location if using a new event
+    const eventName = selectedEvent === "new" ? 
+      `Evento em ${bookingDetails.location.split(',')[0]}` : 
+      userEvents.find(event => event.id === selectedEvent)?.titulo || "Novo Evento";
+    
+    // Navigate to checkout with all necessary information
+    navigate("/checkout", {
+      state: {
+        professionalId: id,
+        bookingType,
+        hours,
+        bookingDetails: {
+          ...bookingDetails,
+          eventName,
+          date: bookingDetails.date,
+        }
+      }
+    });
+    
+    toast.success("Reserva adicionada ao carrinho!");
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex flex-col bg-toca-background">
@@ -479,6 +551,27 @@ const BookProfessional = () => {
                       * O valor final pode variar dependendo de detalhes específicos do evento.
                     </p>
                   </div>
+                </div>
+                
+                <div className="space-y-3 mt-6">
+                  <Button 
+                    className="w-full bg-toca-card border border-toca-accent text-toca-accent hover:bg-toca-accent hover:text-white"
+                    onClick={handleAddToCart}
+                    disabled={isAddingToCart}
+                  >
+                    {isAddingToCart ? "Adicionando..." : "Adicionar ao Carrinho"}
+                  </Button>
+                  
+                  <Button 
+                    className="w-full bg-toca-accent hover:bg-toca-accent-hover"
+                    onClick={handleBooking}
+                  >
+                    Reservar Agora
+                  </Button>
+                </div>
+                
+                <div className="text-xs text-toca-text-secondary">
+                  * Ao adicionar ao carrinho, você pode continuar comprando ou ir diretamente para a página de checkout.
                 </div>
               </CardContent>
             </Card>
