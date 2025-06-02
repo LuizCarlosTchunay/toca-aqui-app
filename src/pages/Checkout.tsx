@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback } from "react";
 import Navbar from "@/components/Navbar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -23,6 +22,13 @@ interface CartItem {
   date: string;
   price: number;
   professionalId: string;
+}
+
+interface BookingDetails {
+  eventName?: string;
+  date?: string;
+  location?: string;
+  description?: string;
 }
 
 const Checkout = () => {
@@ -141,7 +147,7 @@ const Checkout = () => {
         setError(null);
         
         let professionalsToLoad = [];
-        let bookingDetails = {};
+        let bookingDetails: BookingDetails = {};
         
         // First, try to get data from navigation state
         if (professionalsFromState && professionalsFromState.length > 0) {
@@ -154,12 +160,22 @@ const Checkout = () => {
           const savedProfessionals = localStorage.getItem('selectedProfessionals');
           
           if (savedBookingDetails) {
-            bookingDetails = JSON.parse(savedBookingDetails);
+            try {
+              bookingDetails = JSON.parse(savedBookingDetails);
+            } catch (e) {
+              console.error("Error parsing booking details:", e);
+              bookingDetails = {};
+            }
           }
           
           if (savedProfessionals) {
-            professionalsToLoad = JSON.parse(savedProfessionals);
-            console.log("Using professionals from localStorage:", professionalsToLoad);
+            try {
+              professionalsToLoad = JSON.parse(savedProfessionals);
+              console.log("Using professionals from localStorage:", professionalsToLoad);
+            } catch (e) {
+              console.error("Error parsing professionals:", e);
+              professionalsToLoad = [];
+            }
           }
         }
         
@@ -173,6 +189,11 @@ const Checkout = () => {
         
         // Fetch data for all professionals
         const professionalPromises = professionalsToLoad.map(async (prof: any) => {
+          if (!prof.id) {
+            console.error("Professional without ID:", prof);
+            return null;
+          }
+          
           const { data, error } = await supabase
             .from("profissionais")
             .select(`
