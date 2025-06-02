@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import Navbar from "@/components/Navbar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -25,6 +24,7 @@ const BookProfessional = () => {
   const [selectedEvent, setSelectedEvent] = useState("new");
   const [hours, setHours] = useState(4);
   const [isAddingToExistingReservation, setIsAddingToExistingReservation] = useState(false);
+  const [existingProfessionals, setExistingProfessionals] = useState<any[]>([]);
   const [bookingDetails, setBookingDetails] = useState({
     date: "",
     time: "",
@@ -37,6 +37,8 @@ const BookProfessional = () => {
   // Check if we're adding to an existing reservation
   useEffect(() => {
     const savedBookingDetails = localStorage.getItem('currentBookingDetails');
+    const savedProfessionals = localStorage.getItem('currentReservationProfessionals');
+    
     if (savedBookingDetails) {
       try {
         const parsed = JSON.parse(savedBookingDetails);
@@ -46,10 +48,17 @@ const BookProfessional = () => {
         setSelectedEvent(parsed.selectedEvent);
         setIsAddingToExistingReservation(true);
         
-        toast.info("Adicionando profissional à reserva existente");
+        // Load existing professionals
+        if (savedProfessionals) {
+          const professionals = JSON.parse(savedProfessionals);
+          setExistingProfessionals(professionals);
+        }
+        
+        toast.info(`Adicionando profissional à reserva existente${savedProfessionals ? ` (${JSON.parse(savedProfessionals).length} profissional(is) já adicionado(s))` : ""}`);
       } catch (error) {
         console.error("Error parsing saved booking details:", error);
         localStorage.removeItem('currentBookingDetails');
+        localStorage.removeItem('currentReservationProfessionals');
       }
     }
   }, []);
@@ -169,12 +178,22 @@ const BookProfessional = () => {
       `Evento em ${bookingDetails.location.split(',')[0]}` : 
       userEvents.find(event => event.id === selectedEvent)?.titulo || "Novo Evento";
     
-    // Navigate to checkout with all necessary information
+    // Create current professional data
+    const currentProfessional = {
+      professionalId: id,
+      professional: professional,
+      bookingType,
+      hours,
+      price: calculatePrice()
+    };
+    
+    // Combine with existing professionals
+    const allProfessionals = [...existingProfessionals, currentProfessional];
+    
+    // Navigate to checkout with all professionals
     navigate("/checkout", {
       state: {
-        professionalId: id,
-        bookingType,
-        hours,
+        professionals: allProfessionals,
         bookingDetails: {
           ...bookingDetails,
           eventName,
@@ -185,9 +204,10 @@ const BookProfessional = () => {
     
     // Clear saved booking details since we're going to checkout
     localStorage.removeItem('currentBookingDetails');
+    localStorage.removeItem('currentReservationProfessionals');
     
     if (isAddingToExistingReservation) {
-      toast.success("Profissional adicionado à reserva existente!");
+      toast.success(`${allProfessionals.length} profissionais adicionados à reserva!`);
     } else {
       toast.success("Reserva adicionada ao carrinho!");
     }
@@ -199,7 +219,24 @@ const BookProfessional = () => {
       return;
     }
     
-    // Save current booking details to localStorage for maintaining context
+    if (!professional) {
+      toast.error("Não foi possível identificar o profissional atual");
+      return;
+    }
+    
+    // Create current professional data
+    const currentProfessional = {
+      professionalId: id,
+      professional: professional,
+      bookingType,
+      hours,
+      price: calculatePrice()
+    };
+    
+    // Add current professional to the list
+    const updatedProfessionals = [...existingProfessionals, currentProfessional];
+    
+    // Save current booking details and professionals to localStorage
     localStorage.setItem('currentBookingDetails', JSON.stringify({
       bookingDetails,
       bookingType,
@@ -207,13 +244,17 @@ const BookProfessional = () => {
       selectedEvent
     }));
     
-    toast.success("Dados salvos! Agora você pode escolher outro profissional");
+    localStorage.setItem('currentReservationProfessionals', JSON.stringify(updatedProfessionals));
+    
+    toast.success(`${updatedProfessionals.length} profissional(is) na reserva! Escolha outro profissional`);
     navigate("/explorar");
   };
 
   const handleCancelAddingToReservation = () => {
     localStorage.removeItem('currentBookingDetails');
+    localStorage.removeItem('currentReservationProfessionals');
     setIsAddingToExistingReservation(false);
+    setExistingProfessionals([]);
     
     // Reset form to professional's default data
     if (professional) {
@@ -242,6 +283,13 @@ const BookProfessional = () => {
     } else {
       return professional.hourlyRate * hours;
     }
+  };
+  
+  // Calculate total price including existing professionals
+  const calculateTotalPrice = () => {
+    const currentPrice = calculatePrice();
+    const existingTotal = existingProfessionals.reduce((sum, prof) => sum + prof.price, 0);
+    return currentPrice + existingTotal;
   };
   
   if (isLoading) {
@@ -298,7 +346,10 @@ const BookProfessional = () => {
                   <div>
                     <p className="text-white font-medium">Adicionando à reserva existente</p>
                     <p className="text-toca-text-secondary text-sm">
-                      Os dados da reserva foram preenchidos automaticamente
+                      {existingProfessionals.length > 0 
+                        ? `${existingProfessionals.length} profissional(is) já adicionado(s). Total: R$ ${formatCurrency(existingProfessionals.reduce((sum, prof) => sum + prof.price, 0)).replace('R$', '')}`
+                        : "Os dados da reserva foram preenchidos automaticamente"
+                      }
                     </p>
                   </div>
                 </div>
@@ -502,11 +553,23 @@ const BookProfessional = () => {
                       </Button>
                     )}
                     
+                    {isAddingToExistingReservation && (
+                      <Button 
+                        type="button"
+                        variant="outline"
+                        onClick={handleAddMoreProfessionals}
+                        className="border-toca-accent text-toca-accent hover:bg-toca-accent hover:text-white"
+                      >
+                        <Plus size={18} className="mr-1" />
+                        Adicionar Mais Profissionais
+                      </Button>
+                    )}
+                    
                     <Button 
                       type="submit"
                       className="bg-toca-accent hover:bg-toca-accent-hover"
                     >
-                      {isAddingToExistingReservation ? "Adicionar à Reserva" : "Adicionar ao Carrinho"}
+                      {isAddingToExistingReservation ? `Finalizar Reserva (${existingProfessionals.length + 1} profissionais)` : "Adicionar ao Carrinho"}
                     </Button>
                   </div>
                 </form>
@@ -521,6 +584,22 @@ const BookProfessional = () => {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
+                  {/* Show existing professionals if any */}
+                  {existingProfessionals.length > 0 && (
+                    <div className="border-b border-toca-border pb-4">
+                      <h4 className="text-sm font-medium text-toca-text-secondary mb-2">
+                        Profissionais já adicionados:
+                      </h4>
+                      {existingProfessionals.map((prof, index) => (
+                        <div key={index} className="flex items-center justify-between text-sm mb-2">
+                          <span className="text-white">{prof.professional.artisticName}</span>
+                          <span className="text-toca-accent">{formatCurrency(prof.price)}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  
+                  {/* Current professional */}
                   <div className="flex items-center gap-4">
                     <div className="w-16 h-16 rounded-full bg-toca-accent/20 flex items-center justify-center">
                       <ProfessionalTypeIcon type={professional?.type} size={24} />
@@ -568,9 +647,19 @@ const BookProfessional = () => {
                     
                     {bookingType === "event" && (
                       <div className="flex justify-between items-center mt-2">
-                        <span className="text-toca-text-secondary">Total:</span>
+                        <span className="text-toca-text-secondary">Este profissional:</span>
                         <span className="text-toca-accent font-semibold">
                           {formatCurrency(professional?.eventRate || 0)}
+                        </span>
+                      </div>
+                    )}
+                    
+                    {/* Total including existing professionals */}
+                    {existingProfessionals.length > 0 && (
+                      <div className="flex justify-between items-center mt-2 pt-2 border-t border-toca-border">
+                        <span className="text-white font-medium">Total da reserva:</span>
+                        <span className="text-toca-accent font-bold text-lg">
+                          {formatCurrency(calculateTotalPrice())}
                         </span>
                       </div>
                     )}
