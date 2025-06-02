@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,7 +11,7 @@ import { CalendarIcon } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
-import { useToast } from "@/components/ui/use-toast";
+import { toast } from "sonner";
 import { useCart } from "@/hooks/useCart";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -26,7 +27,6 @@ const BookProfessional = () => {
   const { id } = useParams<{ id: string }>();
   const professionalId = id as string;
   const navigate = useNavigate();
-  const { toast } = useToast();
   const { addToCart } = useCart();
 
   const [professional, setProfessional] = useState<Professional | null>(null);
@@ -55,16 +55,12 @@ const BookProfessional = () => {
         setProfessional(data as Professional);
       } catch (error) {
         console.error("Error fetching professional:", error);
-        toast({
-          title: "Erro ao carregar profissional",
-          description: "Não foi possível carregar os dados do profissional.",
-          variant: "destructive",
-        });
+        toast.error("Não foi possível carregar os dados do profissional.");
       }
     };
 
     fetchProfessional();
-  }, [professionalId, toast]);
+  }, [professionalId]);
 
   const handleAddToCart = async () => {
     if (!professional) {
