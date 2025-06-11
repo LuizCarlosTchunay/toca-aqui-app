@@ -67,6 +67,26 @@ const Index = () => {
               de forma rápida, segura e prática.
             </p>
             
+            {/* PWA Install Banner - Visível sempre que for instalável */}
+            {isInstallable && !isInstalled && (
+              <div className="mb-8 p-4 bg-gradient-to-r from-toca-accent/20 to-toca-accent/10 border border-toca-accent rounded-lg backdrop-blur-sm">
+                <div className="flex items-center justify-center gap-2 text-toca-accent mb-2">
+                  <Smartphone size={20} />
+                  <span className="font-semibold">📱 Instale nosso app!</span>
+                </div>
+                <p className="text-sm text-white mb-3">
+                  Tenha acesso rápido, notificações e funcionalidades offline
+                </p>
+                <Button 
+                  onClick={handleInstallClick}
+                  className="bg-toca-accent hover:bg-toca-accent-hover text-white shadow-lg"
+                >
+                  <Download size={16} className="mr-2" />
+                  Instalar Agora
+                </Button>
+              </div>
+            )}
+            
             <div className="flex flex-col sm:flex-row justify-center gap-4">
               <Button 
                 className="bg-toca-accent hover:bg-toca-accent-hover text-lg px-8 py-6 mobile-full-width"

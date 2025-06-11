@@ -13,10 +13,10 @@ const PWAInstallPrompt = () => {
   useEffect(() => {
     const hasBeenDismissed = localStorage.getItem('pwa-install-dismissed');
     if (isInstallable && !isInstalled && !hasBeenDismissed) {
-      // Show prompt after 10 seconds
+      // Show prompt after 3 seconds (reduced from 10)
       const timer = setTimeout(() => {
         setShowPrompt(true);
-      }, 10000);
+      }, 3000);
       return () => clearTimeout(timer);
     }
   }, [isInstallable, isInstalled]);
@@ -42,7 +42,7 @@ const PWAInstallPrompt = () => {
 
   return (
     <div className="fixed bottom-4 left-4 right-4 z-50 md:left-auto md:right-4 md:w-96">
-      <Card className="bg-toca-card border-toca-accent shadow-lg">
+      <Card className="bg-toca-card border-toca-accent shadow-lg animate-pulse">
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
             <CardTitle className="text-white text-lg flex items-center gap-2">
@@ -61,7 +61,7 @@ const PWAInstallPrompt = () => {
         </CardHeader>
         <CardContent className="space-y-3">
           <p className="text-toca-text-secondary text-sm">
-            Instale nosso app para uma experiência completa e acesso offline!
+            🚀 Instale nosso app para uma experiência completa e acesso offline!
           </p>
           
           <div className="flex items-center gap-2 text-xs text-toca-text-secondary">
@@ -77,8 +77,8 @@ const PWAInstallPrompt = () => {
               >
                 Entendi
               </Button>
-              <div className="text-xs text-toca-text-secondary space-y-1">
-                <p>Para instalar no iOS:</p>
+              <div className="text-xs text-toca-text-secondary space-y-1 p-2 bg-toca-background rounded">
+                <p className="font-semibold">Para instalar no iOS:</p>
                 <p>1. Toque no ícone de compartilhar ↗️</p>
                 <p>2. Selecione "Adicionar à Tela de Início"</p>
               </div>
@@ -89,6 +89,7 @@ const PWAInstallPrompt = () => {
                 onClick={handleInstall}
                 className="flex-1 bg-toca-accent hover:bg-toca-accent-hover"
               >
+                <Download size={16} className="mr-2" />
                 Instalar App
               </Button>
               <Button
