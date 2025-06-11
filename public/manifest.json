@@ -4,14 +4,15 @@
   "short_name": "Toca Aqui",
   "description": "A plataforma que conecta contratantes e profissionais do audiovisual de forma rápida, segura e prática.",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
   "background_color": "#0A0A0A",
   "theme_color": "#ea384c",
   "orientation": "portrait-primary",
-  "scope": "/",
   "lang": "pt-BR",
   "dir": "ltr",
   "categories": ["entertainment", "music", "business"],
+  "prefer_related_applications": false,
   "icons": [
     {
       "src": "/lovable-uploads/66d87de3-4ebd-4f4b-9d3f-c9bbb3e3c4ef.png",
@@ -119,6 +120,5 @@
         }
       ]
     }
-  ],
-  "prefer_related_applications": false
+  ]
 }

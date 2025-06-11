@@ -15,13 +15,8 @@ export const usePWA = () => {
   useEffect(() => {
     // Check if app is already installed/running as PWA
     const checkInstalled = () => {
-      // Check for standalone mode (PWA is installed and running)
       const isStandalone = window.matchMedia && window.matchMedia('(display-mode: standalone)').matches;
-      
-      // Check for iOS standalone mode
       const isIOSStandalone = window.navigator && (window.navigator as any).standalone;
-      
-      // Check if running from home screen on Android
       const isAndroidStandalone = window.location.search.includes('utm_source=homescreen') || 
                                  document.referrer.includes('android-app://');
       
@@ -32,7 +27,8 @@ export const usePWA = () => {
         isIOSStandalone,
         isAndroidStandalone,
         installed,
-        userAgent: navigator.userAgent
+        userAgent: navigator.userAgent,
+        displayMode: window.matchMedia('(display-mode: standalone)').matches ? 'standalone' : 'browser'
       });
       
       setIsInstalled(installed);
@@ -41,13 +37,11 @@ export const usePWA = () => {
 
     const installed = checkInstalled();
 
-    // Se já está instalado, não mostrar opções de instalação
     if (installed) {
       setIsInstallable(false);
       return;
     }
 
-    // Listen for beforeinstallprompt event
     const handleBeforeInstallPrompt = (e: Event) => {
       console.log('beforeinstallprompt event fired');
       e.preventDefault();
@@ -55,18 +49,29 @@ export const usePWA = () => {
       setIsInstallable(true);
     };
 
-    // Listen for appinstalled event
     const handleAppInstalled = () => {
-      console.log('App was installed');
+      console.log('App was installed successfully');
       setIsInstalled(true);
       setIsInstallable(false);
       setDeferredPrompt(null);
       
-      // Mostrar mensagem de sucesso sobre o ícone
-      alert('✅ Toca Aqui instalado com sucesso!\n\n🏠 O ícone do app foi adicionado à sua tela inicial ao lado dos outros aplicativos.\n\n📱 Agora você pode acessar o app diretamente da tela inicial!');
+      // Mostrar mensagem de sucesso específica
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+      const isAndroid = /Android/.test(navigator.userAgent);
+      
+      let successMessage = '🎉 Toca Aqui instalado com sucesso!\n\n';
+      
+      if (isIOS) {
+        successMessage += '📱 O ícone do app foi adicionado à sua tela inicial do iPhone/iPad.\n\n🏠 Procure pelo ícone "Toca Aqui" na tela inicial ao lado dos outros aplicativos!';
+      } else if (isAndroid) {
+        successMessage += '📱 O ícone do app foi adicionado à sua tela inicial do Android.\n\n🏠 Procure pelo ícone "Toca Aqui" na tela inicial ou na gaveta de aplicativos!';
+      } else {
+        successMessage += '📱 O ícone do app foi adicionado à sua tela inicial.\n\n🏠 Procure pelo ícone "Toca Aqui" para acesso rápido!';
+      }
+      
+      alert(successMessage);
     };
 
-    // Listen for online/offline status
     const handleOnline = () => setIsOnline(true);
     const handleOffline = () => setIsOnline(false);
 
@@ -88,14 +93,13 @@ export const usePWA = () => {
     
     if (!deferredPrompt) {
       console.log('No deferred prompt available - showing manual instructions');
-      // Para dispositivos que não suportam o evento, mostrar instruções específicas
       const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
       const isAndroid = /Android/.test(navigator.userAgent);
       
       if (isIOS) {
-        alert('📱 Para instalar o Toca Aqui no iPhone/iPad:\n\n1. Toque no ícone de compartilhar (↗️) na parte inferior\n2. Role para baixo e selecione "Adicionar à Tela de Início"\n3. Toque em "Adicionar"\n\n🏠 O ícone do app aparecerá na sua tela inicial!');
+        alert('📱 Para instalar o Toca Aqui no iPhone/iPad:\n\n1. Toque no ícone de compartilhar (↗️) na parte inferior do Safari\n2. Role para baixo e selecione "Adicionar à Tela de Início"\n3. Toque em "Adicionar"\n\n🏠 O ícone do app aparecerá na sua tela inicial ao lado dos outros aplicativos instalados!');
       } else if (isAndroid) {
-        alert('📱 Para instalar o Toca Aqui no Android:\n\n1. Toque no menu do Chrome (⋮) no canto superior\n2. Selecione "Adicionar à tela inicial" ou "Instalar app"\n3. Confirme a instalação\n\n🏠 O ícone do app aparecerá na sua tela inicial!');
+        alert('📱 Para instalar o Toca Aqui no Android:\n\n1. Toque no menu do Chrome (⋮) no canto superior direito\n2. Selecione "Adicionar à tela inicial" ou "Instalar app"\n3. Confirme a instalação\n\n🏠 O ícone do app aparecerá na sua tela inicial e na gaveta de aplicativos!');
       } else {
         alert('📱 Para instalar o Toca Aqui:\n\n1. Clique no menu do navegador\n2. Selecione "Instalar app" ou "Adicionar à tela inicial"\n3. Confirme a instalação\n\n🏠 O ícone do app aparecerá na sua tela inicial!');
       }
@@ -105,21 +109,22 @@ export const usePWA = () => {
     try {
       console.log('Showing install prompt');
       
-      // Mostrar mensagem prévia sobre o que vai acontecer
       const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
       const isAndroid = /Android/.test(navigator.userAgent);
       
-      let preMessage = '📱 Ao clicar em "Instalar" ou "Adicionar", o Toca Aqui será adicionado à sua tela inicial como um aplicativo.\n\n';
+      let preMessage = '📱 Ao confirmar a instalação, o Toca Aqui será adicionado como um aplicativo na sua tela inicial.\n\n';
       
       if (isIOS) {
-        preMessage += '🏠 No iPhone/iPad: O ícone aparecerá na tela inicial ao lado dos outros apps.';
+        preMessage += '🏠 iPhone/iPad: O ícone aparecerá na tela inicial ao lado dos outros apps instalados.\n\n';
       } else if (isAndroid) {
-        preMessage += '🏠 No Android: O ícone aparecerá na tela inicial e na gaveta de aplicativos.';
+        preMessage += '🏠 Android: O ícone aparecerá na tela inicial e na gaveta de aplicativos.\n\n';
       } else {
-        preMessage += '🏠 O ícone aparecerá na sua tela inicial para acesso rápido.';
+        preMessage += '🏠 O ícone aparecerá na sua tela inicial para acesso rápido.\n\n';
       }
       
-      if (confirm(preMessage + '\n\nDeseja continuar com a instalação?')) {
+      preMessage += '✨ Você poderá acessar o app diretamente da tela inicial, como qualquer outro aplicativo!\n\nDeseja continuar com a instalação?';
+      
+      if (confirm(preMessage)) {
         await deferredPrompt.prompt();
         const choiceResult = await deferredPrompt.userChoice;
         
@@ -137,12 +142,12 @@ export const usePWA = () => {
       return false;
     } catch (error) {
       console.error('Error installing app:', error);
+      alert("Erro ao instalar o app. Tente novamente ou use as instruções manuais do seu navegador.");
       return false;
     }
   };
 
-  // Só mostrar botão de instalação se não estiver instalado
-  const shouldShowInstallButton = !isInstalled;
+  const shouldShowInstallButton = !isInstalled && (isInstallable || !deferredPrompt);
 
   return {
     isInstallable: shouldShowInstallButton,

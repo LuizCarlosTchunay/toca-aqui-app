@@ -1,5 +1,5 @@
 
-const CACHE_NAME = 'toca-aqui-v3';
+const CACHE_NAME = 'toca-aqui-v4';
 const urlsToCache = [
   '/',
   '/static/js/bundle.js',
@@ -16,11 +16,10 @@ self.addEventListener('install', (event) => {
     caches.open(CACHE_NAME)
       .then((cache) => {
         console.log('Cache opened');
-        return cache.addAll(urlsToCache);
+        return cache.addAll(urlsToCache.map(url => new Request(url, {cache: 'reload'})));
       })
       .then(() => {
         console.log('All resources cached including app icons');
-        // Force the waiting service worker to become the active service worker
         return self.skipWaiting();
       })
       .catch((error) => {
@@ -31,25 +30,33 @@ self.addEventListener('install', (event) => {
 
 // Fetch event
 self.addEventListener('fetch', (event) => {
+  // Skip non-GET requests
+  if (event.request.method !== 'GET') {
+    return;
+  }
+
   event.respondWith(
     caches.match(event.request)
       .then((response) => {
-        // Return cached version or fetch from network
         if (response) {
           console.log('Serving from cache:', event.request.url);
           return response;
         }
+        
         return fetch(event.request).then((response) => {
-          // Cache new resources if they're from our domain
-          if (response.status === 200 && event.request.url.startsWith(self.location.origin)) {
+          if (!response || response.status !== 200 || response.type !== 'basic') {
+            return response;
+          }
+
+          if (event.request.url.startsWith(self.location.origin)) {
             const responseToCache = response.clone();
             caches.open(CACHE_NAME).then((cache) => {
               cache.put(event.request, responseToCache);
             });
           }
+          
           return response;
         }).catch(() => {
-          // If both cache and network fail, return a generic offline page
           if (event.request.destination === 'document') {
             return caches.match('/');
           }
@@ -74,7 +81,6 @@ self.addEventListener('activate', (event) => {
       );
     }).then(() => {
       console.log('Service Worker activated and ready');
-      // Take control of all pages immediately
       return self.clients.claim();
     })
   );
@@ -111,13 +117,11 @@ self.addEventListener('notificationclick', (event) => {
   
   event.waitUntil(
     clients.matchAll().then((clientList) => {
-      // Se já existe uma janela aberta, foca nela
       for (const client of clientList) {
         if (client.url === '/' && 'focus' in client) {
           return client.focus();
         }
       }
-      // Senão, abre uma nova janela
       if (clients.openWindow) {
         return clients.openWindow('/');
       }
