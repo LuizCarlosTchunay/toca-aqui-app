@@ -1,24 +1,71 @@
+
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pt-BR">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>toca-aqui-conex</title>
-    <meta name="description" content="Lovable Generated Project" />
-    <meta name="author" content="Lovable" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <title>Toca Aqui - Conectando Talentos do Audiovisual</title>
+    <meta name="description" content="A plataforma que conecta contratantes e profissionais do audiovisual de forma rápida, segura e prática." />
+    <meta name="author" content="Toca Aqui" />
+    <meta name="keywords" content="música, audiovisual, eventos, músicos, DJs, fotógrafos, contratação" />
 
-    <meta property="og:title" content="toca-aqui-conex" />
-    <meta property="og:description" content="Lovable Generated Project" />
+    <!-- Open Graph -->
+    <meta property="og:title" content="Toca Aqui - Conectando Talentos do Audiovisual" />
+    <meta property="og:description" content="A plataforma que conecta contratantes e profissionais do audiovisual de forma rápida, segura e prática." />
     <meta property="og:type" content="website" />
-    <meta property="og:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
+    <meta property="og:image" content="/lovable-uploads/66d87de3-4ebd-4f4b-9d3f-c9bbb3e3c4ef.png" />
+    <meta property="og:url" content="https://tocaaqui.com" />
 
+    <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:site" content="@lovable_dev" />
-    <meta name="twitter:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
+    <meta name="twitter:site" content="@tocaaqui" />
+    <meta name="twitter:image" content="/lovable-uploads/66d87de3-4ebd-4f4b-9d3f-c9bbb3e3c4ef.png" />
+
+    <!-- PWA Meta Tags -->
+    <meta name="theme-color" content="#ea384c" />
+    <meta name="background-color" content="#0A0A0A" />
+    <meta name="display" content="standalone" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Toca Aqui" />
+    
+    <!-- iOS Splash Screens -->
+    <meta name="apple-touch-startup-image" content="/lovable-uploads/66d87de3-4ebd-4f4b-9d3f-c9bbb3e3c4ef.png" />
+    
+    <!-- Favicon and Icons -->
+    <link rel="icon" href="/lovable-uploads/66d87de3-4ebd-4f4b-9d3f-c9bbb3e3c4ef.png" type="image/png" />
+    <link rel="apple-touch-icon" href="/lovable-uploads/66d87de3-4ebd-4f4b-9d3f-c9bbb3e3c4ef.png" />
+    <link rel="apple-touch-icon" sizes="152x152" href="/lovable-uploads/66d87de3-4ebd-4f4b-9d3f-c9bbb3e3c4ef.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/lovable-uploads/66d87de3-4ebd-4f4b-9d3f-c9bbb3e3c4ef.png" />
+    <link rel="apple-touch-icon" sizes="167x167" href="/lovable-uploads/66d87de3-4ebd-4f4b-9d3f-c9bbb3e3c4ef.png" />
+
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="/manifest.json" />
+    
+    <!-- Preconnect for performance -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   </head>
 
   <body>
     <div id="root"></div>
+    
+    <!-- Service Worker Registration -->
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js')
+            .then((registration) => {
+              console.log('SW registered: ', registration);
+            })
+            .catch((registrationError) => {
+              console.log('SW registration failed: ', registrationError);
+            });
+        });
+      }
+    </script>
+    
     <!-- IMPORTANT: DO NOT REMOVE THIS SCRIPT TAG OR THIS VERY COMMENT! -->
     <script src="https://cdn.gpteng.co/gptengineer.js" type="module"></script>
     <script type="module" src="/src/main.tsx"></script>

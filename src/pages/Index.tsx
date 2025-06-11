@@ -4,10 +4,12 @@ import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import Navbar from "@/components/Navbar";
 import Logo from "@/components/Logo";
-import { ChevronRight, Music, Camera, Disc, Film, Users, CheckCheck } from "lucide-react";
+import { ChevronRight, Music, Camera, Disc, Film, Users, CheckCheck, Download, Smartphone } from "lucide-react";
+import { usePWA } from "@/hooks/usePWA";
 
 const Index = () => {
   const navigate = useNavigate();
+  const { isInstallable, isInstalled, installApp } = usePWA();
 
   const features = [
     {
@@ -34,6 +36,10 @@ const Index = () => {
     { name: "Filmmakers", icon: <Film size={32} className="mb-4 text-toca-accent" /> },
   ];
 
+  const handleInstallClick = async () => {
+    await installApp();
+  };
+
   return (
     <div className="min-h-screen flex flex-col bg-toca-background">
       <Navbar />
@@ -54,25 +60,51 @@ const Index = () => {
         <div className="container mx-auto px-4 py-20 md:py-32 relative z-10">
           <div className="max-w-3xl mx-auto text-center">
             <div className="flex justify-center mb-8">
-              <Logo size="lg" withText={false} className="mx-auto" />
+              <img 
+                src="/lovable-uploads/66d87de3-4ebd-4f4b-9d3f-c9bbb3e3c4ef.png" 
+                alt="Toca Aqui Logo" 
+                className="w-24 h-24 md:w-32 md:h-32 rounded-lg shadow-lg"
+              />
             </div>
-            <h1 className="text-4xl md:text-6xl font-bold mb-6 text-white">
+            <h1 className="text-3xl md:text-6xl font-bold mb-6 text-white">
               Conectando talentos do audiovisual
             </h1>
-            <p className="text-xl md:text-2xl text-white mb-10 max-w-2xl mx-auto">
+            <p className="text-lg md:text-2xl text-white mb-10 max-w-2xl mx-auto">
               A plataforma que conecta contratantes e profissionais do audiovisual 
               de forma rápida, segura e prática.
             </p>
+            
+            {/* PWA Install Section */}
+            {isInstallable && !isInstalled && (
+              <div className="mb-8 p-4 bg-toca-card border border-toca-accent rounded-lg">
+                <div className="flex items-center justify-center gap-2 text-toca-accent mb-2">
+                  <Smartphone size={20} />
+                  <span className="font-semibold">Instale nosso app!</span>
+                </div>
+                <p className="text-sm text-toca-text-secondary mb-3">
+                  Tenha acesso rápido e funcionalidades offline
+                </p>
+                <Button 
+                  onClick={handleInstallClick}
+                  variant="outline"
+                  className="border-toca-accent text-toca-accent hover:bg-toca-accent hover:text-white"
+                >
+                  <Download size={16} className="mr-2" />
+                  Instalar App
+                </Button>
+              </div>
+            )}
+            
             <div className="flex flex-col sm:flex-row justify-center gap-4">
               <Button 
-                className="bg-toca-accent hover:bg-toca-accent-hover text-lg px-8 py-6"
+                className="bg-toca-accent hover:bg-toca-accent-hover text-lg px-8 py-6 mobile-full-width"
                 onClick={() => navigate("/cadastro")}
               >
                 Começar agora
               </Button>
               <Button 
                 variant="outline"
-                className="border-toca-accent text-toca-accent hover:bg-toca-accent hover:text-white text-lg px-8 py-6"
+                className="border-toca-accent text-toca-accent hover:bg-toca-accent hover:text-white text-lg px-8 py-6 mobile-full-width"
                 onClick={() => navigate("/explorar")}
               >
                 Explorar profissionais
@@ -85,7 +117,7 @@ const Index = () => {
       {/* Features Section */}
       <section className="py-20 bg-gradient-to-br from-toca-card to-toca-background">
         <div className="container mx-auto px-4">
-          <h2 className="text-3xl md:text-4xl font-bold text-center mb-16 text-white">
+          <h2 className="text-2xl md:text-4xl font-bold text-center mb-16 text-white">
             Como o <span className="text-toca-accent">Toca Aqui</span> funciona
           </h2>
 
@@ -106,10 +138,10 @@ const Index = () => {
       {/* Professional Types Section */}
       <section className="py-20">
         <div className="container mx-auto px-4">
-          <h2 className="text-3xl md:text-4xl font-bold text-center mb-6 text-white">
+          <h2 className="text-2xl md:text-4xl font-bold text-center mb-6 text-white">
             Profissionais para seu evento
           </h2>
-          <p className="text-toca-text-secondary text-xl text-center mb-16 max-w-2xl mx-auto">
+          <p className="text-toca-text-secondary text-lg md:text-xl text-center mb-16 max-w-2xl mx-auto">
             Encontre os melhores profissionais do audiovisual para tornar seu evento inesquecível.
           </p>
 
@@ -129,7 +161,7 @@ const Index = () => {
           <div className="text-center mt-12">
             <Button 
               variant="outline"
-              className="border-toca-accent text-toca-accent hover:bg-toca-accent hover:text-white"
+              className="border-toca-accent text-toca-accent hover:bg-toca-accent hover:text-white mobile-full-width"
               onClick={() => navigate("/explorar")}
             >
               Ver todos os profissionais <ChevronRight size={16} className="ml-1" />
@@ -142,23 +174,23 @@ const Index = () => {
       <section className="bg-toca-card py-20">
         <div className="container mx-auto px-4">
           <div className="max-w-3xl mx-auto text-center">
-            <h2 className="text-3xl md:text-4xl font-bold mb-6 text-white">
+            <h2 className="text-2xl md:text-4xl font-bold mb-6 text-white">
               Pronto para começar?
             </h2>
-            <p className="text-toca-text-secondary text-xl mb-8">
+            <p className="text-toca-text-secondary text-lg md:text-xl mb-8">
               Junte-se a milhares de profissionais e contratantes no Toca Aqui. 
               Cadastre-se gratuitamente e comece agora mesmo!
             </p>
             <div className="flex flex-col sm:flex-row justify-center gap-4">
               <Button 
-                className="bg-toca-accent hover:bg-toca-accent-hover text-lg px-8 py-6"
+                className="bg-toca-accent hover:bg-toca-accent-hover text-lg px-8 py-6 mobile-full-width"
                 onClick={() => navigate("/cadastro")}
               >
                 Criar minha conta
               </Button>
               <Button 
                 variant="outline"
-                className="border-toca-accent text-white hover:bg-white/10 text-lg px-8 py-6"
+                className="border-toca-accent text-white hover:bg-white/10 text-lg px-8 py-6 mobile-full-width"
                 onClick={() => navigate("/login")}
               >
                 Já tenho uma conta
