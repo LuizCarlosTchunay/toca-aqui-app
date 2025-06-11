@@ -59,13 +59,6 @@ const Index = () => {
 
         <div className="container mx-auto px-4 py-20 md:py-32 relative z-10">
           <div className="max-w-3xl mx-auto text-center">
-            <div className="flex justify-center mb-8">
-              <img 
-                src="/lovable-uploads/66d87de3-4ebd-4f4b-9d3f-c9bbb3e3c4ef.png" 
-                alt="Toca Aqui Logo" 
-                className="w-24 h-24 md:w-32 md:h-32 rounded-lg shadow-lg"
-              />
-            </div>
             <h1 className="text-3xl md:text-6xl font-bold mb-6 text-white">
               Conectando talentos do audiovisual
             </h1>
@@ -73,27 +66,6 @@ const Index = () => {
               A plataforma que conecta contratantes e profissionais do audiovisual 
               de forma rápida, segura e prática.
             </p>
-            
-            {/* PWA Install Section */}
-            {isInstallable && !isInstalled && (
-              <div className="mb-8 p-4 bg-toca-card border border-toca-accent rounded-lg">
-                <div className="flex items-center justify-center gap-2 text-toca-accent mb-2">
-                  <Smartphone size={20} />
-                  <span className="font-semibold">Instale nosso app!</span>
-                </div>
-                <p className="text-sm text-toca-text-secondary mb-3">
-                  Tenha acesso rápido e funcionalidades offline
-                </p>
-                <Button 
-                  onClick={handleInstallClick}
-                  variant="outline"
-                  className="border-toca-accent text-toca-accent hover:bg-toca-accent hover:text-white"
-                >
-                  <Download size={16} className="mr-2" />
-                  Instalar App
-                </Button>
-              </div>
-            )}
             
             <div className="flex flex-col sm:flex-row justify-center gap-4">
               <Button 
