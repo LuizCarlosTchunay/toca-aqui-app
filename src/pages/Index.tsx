@@ -67,8 +67,8 @@ const Index = () => {
               de forma rápida, segura e prática.
             </p>
             
-            {/* PWA Install Button - Sempre visível quando não instalado */}
-            {isInstallable && (
+            {/* PWA Install Button - Só mostrar se não estiver instalado */}
+            {isInstallable && !isInstalled && (
               <div className="mb-8 p-6 bg-gradient-to-r from-toca-accent/20 to-toca-accent/10 border border-toca-accent rounded-lg backdrop-blur-sm max-w-md mx-auto">
                 <div className="flex items-center justify-center gap-2 text-toca-accent mb-3">
                   <Smartphone size={24} />

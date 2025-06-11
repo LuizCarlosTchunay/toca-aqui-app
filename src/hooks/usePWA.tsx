@@ -13,23 +13,39 @@ export const usePWA = () => {
   const [isOnline, setIsOnline] = useState(navigator.onLine);
 
   useEffect(() => {
-    // Check if app is already installed
+    // Check if app is already installed/running as PWA
     const checkInstalled = () => {
-      if (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) {
-        setIsInstalled(true);
-        return true;
-      }
+      // Check for standalone mode (PWA is installed and running)
+      const isStandalone = window.matchMedia && window.matchMedia('(display-mode: standalone)').matches;
       
-      if (window.navigator && (window.navigator as any).standalone) {
-        setIsInstalled(true);
-        return true;
-      }
+      // Check for iOS standalone mode
+      const isIOSStandalone = window.navigator && (window.navigator as any).standalone;
       
-      return false;
+      // Check if running from home screen on Android
+      const isAndroidStandalone = window.location.search.includes('utm_source=homescreen') || 
+                                 document.referrer.includes('android-app://');
+      
+      const installed = isStandalone || isIOSStandalone || isAndroidStandalone;
+      
+      console.log('PWA Detection:', {
+        isStandalone,
+        isIOSStandalone,
+        isAndroidStandalone,
+        installed,
+        userAgent: navigator.userAgent
+      });
+      
+      setIsInstalled(installed);
+      return installed;
     };
 
     const installed = checkInstalled();
-    console.log('App installed status:', installed);
+
+    // Se já está instalado, não mostrar opções de instalação
+    if (installed) {
+      setIsInstallable(false);
+      return;
+    }
 
     // Listen for beforeinstallprompt event
     const handleBeforeInstallPrompt = (e: Event) => {
@@ -105,8 +121,8 @@ export const usePWA = () => {
     }
   };
 
-  // Considerar instalável se não está instalado (para mostrar o botão)
-  const shouldShowInstallButton = !isInstalled && (isInstallable || true);
+  // Só mostrar botão de instalação se não estiver instalado
+  const shouldShowInstallButton = !isInstalled;
 
   return {
     isInstallable: shouldShowInstallButton,
