@@ -4,22 +4,31 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Download, X, Smartphone, Monitor } from 'lucide-react';
 import { usePWA } from '@/hooks/usePWA';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 const PWAInstallPrompt = () => {
   const { isInstallable, isInstalled, installApp } = usePWA();
   const [showPrompt, setShowPrompt] = useState(false);
   const [dismissed, setDismissed] = useState(false);
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     const hasBeenDismissed = localStorage.getItem('pwa-install-dismissed');
-    if (isInstallable && !isInstalled && !hasBeenDismissed) {
-      // Show prompt after 3 seconds (reduced from 10)
+    
+    // No mobile, mostrar mais rapidamente e mesmo sem o evento beforeinstallprompt
+    if (isMobile && !isInstalled && !hasBeenDismissed) {
+      const timer = setTimeout(() => {
+        setShowPrompt(true);
+      }, 1000); // 1 segundo no mobile
+      return () => clearTimeout(timer);
+    } else if (isInstallable && !isInstalled && !hasBeenDismissed) {
+      // Desktop - aguardar o evento beforeinstallprompt
       const timer = setTimeout(() => {
         setShowPrompt(true);
       }, 3000);
       return () => clearTimeout(timer);
     }
-  }, [isInstallable, isInstalled]);
+  }, [isInstallable, isInstalled, isMobile]);
 
   const handleInstall = async () => {
     const success = await installApp();
@@ -37,8 +46,14 @@ const PWAInstallPrompt = () => {
   // iOS Safari detection
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
   const isSafari = /Safari/.test(navigator.userAgent) && !/Chrome/.test(navigator.userAgent);
+  const isAndroid = /Android/.test(navigator.userAgent);
 
-  if (!showPrompt || isInstalled || dismissed) return null;
+  // Mostrar prompt se:
+  // 1. É mobile e não está instalado
+  // 2. Ou se é instalável (desktop com beforeinstallprompt)
+  const shouldShow = (isMobile && !isInstalled) || isInstallable;
+
+  if (!showPrompt || isInstalled || dismissed || !shouldShow) return null;
 
   return (
     <div className="fixed bottom-4 left-4 right-4 z-50 md:left-auto md:right-4 md:w-96">
@@ -47,7 +62,7 @@ const PWAInstallPrompt = () => {
           <div className="flex items-center justify-between">
             <CardTitle className="text-white text-lg flex items-center gap-2">
               <Download size={20} className="text-toca-accent" />
-              Instalar Toca Aqui
+              {isMobile ? '📱 Instalar App' : 'Instalar Toca Aqui'}
             </CardTitle>
             <Button
               variant="ghost"
@@ -61,12 +76,12 @@ const PWAInstallPrompt = () => {
         </CardHeader>
         <CardContent className="space-y-3">
           <p className="text-toca-text-secondary text-sm">
-            🚀 Instale nosso app para uma experiência completa e acesso offline!
+            🚀 {isMobile ? 'Adicione à sua tela inicial!' : 'Instale nosso app para uma experiência completa e acesso offline!'}
           </p>
           
           <div className="flex items-center gap-2 text-xs text-toca-text-secondary">
             <Smartphone size={14} />
-            <span>Funciona em qualquer dispositivo</span>
+            <span>{isMobile ? 'Acesso rápido e offline' : 'Funciona em qualquer dispositivo'}</span>
           </div>
 
           {isIOS && isSafari ? (
@@ -81,6 +96,21 @@ const PWAInstallPrompt = () => {
                 <p className="font-semibold">Para instalar no iOS:</p>
                 <p>1. Toque no ícone de compartilhar ↗️</p>
                 <p>2. Selecione "Adicionar à Tela de Início"</p>
+              </div>
+            </div>
+          ) : isAndroid ? (
+            <div className="space-y-2">
+              <Button
+                onClick={handleInstall}
+                className="w-full bg-toca-accent hover:bg-toca-accent-hover"
+              >
+                <Download size={16} className="mr-2" />
+                Instalar App
+              </Button>
+              <div className="text-xs text-toca-text-secondary space-y-1 p-2 bg-toca-background rounded">
+                <p className="font-semibold">No Android:</p>
+                <p>• Toque em "Instalar App" acima</p>
+                <p>• Ou use o menu do navegador → "Adicionar à tela inicial"</p>
               </div>
             </div>
           ) : (
