@@ -15,13 +15,11 @@ export const usePWA = () => {
   useEffect(() => {
     // Check if app is already installed
     const checkInstalled = () => {
-      // Verifica se está rodando como PWA
       if (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) {
         setIsInstalled(true);
         return true;
       }
       
-      // Verifica se está no iOS como PWA
       if (window.navigator && (window.navigator as any).standalone) {
         setIsInstalled(true);
         return true;
@@ -31,26 +29,22 @@ export const usePWA = () => {
     };
 
     const installed = checkInstalled();
+    console.log('App installed status:', installed);
 
-    // Se não está instalado, considera como instalável (especialmente para mobile)
-    if (!installed) {
-      setIsInstallable(true);
-    }
-
-    // Listen for beforeinstallprompt event (principalmente desktop/Android Chrome)
+    // Listen for beforeinstallprompt event
     const handleBeforeInstallPrompt = (e: Event) => {
+      console.log('beforeinstallprompt event fired');
       e.preventDefault();
       setDeferredPrompt(e as BeforeInstallPromptEvent);
       setIsInstallable(true);
-      console.log('beforeinstallprompt event fired');
     };
 
     // Listen for appinstalled event
     const handleAppInstalled = () => {
+      console.log('App was installed');
       setIsInstalled(true);
       setIsInstallable(false);
       setDeferredPrompt(null);
-      console.log('App was installed');
     };
 
     // Listen for online/offline status
@@ -71,14 +65,30 @@ export const usePWA = () => {
   }, []);
 
   const installApp = async () => {
+    console.log('Install app clicked, deferredPrompt:', deferredPrompt);
+    
     if (!deferredPrompt) {
-      console.log('No deferred prompt available');
+      console.log('No deferred prompt available - showing manual instructions');
+      // Para dispositivos que não suportam o evento, mostrar instruções
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+      const isAndroid = /Android/.test(navigator.userAgent);
+      
+      if (isIOS) {
+        alert('Para instalar no iOS:\n1. Toque no ícone de compartilhar (↗️)\n2. Selecione "Adicionar à Tela de Início"');
+      } else if (isAndroid) {
+        alert('Para instalar:\n1. Toque no menu do Chrome (⋮)\n2. Selecione "Adicionar à tela inicial" ou "Instalar app"');
+      } else {
+        alert('Para instalar:\n1. Clique no menu do navegador\n2. Selecione "Instalar app" ou "Adicionar à tela inicial"');
+      }
       return false;
     }
 
     try {
+      console.log('Showing install prompt');
       await deferredPrompt.prompt();
       const choiceResult = await deferredPrompt.userChoice;
+      
+      console.log('User choice:', choiceResult.outcome);
       
       if (choiceResult.outcome === 'accepted') {
         console.log('User accepted the install prompt');
@@ -95,8 +105,11 @@ export const usePWA = () => {
     }
   };
 
+  // Considerar instalável se não está instalado (para mostrar o botão)
+  const shouldShowInstallButton = !isInstalled && (isInstallable || true);
+
   return {
-    isInstallable,
+    isInstallable: shouldShowInstallButton,
     isInstalled,
     isOnline,
     installApp
