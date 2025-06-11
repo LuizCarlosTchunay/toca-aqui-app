@@ -8,7 +8,7 @@ import { usePWA } from "@/hooks/usePWA";
 
 const Index = () => {
   const navigate = useNavigate();
-  const { isInstallable, isInstalled, installApp } = usePWA();
+  const { isInstallable, isInstalled, installApp, hasNativePrompt } = usePWA();
 
   const features = [
     {
@@ -36,8 +36,19 @@ const Index = () => {
   ];
 
   const handleInstallClick = async () => {
-    console.log('Install button clicked');
-    await installApp();
+    console.log('Install button clicked, hasNativePrompt:', hasNativePrompt);
+    const success = await installApp();
+    
+    if (success) {
+      // App was installed successfully
+      console.log('App installed successfully');
+    } else if (hasNativePrompt) {
+      // User dismissed the prompt
+      console.log('User dismissed install prompt');
+    } else {
+      // Manual instructions were shown
+      console.log('Manual installation instructions shown');
+    }
   };
 
   return (
@@ -75,7 +86,10 @@ const Index = () => {
                   <span className="font-bold text-lg">📱 Instale nosso app!</span>
                 </div>
                 <p className="text-sm text-white mb-4">
-                  Tenha acesso rápido, notificações e funcionalidades offline
+                  {hasNativePrompt 
+                    ? "Clique para instalar diretamente na sua tela inicial"
+                    : "Tenha acesso rápido, notificações e funcionalidades offline"
+                  }
                 </p>
                 <Button 
                   onClick={handleInstallClick}
@@ -83,10 +97,13 @@ const Index = () => {
                   size="lg"
                 >
                   <Download size={20} className="mr-2" />
-                  Instalar Agora
+                  {hasNativePrompt ? "Instalar Diretamente" : "Ver Como Instalar"}
                 </Button>
                 <p className="text-xs text-toca-text-secondary mt-2">
-                  Funciona offline • Notificações • Acesso rápido
+                  {hasNativePrompt 
+                    ? "Instalação direta • Sem precisar do menu do Chrome"
+                    : "Funciona offline • Notificações • Acesso rápido"
+                  }
                 </p>
               </div>
             )}

@@ -15,21 +15,18 @@ export const usePWA = () => {
   useEffect(() => {
     // Check if app is already installed
     const checkInstalled = () => {
-      // Check for standalone mode (PWA installed)
       if (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) {
         console.log('App is running in standalone mode (installed)');
         setIsInstalled(true);
         return true;
       }
       
-      // Check for iOS Safari standalone
       if (window.navigator && (window.navigator as any).standalone) {
         console.log('App is running in iOS standalone mode (installed)');
         setIsInstalled(true);
         return true;
       }
       
-      // Check if running from home screen on Android
       if (window.location.search.includes('utm_source=homescreen') || 
           document.referrer.includes('android-app://')) {
         console.log('App launched from home screen (installed)');
@@ -44,8 +41,8 @@ export const usePWA = () => {
 
     // Listen for beforeinstallprompt event
     const handleBeforeInstallPrompt = (e: Event) => {
-      console.log('beforeinstallprompt event fired - app is installable');
-      e.preventDefault();
+      console.log('beforeinstallprompt event captured');
+      e.preventDefault(); // Prevent the default mini-infobar
       setDeferredPrompt(e as BeforeInstallPromptEvent);
       if (!installed) {
         setIsInstallable(true);
@@ -59,7 +56,7 @@ export const usePWA = () => {
       setIsInstallable(false);
       setDeferredPrompt(null);
       
-      // Show success message
+      // Show success notification
       if ('Notification' in window && Notification.permission === 'granted') {
         new Notification('Toca Aqui instalado!', {
           body: 'O app foi adicionado à sua tela inicial. Toque no ícone para abrir.',
@@ -72,28 +69,19 @@ export const usePWA = () => {
     const handleOnline = () => setIsOnline(true);
     const handleOffline = () => setIsOnline(false);
 
+    // Add event listeners
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
     window.addEventListener('appinstalled', handleAppInstalled);
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
 
-    // For devices that don't support beforeinstallprompt, show install option anyway
-    if (!installed && !deferredPrompt) {
-      const timer = setTimeout(() => {
-        if (!isInstalled && !deferredPrompt) {
-          console.log('Setting installable to true for manual installation');
-          setIsInstallable(true);
-        }
-      }, 2000);
-      
-      return () => {
-        clearTimeout(timer);
-        window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-        window.removeEventListener('appinstalled', handleAppInstalled);
-        window.removeEventListener('online', handleOnline);
-        window.removeEventListener('offline', handleOffline);
-      };
-    }
+    // For debugging - check if prompt is available after page load
+    setTimeout(() => {
+      if (!deferredPrompt && !installed) {
+        console.log('No beforeinstallprompt event detected, showing manual instructions');
+        setIsInstallable(true);
+      }
+    }, 3000);
 
     return () => {
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
@@ -104,19 +92,22 @@ export const usePWA = () => {
   }, []);
 
   const installApp = async () => {
-    console.log('Install app clicked, deferredPrompt available:', !!deferredPrompt);
+    console.log('Install button clicked');
     
     if (deferredPrompt) {
+      console.log('Using native install prompt');
       try {
-        console.log('Showing native install prompt');
+        // Show the native install prompt
         await deferredPrompt.prompt();
-        const choiceResult = await deferredPrompt.userChoice;
         
+        // Wait for user choice
+        const choiceResult = await deferredPrompt.userChoice;
         console.log('User choice:', choiceResult.outcome);
         
         if (choiceResult.outcome === 'accepted') {
           console.log('User accepted the install prompt');
-          // Don't set states here, let the appinstalled event handle it
+          setDeferredPrompt(null);
+          setIsInstallable(false);
           return true;
         } else {
           console.log('User dismissed the install prompt');
@@ -143,36 +134,42 @@ export const usePWA = () => {
     if (isIOS) {
       message = `Para instalar o Toca Aqui no seu iPhone/iPad:
 
-1. Toque no ícone de compartilhar (↗️) na barra inferior
+1. Toque no ícone de compartilhar (↗️) na barra inferior do Safari
 2. Role para baixo e toque em "Adicionar à Tela de Início"
 3. Toque em "Adicionar" para confirmar
 
-O ícone do Toca Aqui aparecerá na sua tela inicial junto com seus outros apps!`;
+🏠 O ícone do Toca Aqui aparecerá na sua tela inicial!`;
     } else if (isAndroid) {
       message = `Para instalar o Toca Aqui no seu Android:
 
-1. Toque no menu do Chrome (⋮) no canto superior direito
+Opção 1 - Pelo Chrome:
+1. Toque no menu (⋮) no canto superior direito
 2. Selecione "Adicionar à tela inicial" ou "Instalar app"
 3. Toque em "Adicionar" para confirmar
 
-O ícone do Toca Aqui aparecerá na sua tela inicial como um app nativo!`;
+Opção 2 - Pela barra de endereços:
+1. Procure por um ícone de "+" ou "instalação" na barra de endereços
+2. Toque no ícone e confirme
+
+🏠 O ícone do Toca Aqui aparecerá na sua tela inicial como um app nativo!`;
     } else {
       message = `Para instalar o Toca Aqui:
 
-1. Clique no menu do seu navegador
-2. Procure por "Instalar app", "Adicionar à tela inicial" ou ícone de instalação
+1. Procure por um ícone de instalação na barra de endereços do seu navegador
+2. Ou clique no menu do navegador e procure por "Instalar app" ou "Adicionar à tela inicial"
 3. Confirme a instalação
 
-O Toca Aqui ficará disponível como um aplicativo independente!`;
+🏠 O Toca Aqui ficará disponível como um aplicativo independente!`;
     }
     
     alert(message);
   };
 
   return {
-    isInstallable: !isInstalled && (isInstallable || true), // Always show button if not installed
+    isInstallable: !isInstalled,
     isInstalled,
     isOnline,
-    installApp
+    installApp,
+    hasNativePrompt: !!deferredPrompt
   };
 };
