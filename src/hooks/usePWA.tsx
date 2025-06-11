@@ -61,6 +61,9 @@ export const usePWA = () => {
       setIsInstalled(true);
       setIsInstallable(false);
       setDeferredPrompt(null);
+      
+      // Mostrar mensagem de sucesso sobre o ícone
+      alert('✅ Toca Aqui instalado com sucesso!\n\n🏠 O ícone do app foi adicionado à sua tela inicial ao lado dos outros aplicativos.\n\n📱 Agora você pode acessar o app diretamente da tela inicial!');
     };
 
     // Listen for online/offline status
@@ -85,34 +88,51 @@ export const usePWA = () => {
     
     if (!deferredPrompt) {
       console.log('No deferred prompt available - showing manual instructions');
-      // Para dispositivos que não suportam o evento, mostrar instruções
+      // Para dispositivos que não suportam o evento, mostrar instruções específicas
       const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
       const isAndroid = /Android/.test(navigator.userAgent);
       
       if (isIOS) {
-        alert('Para instalar no iOS:\n1. Toque no ícone de compartilhar (↗️)\n2. Selecione "Adicionar à Tela de Início"');
+        alert('📱 Para instalar o Toca Aqui no iPhone/iPad:\n\n1. Toque no ícone de compartilhar (↗️) na parte inferior\n2. Role para baixo e selecione "Adicionar à Tela de Início"\n3. Toque em "Adicionar"\n\n🏠 O ícone do app aparecerá na sua tela inicial!');
       } else if (isAndroid) {
-        alert('Para instalar:\n1. Toque no menu do Chrome (⋮)\n2. Selecione "Adicionar à tela inicial" ou "Instalar app"');
+        alert('📱 Para instalar o Toca Aqui no Android:\n\n1. Toque no menu do Chrome (⋮) no canto superior\n2. Selecione "Adicionar à tela inicial" ou "Instalar app"\n3. Confirme a instalação\n\n🏠 O ícone do app aparecerá na sua tela inicial!');
       } else {
-        alert('Para instalar:\n1. Clique no menu do navegador\n2. Selecione "Instalar app" ou "Adicionar à tela inicial"');
+        alert('📱 Para instalar o Toca Aqui:\n\n1. Clique no menu do navegador\n2. Selecione "Instalar app" ou "Adicionar à tela inicial"\n3. Confirme a instalação\n\n🏠 O ícone do app aparecerá na sua tela inicial!');
       }
       return false;
     }
 
     try {
       console.log('Showing install prompt');
-      await deferredPrompt.prompt();
-      const choiceResult = await deferredPrompt.userChoice;
       
-      console.log('User choice:', choiceResult.outcome);
+      // Mostrar mensagem prévia sobre o que vai acontecer
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+      const isAndroid = /Android/.test(navigator.userAgent);
       
-      if (choiceResult.outcome === 'accepted') {
-        console.log('User accepted the install prompt');
-        setIsInstallable(false);
-        setDeferredPrompt(null);
-        return true;
+      let preMessage = '📱 Ao clicar em "Instalar" ou "Adicionar", o Toca Aqui será adicionado à sua tela inicial como um aplicativo.\n\n';
+      
+      if (isIOS) {
+        preMessage += '🏠 No iPhone/iPad: O ícone aparecerá na tela inicial ao lado dos outros apps.';
+      } else if (isAndroid) {
+        preMessage += '🏠 No Android: O ícone aparecerá na tela inicial e na gaveta de aplicativos.';
       } else {
-        console.log('User dismissed the install prompt');
+        preMessage += '🏠 O ícone aparecerá na sua tela inicial para acesso rápido.';
+      }
+      
+      if (confirm(preMessage + '\n\nDeseja continuar com a instalação?')) {
+        await deferredPrompt.prompt();
+        const choiceResult = await deferredPrompt.userChoice;
+        
+        console.log('User choice:', choiceResult.outcome);
+        
+        if (choiceResult.outcome === 'accepted') {
+          console.log('User accepted the install prompt');
+          setIsInstallable(false);
+          setDeferredPrompt(null);
+          return true;
+        } else {
+          console.log('User dismissed the install prompt');
+        }
       }
       return false;
     } catch (error) {
