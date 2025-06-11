@@ -1,5 +1,5 @@
 
-const CACHE_NAME = 'toca-aqui-v1';
+const CACHE_NAME = 'toca-aqui-v2';
 const urlsToCache = [
   '/',
   '/static/js/bundle.js',
@@ -11,11 +11,17 @@ const urlsToCache = [
 
 // Install event
 self.addEventListener('install', (event) => {
+  console.log('Service Worker installing...');
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then((cache) => {
         console.log('Cache opened');
         return cache.addAll(urlsToCache);
+      })
+      .then(() => {
+        console.log('All resources cached');
+        // Force the waiting service worker to become the active service worker
+        return self.skipWaiting();
       })
   );
 });
@@ -29,7 +35,12 @@ self.addEventListener('fetch', (event) => {
         if (response) {
           return response;
         }
-        return fetch(event.request);
+        return fetch(event.request).catch(() => {
+          // If both cache and network fail, return a generic offline page
+          if (event.request.destination === 'document') {
+            return caches.match('/');
+          }
+        });
       }
     )
   );
@@ -37,6 +48,7 @@ self.addEventListener('fetch', (event) => {
 
 // Activate event
 self.addEventListener('activate', (event) => {
+  console.log('Service Worker activating...');
   event.waitUntil(
     caches.keys().then((cacheNames) => {
       return Promise.all(
@@ -47,6 +59,9 @@ self.addEventListener('activate', (event) => {
           }
         })
       );
+    }).then(() => {
+      // Take control of all pages immediately
+      return self.clients.claim();
     })
   );
 });
@@ -66,5 +81,13 @@ self.addEventListener('push', (event) => {
 
   event.waitUntil(
     self.registration.showNotification('Toca Aqui', options)
+  );
+});
+
+// Handle notification clicks
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  event.waitUntil(
+    clients.openWindow('/')
   );
 });
