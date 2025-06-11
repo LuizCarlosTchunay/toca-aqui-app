@@ -1,5 +1,5 @@
 
-const CACHE_NAME = 'toca-aqui-v4';
+const CACHE_NAME = 'toca-aqui-v1';
 const urlsToCache = [
   '/',
   '/static/js/bundle.js',
@@ -11,56 +11,25 @@ const urlsToCache = [
 
 // Install event
 self.addEventListener('install', (event) => {
-  console.log('Service Worker installing...');
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then((cache) => {
         console.log('Cache opened');
-        return cache.addAll(urlsToCache.map(url => new Request(url, {cache: 'reload'})));
-      })
-      .then(() => {
-        console.log('All resources cached including app icons');
-        return self.skipWaiting();
-      })
-      .catch((error) => {
-        console.error('Cache failed:', error);
+        return cache.addAll(urlsToCache);
       })
   );
 });
 
 // Fetch event
 self.addEventListener('fetch', (event) => {
-  // Skip non-GET requests
-  if (event.request.method !== 'GET') {
-    return;
-  }
-
   event.respondWith(
     caches.match(event.request)
       .then((response) => {
+        // Return cached version or fetch from network
         if (response) {
-          console.log('Serving from cache:', event.request.url);
           return response;
         }
-        
-        return fetch(event.request).then((response) => {
-          if (!response || response.status !== 200 || response.type !== 'basic') {
-            return response;
-          }
-
-          if (event.request.url.startsWith(self.location.origin)) {
-            const responseToCache = response.clone();
-            caches.open(CACHE_NAME).then((cache) => {
-              cache.put(event.request, responseToCache);
-            });
-          }
-          
-          return response;
-        }).catch(() => {
-          if (event.request.destination === 'document') {
-            return caches.match('/');
-          }
-        });
+        return fetch(event.request);
       }
     )
   );
@@ -68,7 +37,6 @@ self.addEventListener('fetch', (event) => {
 
 // Activate event
 self.addEventListener('activate', (event) => {
-  console.log('Service Worker activating...');
   event.waitUntil(
     caches.keys().then((cacheNames) => {
       return Promise.all(
@@ -79,9 +47,6 @@ self.addEventListener('activate', (event) => {
           }
         })
       );
-    }).then(() => {
-      console.log('Service Worker activated and ready');
-      return self.clients.claim();
     })
   );
 });
@@ -96,35 +61,10 @@ self.addEventListener('push', (event) => {
     data: {
       dateOfArrival: Date.now(),
       primaryKey: 1
-    },
-    actions: [
-      {
-        action: 'open',
-        title: 'Abrir App'
-      }
-    ]
+    }
   };
 
   event.waitUntil(
     self.registration.showNotification('Toca Aqui', options)
-  );
-});
-
-// Handle notification clicks
-self.addEventListener('notificationclick', (event) => {
-  console.log('Notification clicked');
-  event.notification.close();
-  
-  event.waitUntil(
-    clients.matchAll().then((clientList) => {
-      for (const client of clientList) {
-        if (client.url === '/' && 'focus' in client) {
-          return client.focus();
-        }
-      }
-      if (clients.openWindow) {
-        return clients.openWindow('/');
-      }
-    })
   );
 });

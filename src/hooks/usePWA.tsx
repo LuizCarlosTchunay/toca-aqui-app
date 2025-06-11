@@ -13,35 +13,25 @@ export const usePWA = () => {
   const [isOnline, setIsOnline] = useState(navigator.onLine);
 
   useEffect(() => {
-    // Check if app is already installed/running as PWA
+    // Check if app is already installed
     const checkInstalled = () => {
-      const isStandalone = window.matchMedia && window.matchMedia('(display-mode: standalone)').matches;
-      const isIOSStandalone = window.navigator && (window.navigator as any).standalone;
-      const isAndroidStandalone = window.location.search.includes('utm_source=homescreen') || 
-                                 document.referrer.includes('android-app://');
+      if (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) {
+        setIsInstalled(true);
+        return true;
+      }
       
-      const installed = isStandalone || isIOSStandalone || isAndroidStandalone;
+      if (window.navigator && (window.navigator as any).standalone) {
+        setIsInstalled(true);
+        return true;
+      }
       
-      console.log('PWA Detection:', {
-        isStandalone,
-        isIOSStandalone,
-        isAndroidStandalone,
-        installed,
-        userAgent: navigator.userAgent,
-        displayMode: window.matchMedia('(display-mode: standalone)').matches ? 'standalone' : 'browser'
-      });
-      
-      setIsInstalled(installed);
-      return installed;
+      return false;
     };
 
     const installed = checkInstalled();
+    console.log('App installed status:', installed);
 
-    if (installed) {
-      setIsInstallable(false);
-      return;
-    }
-
+    // Listen for beforeinstallprompt event
     const handleBeforeInstallPrompt = (e: Event) => {
       console.log('beforeinstallprompt event fired');
       e.preventDefault();
@@ -49,29 +39,15 @@ export const usePWA = () => {
       setIsInstallable(true);
     };
 
+    // Listen for appinstalled event
     const handleAppInstalled = () => {
-      console.log('App was installed successfully');
+      console.log('App was installed');
       setIsInstalled(true);
       setIsInstallable(false);
       setDeferredPrompt(null);
-      
-      // Mostrar mensagem de sucesso específica
-      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-      const isAndroid = /Android/.test(navigator.userAgent);
-      
-      let successMessage = '🎉 Toca Aqui instalado com sucesso!\n\n';
-      
-      if (isIOS) {
-        successMessage += '📱 O ícone do app foi adicionado à sua tela inicial do iPhone/iPad.\n\n🏠 Procure pelo ícone "Toca Aqui" na tela inicial ao lado dos outros aplicativos!';
-      } else if (isAndroid) {
-        successMessage += '📱 O ícone do app foi adicionado à sua tela inicial do Android.\n\n🏠 Procure pelo ícone "Toca Aqui" na tela inicial ou na gaveta de aplicativos!';
-      } else {
-        successMessage += '📱 O ícone do app foi adicionado à sua tela inicial.\n\n🏠 Procure pelo ícone "Toca Aqui" para acesso rápido!';
-      }
-      
-      alert(successMessage);
     };
 
+    // Listen for online/offline status
     const handleOnline = () => setIsOnline(true);
     const handleOffline = () => setIsOnline(false);
 
@@ -93,61 +69,44 @@ export const usePWA = () => {
     
     if (!deferredPrompt) {
       console.log('No deferred prompt available - showing manual instructions');
+      // Para dispositivos que não suportam o evento, mostrar instruções
       const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
       const isAndroid = /Android/.test(navigator.userAgent);
       
       if (isIOS) {
-        alert('📱 Para instalar o Toca Aqui no iPhone/iPad:\n\n1. Toque no ícone de compartilhar (↗️) na parte inferior do Safari\n2. Role para baixo e selecione "Adicionar à Tela de Início"\n3. Toque em "Adicionar"\n\n🏠 O ícone do app aparecerá na sua tela inicial ao lado dos outros aplicativos instalados!');
+        alert('Para instalar no iOS:\n1. Toque no ícone de compartilhar (↗️)\n2. Selecione "Adicionar à Tela de Início"');
       } else if (isAndroid) {
-        alert('📱 Para instalar o Toca Aqui no Android:\n\n1. Toque no menu do Chrome (⋮) no canto superior direito\n2. Selecione "Adicionar à tela inicial" ou "Instalar app"\n3. Confirme a instalação\n\n🏠 O ícone do app aparecerá na sua tela inicial e na gaveta de aplicativos!');
+        alert('Para instalar:\n1. Toque no menu do Chrome (⋮)\n2. Selecione "Adicionar à tela inicial" ou "Instalar app"');
       } else {
-        alert('📱 Para instalar o Toca Aqui:\n\n1. Clique no menu do navegador\n2. Selecione "Instalar app" ou "Adicionar à tela inicial"\n3. Confirme a instalação\n\n🏠 O ícone do app aparecerá na sua tela inicial!');
+        alert('Para instalar:\n1. Clique no menu do navegador\n2. Selecione "Instalar app" ou "Adicionar à tela inicial"');
       }
       return false;
     }
 
     try {
       console.log('Showing install prompt');
+      await deferredPrompt.prompt();
+      const choiceResult = await deferredPrompt.userChoice;
       
-      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-      const isAndroid = /Android/.test(navigator.userAgent);
+      console.log('User choice:', choiceResult.outcome);
       
-      let preMessage = '📱 Ao confirmar a instalação, o Toca Aqui será adicionado como um aplicativo na sua tela inicial.\n\n';
-      
-      if (isIOS) {
-        preMessage += '🏠 iPhone/iPad: O ícone aparecerá na tela inicial ao lado dos outros apps instalados.\n\n';
-      } else if (isAndroid) {
-        preMessage += '🏠 Android: O ícone aparecerá na tela inicial e na gaveta de aplicativos.\n\n';
+      if (choiceResult.outcome === 'accepted') {
+        console.log('User accepted the install prompt');
+        setIsInstallable(false);
+        setDeferredPrompt(null);
+        return true;
       } else {
-        preMessage += '🏠 O ícone aparecerá na sua tela inicial para acesso rápido.\n\n';
-      }
-      
-      preMessage += '✨ Você poderá acessar o app diretamente da tela inicial, como qualquer outro aplicativo!\n\nDeseja continuar com a instalação?';
-      
-      if (confirm(preMessage)) {
-        await deferredPrompt.prompt();
-        const choiceResult = await deferredPrompt.userChoice;
-        
-        console.log('User choice:', choiceResult.outcome);
-        
-        if (choiceResult.outcome === 'accepted') {
-          console.log('User accepted the install prompt');
-          setIsInstallable(false);
-          setDeferredPrompt(null);
-          return true;
-        } else {
-          console.log('User dismissed the install prompt');
-        }
+        console.log('User dismissed the install prompt');
       }
       return false;
     } catch (error) {
       console.error('Error installing app:', error);
-      alert("Erro ao instalar o app. Tente novamente ou use as instruções manuais do seu navegador.");
       return false;
     }
   };
 
-  const shouldShowInstallButton = !isInstalled && (isInstallable || !deferredPrompt);
+  // Considerar instalável se não está instalado (para mostrar o botão)
+  const shouldShowInstallButton = !isInstalled && (isInstallable || true);
 
   return {
     isInstallable: shouldShowInstallButton,
