@@ -3,7 +3,7 @@
   "name": "Toca Aqui - Conectando Talentos do Audiovisual",
   "short_name": "Toca Aqui",
   "description": "A plataforma que conecta contratantes e profissionais do audiovisual de forma rápida, segura e prática.",
-  "start_url": "/?utm_source=pwa",
+  "start_url": "/",
   "display": "standalone",
   "background_color": "#0A0A0A",
   "theme_color": "#ea384c",
@@ -75,7 +75,19 @@
       "name": "Explorar Profissionais",
       "short_name": "Explorar",
       "description": "Encontre profissionais do audiovisual",
-      "url": "/explorar?utm_source=pwa",
+      "url": "/explorar",
+      "icons": [
+        {
+          "src": "/lovable-uploads/66d87de3-4ebd-4f4b-9d3f-c9bbb3e3c4ef.png",
+          "sizes": "96x96"
+        }
+      ]
+    },
+    {
+      "name": "Meu Perfil",
+      "short_name": "Perfil",
+      "description": "Acesse seu perfil",
+      "url": "/perfil",
       "icons": [
         {
           "src": "/lovable-uploads/66d87de3-4ebd-4f4b-9d3f-c9bbb3e3c4ef.png",
@@ -84,9 +96,5 @@
       ]
     }
   ],
-  "prefer_related_applications": false,
-  "display_override": ["window-controls-overlay", "standalone"],
-  "launch_handler": {
-    "client_mode": "focus-existing"
-  }
+  "prefer_related_applications": false
 }

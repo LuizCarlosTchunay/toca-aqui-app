@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -8,7 +9,7 @@ import { usePWA } from "@/hooks/usePWA";
 
 const Index = () => {
   const navigate = useNavigate();
-  const { isInstallable, isInstalled, installApp, hasNativePrompt } = usePWA();
+  const { isInstallable, isInstalled, installApp } = usePWA();
 
   const features = [
     {
@@ -36,19 +37,7 @@ const Index = () => {
   ];
 
   const handleInstallClick = async () => {
-    console.log('Install button clicked, hasNativePrompt:', hasNativePrompt);
-    const success = await installApp();
-    
-    if (success) {
-      // App was installed successfully
-      console.log('App installed successfully');
-    } else if (hasNativePrompt) {
-      // User dismissed the prompt
-      console.log('User dismissed install prompt');
-    } else {
-      // Manual instructions were shown
-      console.log('Manual installation instructions shown');
-    }
+    await installApp();
   };
 
   return (
@@ -78,33 +67,23 @@ const Index = () => {
               de forma rápida, segura e prática.
             </p>
             
-            {/* PWA Install Button - Sempre visível quando não instalado */}
-            {isInstallable && (
-              <div className="mb-8 p-6 bg-gradient-to-r from-toca-accent/20 to-toca-accent/10 border border-toca-accent rounded-lg backdrop-blur-sm max-w-md mx-auto">
-                <div className="flex items-center justify-center gap-2 text-toca-accent mb-3">
-                  <Smartphone size={24} />
-                  <span className="font-bold text-lg">📱 Instale nosso app!</span>
+            {/* PWA Install Banner - Visível sempre que for instalável */}
+            {isInstallable && !isInstalled && (
+              <div className="mb-8 p-4 bg-gradient-to-r from-toca-accent/20 to-toca-accent/10 border border-toca-accent rounded-lg backdrop-blur-sm">
+                <div className="flex items-center justify-center gap-2 text-toca-accent mb-2">
+                  <Smartphone size={20} />
+                  <span className="font-semibold">📱 Instale nosso app!</span>
                 </div>
-                <p className="text-sm text-white mb-4">
-                  {hasNativePrompt 
-                    ? "Clique para instalar diretamente na sua tela inicial"
-                    : "Tenha acesso rápido, notificações e funcionalidades offline"
-                  }
+                <p className="text-sm text-white mb-3">
+                  Tenha acesso rápido, notificações e funcionalidades offline
                 </p>
                 <Button 
                   onClick={handleInstallClick}
-                  className="w-full bg-toca-accent hover:bg-toca-accent-hover text-white shadow-lg text-lg py-3"
-                  size="lg"
+                  className="bg-toca-accent hover:bg-toca-accent-hover text-white shadow-lg"
                 >
-                  <Download size={20} className="mr-2" />
-                  {hasNativePrompt ? "Instalar Diretamente" : "Ver Como Instalar"}
+                  <Download size={16} className="mr-2" />
+                  Instalar Agora
                 </Button>
-                <p className="text-xs text-toca-text-secondary mt-2">
-                  {hasNativePrompt 
-                    ? "Instalação direta • Sem precisar do menu do Chrome"
-                    : "Funciona offline • Notificações • Acesso rápido"
-                  }
-                </p>
               </div>
             )}
             
