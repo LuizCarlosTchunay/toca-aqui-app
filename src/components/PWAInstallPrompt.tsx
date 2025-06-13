@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Download, X, Smartphone } from 'lucide-react';
+import { Download, X, Smartphone, Monitor } from 'lucide-react';
 import { usePWA } from '@/hooks/usePWA';
 import { useIsMobile } from '@/hooks/use-mobile';
 
@@ -18,7 +18,7 @@ const PWAInstallPrompt = () => {
     if (!isInstalled && !hasBeenDismissed && isInstallable) {
       const timer = setTimeout(() => {
         setShowPrompt(true);
-      }, isMobile ? 2000 : 3000);
+      }, isMobile ? 1500 : 3000);
       return () => clearTimeout(timer);
     }
   }, [isInstallable, isInstalled, isMobile]);
@@ -29,6 +29,9 @@ const PWAInstallPrompt = () => {
       if (success) {
         setShowPrompt(false);
       }
+    } else {
+      // Show manual instructions
+      console.log('Showing manual install instructions');
     }
   };
 
@@ -76,21 +79,11 @@ const PWAInstallPrompt = () => {
             <span>Funciona offline • Notificações • Acesso rápido</span>
           </div>
 
-          {canInstallDirectly ? (
-            <div className="space-y-2">
-              <Button
-                onClick={handleInstall}
-                className="w-full bg-toca-accent hover:bg-toca-accent-hover text-white font-semibold"
-              >
-                <Download size={16} className="mr-2" />
-                Instalar Agora
-              </Button>
-            </div>
-          ) : isIOS && isSafari ? (
+          {isIOS && isSafari ? (
             <div className="space-y-2">
               <div className="text-xs text-toca-text-secondary space-y-1 p-3 bg-toca-background rounded border border-toca-border">
-                <p className="font-semibold text-toca-accent">📱 Para instalar no Safari (iOS):</p>
-                <p>1. Toque no ícone de compartilhar ↗️ (no centro inferior)</p>
+                <p className="font-semibold text-toca-accent">📱 Para instalar no iOS Safari:</p>
+                <p>1. Toque no ícone de compartilhar ↗️</p>
                 <p>2. Role para baixo e toque em "Adicionar à Tela de Início"</p>
                 <p>3. Toque em "Adicionar" no canto superior direito</p>
               </div>
@@ -101,74 +94,41 @@ const PWAInstallPrompt = () => {
                 Entendi
               </Button>
             </div>
-          ) : isChrome && isAndroid ? (
+          ) : (isChrome || isEdge) && (isAndroid || isMobile) ? (
             <div className="space-y-2">
-              <div className="text-xs text-toca-text-secondary space-y-2 p-3 bg-toca-background rounded border border-toca-border">
-                <p className="font-semibold text-toca-accent">📱 Como instalar no Chrome Android:</p>
-                
-                <div className="bg-toca-card p-2 rounded border-l-2 border-toca-accent">
-                  <p className="font-medium text-white mb-1">🔥 MÉTODO 1 - Mais Fácil:</p>
-                  <p>• Procure por um ícone de download (⬇️) na barra de endereços</p>
-                  <p>• OU um banner "Instalar app" que pode aparecer na parte inferior</p>
-                  <p>• Toque para instalar diretamente!</p>
-                </div>
-
-                <div className="bg-toca-card p-2 rounded border-l-2 border-yellow-500">
-                  <p className="font-medium text-white mb-1">📱 MÉTODO 2 - Menu Chrome:</p>
-                  <p>1. Toque nos 3 pontos (⋮) no canto superior direito</p>
-                  <p>2. Procure por:</p>
-                  <p className="ml-2">• "Instalar app" OU</p>
-                  <p className="ml-2">• "Adicionar à tela inicial" OU</p>
-                  <p className="ml-2">• "Adicionar ao Chrome"</p>
-                  <p>3. Confirme a instalação</p>
-                </div>
-
-                <div className="bg-green-900/20 p-2 rounded border-l-2 border-green-500">
-                  <p className="text-green-300 text-xs">💡 Se não encontrar essas opções, pode ser que seu Chrome precise ser atualizado na Play Store!</p>
-                </div>
-              </div>
+              <Button
+                onClick={handleInstall}
+                className="w-full bg-toca-accent hover:bg-toca-accent-hover text-white font-semibold"
+              >
+                <Download size={16} className="mr-2" />
+                {canInstallDirectly ? 'Instalar Agora' : 'Como Instalar'}
+              </Button>
               
-              <Button
-                onClick={handleDismiss}
-                className="w-full bg-toca-accent hover:bg-toca-accent-hover"
-              >
-                Entendi, vou tentar!
-              </Button>
-            </div>
-          ) : isEdge && isAndroid ? (
-            <div className="space-y-2">
-              <div className="text-xs text-toca-text-secondary space-y-1 p-3 bg-toca-background rounded border border-toca-border">
-                <p className="font-semibold text-toca-accent">📱 Para instalar no Microsoft Edge:</p>
-                <p>1. Toque nos 3 pontos (...) no menu inferior</p>
-                <p>2. Procure por "Aplicativos" ou "Apps"</p>
-                <p>3. Toque em "Instalar este site como aplicativo"</p>
-                <p>4. Confirme tocando em "Instalar"</p>
-              </div>
-              <Button
-                onClick={handleDismiss}
-                className="w-full bg-toca-accent hover:bg-toca-accent-hover"
-              >
-                Entendi
-              </Button>
+              {!canInstallDirectly && (
+                <div className="text-xs text-toca-text-secondary space-y-1 p-3 bg-toca-background rounded border border-toca-border">
+                  <p className="font-semibold text-toca-accent">📱 Como instalar no {isChrome ? 'Chrome' : 'Edge'}:</p>
+                  <p>1. Toque no menu (⋮) no canto superior direito</p>
+                  <p>2. Selecione "Adicionar à tela inicial" ou "Instalar app"</p>
+                  <p>3. Confirme tocando em "Adicionar" ou "Instalar"</p>
+                  <p className="text-toca-accent">💡 O app aparecerá como ícone na sua tela inicial!</p>
+                </div>
+              )}
             </div>
           ) : (
             <div className="space-y-2">
-              <div className="text-xs text-toca-text-secondary space-y-1 p-3 bg-toca-background rounded border border-toca-border">
-                <p className="font-semibold text-toca-accent">📱 Para instalar como app:</p>
-                <p>• Procure por um ícone de download na barra de endereços</p>
-                <p>• OU acesse o menu do seu navegador</p>
-                <p>• Procure por opções como:</p>
-                <p className="ml-2">- "Instalar app"</p>
-                <p className="ml-2">- "Adicionar à tela inicial"</p>
-                <p className="ml-2">- "Adicionar ao Chrome/Edge"</p>
-                <p>• O app ficará disponível como ícone nativo!</p>
-              </div>
               <Button
-                onClick={handleDismiss}
+                onClick={handleInstall}
                 className="w-full bg-toca-accent hover:bg-toca-accent-hover"
               >
-                Entendi
+                <Download size={16} className="mr-2" />
+                Instalar App
               </Button>
+              <div className="text-xs text-toca-text-secondary space-y-1 p-3 bg-toca-background rounded border border-toca-border">
+                <p className="font-semibold text-toca-accent">📱 Para instalar:</p>
+                <p>• Use o menu do seu navegador</p>
+                <p>• Procure por "Adicionar à tela inicial" ou "Instalar app"</p>
+                <p>• O app ficará disponível como ícone nativo!</p>
+              </div>
             </div>
           )}
         </CardContent>

@@ -31,11 +31,10 @@ export const usePWA = () => {
     };
 
     const installed = checkInstalled();
-    console.log('PWA Status - Is installed:', installed);
 
     // Listen for beforeinstallprompt event
     const handleBeforeInstallPrompt = (e: Event) => {
-      console.log('beforeinstallprompt event fired - PWA is installable');
+      console.log('beforeinstallprompt event fired');
       e.preventDefault();
       setDeferredPrompt(e as BeforeInstallPromptEvent);
       setIsInstallable(true);
@@ -43,7 +42,7 @@ export const usePWA = () => {
 
     // Listen for appinstalled event
     const handleAppInstalled = () => {
-      console.log('App was installed successfully');
+      console.log('App was installed');
       setIsInstalled(true);
       setIsInstallable(false);
       setDeferredPrompt(null);
@@ -59,34 +58,21 @@ export const usePWA = () => {
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
 
-    // Enhanced PWA criteria check for mobile browsers
+    // For mobile browsers, check if PWA criteria are met
     if (!installed && 'serviceWorker' in navigator) {
+      // Check if PWA criteria are met for mobile browsers
       const checkPWACriteria = () => {
         const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
         const isSecure = location.protocol === 'https:' || location.hostname === 'localhost';
         const hasManifest = document.querySelector('link[rel="manifest"]');
-        const isChrome = /Chrome/.test(navigator.userAgent) && /Google Inc/.test(navigator.vendor);
-        const isEdge = /Edg/.test(navigator.userAgent);
-        const isSafari = /Safari/.test(navigator.userAgent) && !/Chrome/.test(navigator.userAgent);
         
-        console.log('PWA Criteria Check:', {
-          isMobile,
-          isSecure,
-          hasManifest: !!hasManifest,
-          isChrome,
-          isEdge,
-          isSafari
-        });
-        
-        // Always show installable prompt on mobile if basic criteria are met
         if (isMobile && isSecure && hasManifest) {
-          console.log('PWA is installable on mobile device');
           setIsInstallable(true);
         }
       };
 
-      // Delay to ensure DOM and manifest are fully loaded
-      setTimeout(checkPWACriteria, 2000);
+      // Small delay to ensure DOM is ready
+      setTimeout(checkPWACriteria, 1000);
     }
 
     return () => {
@@ -100,25 +86,26 @@ export const usePWA = () => {
   const installApp = async () => {
     if (deferredPrompt) {
       try {
-        console.log('Triggering PWA install prompt...');
+        console.log('Triggering install prompt');
         await deferredPrompt.prompt();
         const choiceResult = await deferredPrompt.userChoice;
         
         if (choiceResult.outcome === 'accepted') {
-          console.log('User accepted the PWA install prompt');
+          console.log('User accepted the install prompt');
           setIsInstallable(false);
           setDeferredPrompt(null);
           return true;
         } else {
-          console.log('User dismissed the PWA install prompt');
+          console.log('User dismissed the install prompt');
         }
         return false;
       } catch (error) {
-        console.error('Error during PWA installation:', error);
+        console.error('Error installing app:', error);
         return false;
       }
     }
     
+    // Fallback for browsers that don't support beforeinstallprompt
     console.log('No deferred prompt available - showing manual instructions');
     return false;
   };
