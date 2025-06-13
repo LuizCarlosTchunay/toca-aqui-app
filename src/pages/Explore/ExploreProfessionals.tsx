@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, Filter, ChevronLeft, MapPin, AlertCircle } from "lucide-react";
+import { Search, Filter, Music, Film, Camera, Disc, Users, ChevronLeft, MapPin, AlertCircle } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
@@ -31,9 +31,11 @@ interface Professional {
 const ExploreProfessionals = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const initialType = searchParams.get('tipo') || "";
   
   const [showFilters, setShowFilters] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  const [activeType, setActiveType] = useState(initialType);
   const [hasOngoingReservation, setHasOngoingReservation] = useState(false);
   const [filters, setFilters] = useState({
     city: "",
@@ -52,9 +54,9 @@ const ExploreProfessionals = () => {
   }, []);
 
   const { data: professionals = [], isLoading, isError } = useQuery({
-    queryKey: ['professionals'],
+    queryKey: ['professionals', activeType],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from("profissionais")
         .select(`
           id,
@@ -73,6 +75,18 @@ const ExploreProfessionals = () => {
           youtube_url
         `);
       
+      // Apply type filter if active, making sure to normalize for "Músico" variations
+      if (activeType) {
+        if (activeType === "Músico") {
+          // Handle both "Músico" and "Musico" when filtering
+          query = query.or('tipo_profissional.eq.Músico,tipo_profissional.eq.Musico');
+        } else {
+          query = query.eq('tipo_profissional', activeType);
+        }
+      }
+      
+      const { data, error } = await query;
+
       if (error) {
         console.error("Erro ao buscar profissionais:", error);
         throw error;
@@ -237,6 +251,44 @@ const ExploreProfessionals = () => {
       )}
 
       <div className="mb-6">
+        <div className="flex overflow-x-auto scrollbar-hide pb-4 gap-2 mb-4">
+          <Button
+            variant={activeType === "" ? "default" : "outline"}
+            className={activeType === "" ? "bg-toca-accent hover:bg-toca-accent-hover" : "bg-black text-white hover:bg-gray-800"}
+            onClick={() => setActiveType("")}
+          >
+            <Users size={18} className="mr-2" /> Todos
+          </Button>
+          <Button
+            variant={activeType === "Músico" ? "default" : "outline"}
+            className={activeType === "Músico" ? "bg-toca-accent hover:bg-toca-accent-hover" : "bg-black text-white hover:bg-gray-800"}
+            onClick={() => setActiveType(activeType === "Músico" ? "" : "Músico")}
+          >
+            <Music size={18} className="mr-2" /> Músicos
+          </Button>
+          <Button
+            variant={activeType === "DJ" ? "default" : "outline"}
+            className={activeType === "DJ" ? "bg-toca-accent hover:bg-toca-accent-hover" : "bg-black text-white hover:bg-gray-800"}
+            onClick={() => setActiveType(activeType === "DJ" ? "" : "DJ")}
+          >
+            <Disc size={18} className="mr-2" /> DJs
+          </Button>
+          <Button
+            variant={activeType === "Fotógrafo" ? "default" : "outline"}
+            className={activeType === "Fotógrafo" ? "bg-toca-accent hover:bg-toca-accent-hover" : "bg-black text-white hover:bg-gray-800"}
+            onClick={() => setActiveType(activeType === "Fotógrafo" ? "" : "Fotógrafo")}
+          >
+            <Camera size={18} className="mr-2" /> Fotógrafos
+          </Button>
+          <Button
+            variant={activeType === "Filmmaker" ? "default" : "outline"}
+            className={activeType === "Filmmaker" ? "bg-toca-accent hover:bg-toca-accent-hover" : "bg-black text-white hover:bg-gray-800"}
+            onClick={() => setActiveType(activeType === "Filmmaker" ? "" : "Filmmaker")}
+          >
+            <Film size={18} className="mr-2" /> Filmmakers
+          </Button>
+        </div>
+
         <div className="flex flex-col md:flex-row gap-4">
           <div className="flex-1 relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-toca-text-secondary" size={18} />
@@ -387,6 +439,7 @@ const ExploreProfessionals = () => {
               className="bg-black text-toca-accent hover:bg-gray-900"
               onClick={() => {
                 setSearchTerm("");
+                setActiveType("");
                 setFilters({ city: "", state: "", minPrice: "", maxPrice: "", rating: "" });
               }}
             >
