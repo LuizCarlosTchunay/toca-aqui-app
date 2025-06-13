@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import ProfileCard from "@/components/ProfileCard";
 import { Button } from "@/components/ui/button";
@@ -251,41 +250,61 @@ const ExploreProfessionals = () => {
       )}
 
       <div className="mb-6">
-        <div className="flex overflow-x-auto scrollbar-hide pb-4 gap-2 mb-4">
+        <div className="flex flex-wrap gap-2 sm:gap-3 mb-4 justify-center sm:justify-start">
           <Button
             variant={activeType === "" ? "default" : "outline"}
-            className={activeType === "" ? "bg-toca-accent hover:bg-toca-accent-hover" : "bg-black text-white hover:bg-gray-800"}
+            className={`
+              ${activeType === "" ? "bg-toca-accent hover:bg-toca-accent-hover text-white" : "bg-black text-white hover:bg-gray-800"}
+              text-xs sm:text-sm px-2 sm:px-4 py-2 min-w-0 flex-shrink-0 whitespace-nowrap
+            `}
             onClick={() => setActiveType("")}
           >
-            <Users size={18} className="mr-2" /> Todos
+            <Users size={16} className="mr-1 sm:mr-2 flex-shrink-0" /> 
+            <span className="truncate">Todos</span>
           </Button>
           <Button
             variant={activeType === "Músico" ? "default" : "outline"}
-            className={activeType === "Músico" ? "bg-toca-accent hover:bg-toca-accent-hover" : "bg-black text-white hover:bg-gray-800"}
+            className={`
+              ${activeType === "Músico" ? "bg-toca-accent hover:bg-toca-accent-hover text-white" : "bg-black text-white hover:bg-gray-800"}
+              text-xs sm:text-sm px-2 sm:px-4 py-2 min-w-0 flex-shrink-0 whitespace-nowrap
+            `}
             onClick={() => setActiveType(activeType === "Músico" ? "" : "Músico")}
           >
-            <Music size={18} className="mr-2" /> Músicos
+            <Music size={16} className="mr-1 sm:mr-2 flex-shrink-0" /> 
+            <span className="truncate">Músicos</span>
           </Button>
           <Button
             variant={activeType === "DJ" ? "default" : "outline"}
-            className={activeType === "DJ" ? "bg-toca-accent hover:bg-toca-accent-hover" : "bg-black text-white hover:bg-gray-800"}
+            className={`
+              ${activeType === "DJ" ? "bg-toca-accent hover:bg-toca-accent-hover text-white" : "bg-black text-white hover:bg-gray-800"}
+              text-xs sm:text-sm px-2 sm:px-4 py-2 min-w-0 flex-shrink-0 whitespace-nowrap
+            `}
             onClick={() => setActiveType(activeType === "DJ" ? "" : "DJ")}
           >
-            <Disc size={18} className="mr-2" /> DJs
+            <Disc size={16} className="mr-1 sm:mr-2 flex-shrink-0" /> 
+            <span className="truncate">DJs</span>
           </Button>
           <Button
             variant={activeType === "Fotógrafo" ? "default" : "outline"}
-            className={activeType === "Fotógrafo" ? "bg-toca-accent hover:bg-toca-accent-hover" : "bg-black text-white hover:bg-gray-800"}
+            className={`
+              ${activeType === "Fotógrafo" ? "bg-toca-accent hover:bg-toca-accent-hover text-white" : "bg-black text-white hover:bg-gray-800"}
+              text-xs sm:text-sm px-2 sm:px-4 py-2 min-w-0 flex-shrink-0 whitespace-nowrap
+            `}
             onClick={() => setActiveType(activeType === "Fotógrafo" ? "" : "Fotógrafo")}
           >
-            <Camera size={18} className="mr-2" /> Fotógrafos
+            <Camera size={16} className="mr-1 sm:mr-2 flex-shrink-0" /> 
+            <span className="truncate">Fotógrafos</span>
           </Button>
           <Button
             variant={activeType === "Filmmaker" ? "default" : "outline"}
-            className={activeType === "Filmmaker" ? "bg-toca-accent hover:bg-toca-accent-hover" : "bg-black text-white hover:bg-gray-800"}
+            className={`
+              ${activeType === "Filmmaker" ? "bg-toca-accent hover:bg-toca-accent-hover text-white" : "bg-black text-white hover:bg-gray-800"}
+              text-xs sm:text-sm px-2 sm:px-4 py-2 min-w-0 flex-shrink-0 whitespace-nowrap
+            `}
             onClick={() => setActiveType(activeType === "Filmmaker" ? "" : "Filmmaker")}
           >
-            <Film size={18} className="mr-2" /> Filmmakers
+            <Film size={16} className="mr-1 sm:mr-2 flex-shrink-0" /> 
+            <span className="truncate">Filmmakers</span>
           </Button>
         </div>
 
