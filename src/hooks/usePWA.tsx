@@ -15,13 +15,13 @@ export const usePWA = () => {
   useEffect(() => {
     // Check if app is already installed
     const checkInstalled = () => {
-      // Verifica se está rodando como PWA
+      // Check if running as PWA
       if (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) {
         setIsInstalled(true);
         return true;
       }
       
-      // Verifica se está no iOS como PWA
+      // Check if iOS PWA
       if (window.navigator && (window.navigator as any).standalone) {
         setIsInstalled(true);
         return true;
@@ -32,35 +32,48 @@ export const usePWA = () => {
 
     const installed = checkInstalled();
 
-    // Se não está instalado, considera como instalável (especialmente para mobile)
-    if (!installed) {
-      setIsInstallable(true);
-    }
-
-    // Listen for beforeinstallprompt event (principalmente desktop/Android Chrome)
+    // Listen for beforeinstallprompt event
     const handleBeforeInstallPrompt = (e: Event) => {
+      console.log('beforeinstallprompt event fired');
       e.preventDefault();
       setDeferredPrompt(e as BeforeInstallPromptEvent);
       setIsInstallable(true);
-      console.log('beforeinstallprompt event fired');
     };
 
     // Listen for appinstalled event
     const handleAppInstalled = () => {
+      console.log('App was installed');
       setIsInstalled(true);
       setIsInstallable(false);
       setDeferredPrompt(null);
-      console.log('App was installed');
     };
 
     // Listen for online/offline status
     const handleOnline = () => setIsOnline(true);
     const handleOffline = () => setIsOnline(false);
 
+    // Add event listeners
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
     window.addEventListener('appinstalled', handleAppInstalled);
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
+
+    // For mobile browsers, check if PWA criteria are met
+    if (!installed && 'serviceWorker' in navigator) {
+      // Check if PWA criteria are met for mobile browsers
+      const checkPWACriteria = () => {
+        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        const isSecure = location.protocol === 'https:' || location.hostname === 'localhost';
+        const hasManifest = document.querySelector('link[rel="manifest"]');
+        
+        if (isMobile && isSecure && hasManifest) {
+          setIsInstallable(true);
+        }
+      };
+
+      // Small delay to ensure DOM is ready
+      setTimeout(checkPWACriteria, 1000);
+    }
 
     return () => {
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
@@ -71,34 +84,37 @@ export const usePWA = () => {
   }, []);
 
   const installApp = async () => {
-    if (!deferredPrompt) {
-      console.log('No deferred prompt available');
-      return false;
-    }
-
-    try {
-      await deferredPrompt.prompt();
-      const choiceResult = await deferredPrompt.userChoice;
-      
-      if (choiceResult.outcome === 'accepted') {
-        console.log('User accepted the install prompt');
-        setIsInstallable(false);
-        setDeferredPrompt(null);
-        return true;
-      } else {
-        console.log('User dismissed the install prompt');
+    if (deferredPrompt) {
+      try {
+        console.log('Triggering install prompt');
+        await deferredPrompt.prompt();
+        const choiceResult = await deferredPrompt.userChoice;
+        
+        if (choiceResult.outcome === 'accepted') {
+          console.log('User accepted the install prompt');
+          setIsInstallable(false);
+          setDeferredPrompt(null);
+          return true;
+        } else {
+          console.log('User dismissed the install prompt');
+        }
+        return false;
+      } catch (error) {
+        console.error('Error installing app:', error);
+        return false;
       }
-      return false;
-    } catch (error) {
-      console.error('Error installing app:', error);
-      return false;
     }
+    
+    // Fallback for browsers that don't support beforeinstallprompt
+    console.log('No deferred prompt available - showing manual instructions');
+    return false;
   };
 
   return {
     isInstallable,
     isInstalled,
     isOnline,
-    installApp
+    installApp,
+    canInstallDirectly: !!deferredPrompt
   };
 };
