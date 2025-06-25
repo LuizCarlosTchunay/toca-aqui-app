@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import Navbar from "@/components/Navbar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,6 +9,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { createNotification } from "@/utils/notifications";
 
 const MyApplications = () => {
   const navigate = useNavigate();
@@ -23,6 +23,7 @@ const MyApplications = () => {
     queryFn: async () => {
       if (!user) return null;
       
+      // RLS will automatically filter to user's own professional profile
       const { data, error } = await supabase
         .from('profissionais')
         .select('*')
@@ -45,6 +46,7 @@ const MyApplications = () => {
     queryFn: async () => {
       if (!professionalData?.id) return [];
       
+      // RLS will automatically filter to this professional's applications
       const { data, error } = await supabase
         .from('candidaturas')
         .select(`
@@ -78,7 +80,8 @@ const MyApplications = () => {
         status: app.status || "pendente",
         applied: app.data_candidatura ? new Date(app.data_candidatura).toLocaleDateString('pt-BR') : "",
         eventId: app.eventos?.id || "",
-        message: app.mensagem || ""
+        message: app.mensagem || "",
+        contractorId: app.eventos?.contratante_id || ""
       }));
     },
     enabled: !!professionalData?.id
@@ -130,7 +133,7 @@ const MyApplications = () => {
     }
   };
 
-  const handleCancelApplication = async (applicationId: string) => {
+  const handleCancelApplication = async (applicationId: string, contractorId: string, eventTitle: string) => {
     if (!user || !professionalData) {
       toast.error("Erro: usuário não autenticado");
       return;
@@ -140,16 +143,27 @@ const MyApplications = () => {
     setCancellingApplications(prev => new Set(prev).add(applicationId));
 
     try {
+      // RLS will automatically ensure user can only update their own applications
       const { error } = await supabase
         .from('candidaturas')
         .update({ status: 'cancelada' })
-        .eq('id', applicationId)
-        .eq('profissional_id', professionalData.id);
+        .eq('id', applicationId);
 
       if (error) {
         console.error('Error cancelling application:', error);
         toast.error("Erro ao cancelar candidatura");
         return;
+      }
+
+      // Create notification for the contractor
+      if (contractorId) {
+        await createNotification(
+          contractorId,
+          "application",
+          "Candidatura cancelada",
+          `Um profissional cancelou sua candidatura para o evento "${eventTitle}".`,
+          `/eventos/${applications.find(app => app.id === applicationId)?.eventId}`
+        );
       }
 
       // Refresh the applications list
@@ -250,7 +264,7 @@ const MyApplications = () => {
                           className="ml-4 text-red-400 border-red-400 hover:bg-red-400/10"
                           size="sm"
                           disabled={cancellingApplications.has(application.id)}
-                          onClick={() => handleCancelApplication(application.id)}
+                          onClick={() => handleCancelApplication(application.id, application.contractorId, application.event)}
                         >
                           {cancellingApplications.has(application.id) ? "Cancelando..." : "Cancelar candidatura"}
                         </Button>

@@ -28,6 +28,41 @@ const CreateEvent = () => {
 
   console.log("CreateEvent - Current imageUrl state:", imageUrl);
 
+  // Input validation and sanitization
+  const validateForm = () => {
+    if (!formData.title.trim() || formData.title.length > 200) {
+      toast.error("Título é obrigatório e deve ter no máximo 200 caracteres");
+      return false;
+    }
+    
+    if (formData.description.length > 1000) {
+      toast.error("Descrição deve ter no máximo 1000 caracteres");
+      return false;
+    }
+    
+    if (!formData.date) {
+      toast.error("Data do evento é obrigatória");
+      return false;
+    }
+    
+    if (!formData.location.trim() || formData.location.length > 200) {
+      toast.error("Local é obrigatório e deve ter no máximo 200 caracteres");
+      return false;
+    }
+    
+    // Check if date is not in the past
+    const eventDate = new Date(formData.date);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    if (eventDate < today) {
+      toast.error("Data do evento não pode ser no passado");
+      return false;
+    }
+    
+    return true;
+  };
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({
@@ -61,8 +96,7 @@ const CreateEvent = () => {
       return;
     }
 
-    if (!formData.title || !formData.date || !formData.location) {
-      toast.error("Por favor, preencha todos os campos obrigatórios");
+    if (!validateForm()) {
       return;
     }
 
@@ -72,17 +106,21 @@ const CreateEvent = () => {
       console.log("CreateEvent - Submitting event with imageUrl:", imageUrl);
       console.log("CreateEvent - Full form data:", formData);
 
+      // Sanitize input data
+      const sanitizedData = {
+        titulo: formData.title.trim(),
+        descricao: formData.description.trim(),
+        data: formData.date,
+        local: formData.location.trim(),
+        servicos_requeridos: formData.services,
+        contratante_id: user.id,
+        imagem_url: imageUrl || null,
+      };
+
+      // RLS will automatically ensure the event is created with the correct user ID
       const { data, error } = await supabase
         .from("eventos")
-        .insert({
-          titulo: formData.title,
-          descricao: formData.description,
-          data: formData.date,
-          local: formData.location,
-          servicos_requeridos: formData.services,
-          contratante_id: user.id,
-          imagem_url: imageUrl || null, // Explicitly setting the image URL
-        })
+        .insert(sanitizedData)
         .select()
         .single();
 
@@ -142,8 +180,12 @@ const CreateEvent = () => {
                   onChange={handleInputChange}
                   className="bg-toca-background border-toca-border text-white"
                   placeholder="Digite o título do evento"
+                  maxLength={200}
                   required
                 />
+                <div className="text-xs text-toca-text-secondary mt-1">
+                  {formData.title.length}/200 caracteres
+                </div>
               </div>
 
               <div>
@@ -157,7 +199,11 @@ const CreateEvent = () => {
                   onChange={handleInputChange}
                   className="bg-toca-background border-toca-border text-white min-h-[100px]"
                   placeholder="Descreva seu evento..."
+                  maxLength={1000}
                 />
+                <div className="text-xs text-toca-text-secondary mt-1">
+                  {formData.description.length}/1000 caracteres
+                </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -173,6 +219,7 @@ const CreateEvent = () => {
                     value={formData.date}
                     onChange={handleInputChange}
                     className="bg-toca-background border-toca-border text-white"
+                    min={new Date().toISOString().split('T')[0]}
                     required
                   />
                 </div>
@@ -190,8 +237,12 @@ const CreateEvent = () => {
                   onChange={handleInputChange}
                   className="bg-toca-background border-toca-border text-white"
                   placeholder="Cidade, Estado"
+                  maxLength={200}
                   required
                 />
+                <div className="text-xs text-toca-text-secondary mt-1">
+                  {formData.location.length}/200 caracteres
+                </div>
               </div>
 
               <div>

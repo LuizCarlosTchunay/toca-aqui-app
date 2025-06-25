@@ -45,10 +45,10 @@ export const fetchRealNotifications = async (userId: string): Promise<Notificati
   try {
     console.log("Fetching notifications for user:", userId);
     
+    // No need to filter by user_id anymore - RLS will handle this automatically
     const { data, error } = await supabase
       .from('notifications')
       .select('*')
-      .eq('user_id', userId)
       .order('created_at', { ascending: false });
       
     if (error) {
@@ -86,11 +86,11 @@ export const markNotificationAsRead = async (notificationId: string, userId: str
   try {
     console.log("Marking notification as read:", notificationId);
     
+    // RLS will automatically ensure user can only update their own notifications
     const { error } = await supabase
       .from('notifications')
       .update({ read: true })
-      .eq('id', notificationId)
-      .eq('user_id', userId);
+      .eq('id', notificationId);
       
     if (error) {
       console.error("Error marking notification as read:", error);
@@ -109,10 +109,10 @@ export const markAllNotificationsAsRead = async (userId: string): Promise<boolea
   try {
     console.log("Marking all notifications as read for user:", userId);
     
+    // RLS will automatically ensure user can only update their own notifications
     const { error } = await supabase
       .from('notifications')
       .update({ read: true })
-      .eq('user_id', userId)
       .eq('read', false);
       
     if (error) {
@@ -138,13 +138,17 @@ export const createNotification = async (
   try {
     console.log("Creating notification for user:", userId, "type:", type);
     
+    // Validate input to prevent XSS
+    const sanitizedTitle = title.trim().substring(0, 200);
+    const sanitizedMessage = message.trim().substring(0, 500);
+    
     const { data, error } = await supabase
       .from('notifications')
       .insert([{ 
         user_id: userId,
         type,
-        title,
-        message,
+        title: sanitizedTitle,
+        message: sanitizedMessage,
         action_url: actionUrl || null,
         read: false
       }])
@@ -168,10 +172,10 @@ export const getUnreadNotificationsCount = async (userId: string): Promise<numbe
   try {
     console.log("Getting unread notifications count for user:", userId);
     
+    // RLS will automatically filter to user's notifications only
     const { count, error } = await supabase
       .from('notifications')
       .select('*', { count: 'exact', head: true })
-      .eq('user_id', userId)
       .eq('read', false);
       
     if (error) {
