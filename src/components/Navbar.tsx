@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+
+import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Menu, X, User, Search, Bell } from "lucide-react";
 import Logo from "./Logo";
@@ -6,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import UserAvatar from "./UserAvatar";
 import { useAuth } from "@/hooks/useAuth";
+import { getUnreadNotificationsCount } from "@/utils/notifications";
 
 interface NavbarProps {
   isAuthenticated?: boolean;
@@ -19,11 +21,30 @@ const Navbar: React.FC<NavbarProps> = ({
   onRoleToggle: propOnRoleToggle,
 }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
   const { user, signOut, currentRole: authCurrentRole, setCurrentRole } = useAuth();
   
   const isAuthenticated = propIsAuthenticated !== undefined ? propIsAuthenticated : !!user;
   const activeRole = propCurrentRole || authCurrentRole || "contratante";
   const navigate = useNavigate();
+
+  // Fetch unread notifications count
+  useEffect(() => {
+    const fetchUnreadCount = async () => {
+      if (user) {
+        const count = await getUnreadNotificationsCount(user.id);
+        setUnreadCount(count);
+      }
+    };
+
+    if (isAuthenticated && user) {
+      fetchUnreadCount();
+      
+      // Update count every 30 seconds
+      const interval = setInterval(fetchUnreadCount, 30000);
+      return () => clearInterval(interval);
+    }
+  }, [isAuthenticated, user]);
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
@@ -40,6 +61,10 @@ const Navbar: React.FC<NavbarProps> = ({
   const handleSignOut = async () => {
     await signOut();
     setIsMenuOpen(false);
+  };
+
+  const handleNotificationClick = () => {
+    navigate("/notificacoes");
   };
 
   return (
@@ -97,8 +122,18 @@ const Navbar: React.FC<NavbarProps> = ({
                   <Search size={20} />
                 </Button>
                 
-                <Button variant="ghost" size="icon" className="text-toca-text-secondary">
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="text-toca-text-secondary relative"
+                  onClick={handleNotificationClick}
+                >
                   <Bell size={20} />
+                  {unreadCount > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-toca-accent text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                      {unreadCount > 9 ? '9+' : unreadCount}
+                    </span>
+                  )}
                 </Button>
                 
                 <UserAvatar user={{ 
@@ -195,6 +230,18 @@ const Navbar: React.FC<NavbarProps> = ({
                   onClick={() => setIsMenuOpen(false)}
                 >
                   Eventos
+                </Link>
+                <Link
+                  to="/notificacoes"
+                  className="flex items-center justify-between px-4 py-2 text-toca-text-secondary hover:bg-toca-card"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  <span>Notificações</span>
+                  {unreadCount > 0 && (
+                    <span className="bg-toca-accent text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                      {unreadCount > 9 ? '9+' : unreadCount}
+                    </span>
+                  )}
                 </Link>
                 <Link
                   to="/configuracoes"

@@ -108,7 +108,7 @@ const Notifications = () => {
     }
     
     // Navigate to the target page
-    if (notification.actionUrl) {
+    if (notification.actionUrl && notification.actionUrl !== '#') {
       navigate(notification.actionUrl);
     }
   };
@@ -123,15 +123,17 @@ const Notifications = () => {
         <Card className="bg-toca-card border-toca-border">
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle>Suas Notificações</CardTitle>
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              className="text-toca-text-secondary"
-              onClick={handleMarkAllAsRead}
-              disabled={isLoading || notifications.every(n => n.read)}
-            >
-              Marcar todas como lidas
-            </Button>
+            {notifications.length > 0 && notifications.some(n => !n.read) && (
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="text-toca-text-secondary"
+                onClick={handleMarkAllAsRead}
+                disabled={isLoading}
+              >
+                Marcar todas como lidas
+              </Button>
+            )}
           </CardHeader>
           <CardContent>
             {isLoading ? (
@@ -163,7 +165,7 @@ const Notifications = () => {
             ) : (
               <div className="text-center py-10">
                 <Bell size={48} className="text-toca-text-secondary mx-auto mb-4" />
-                <p className="text-toca-text-secondary">Você não tem notificações novas.</p>
+                <p className="text-toca-text-secondary">Você não tem notificações.</p>
               </div>
             )}
           </CardContent>

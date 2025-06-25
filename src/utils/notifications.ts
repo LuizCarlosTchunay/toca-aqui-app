@@ -14,56 +14,6 @@ export type Notification = {
   user_id: string;
 };
 
-// Generate mock notifications for development
-export const getMockNotifications = (userId: string): Notification[] => {
-  return [
-    {
-      id: "1",
-      type: "booking",
-      title: "Nova reserva confirmada",
-      message: "Sua reserva para o evento 'Casamento Silva' foi confirmada.",
-      time: "há 2 horas",
-      read: false,
-      actionUrl: "/reservas/1",
-      created_at: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-      user_id: userId
-    },
-    {
-      id: "2",
-      type: "application",
-      title: "Candidatura aprovada",
-      message: "Sua candidatura para o evento 'Festival de Verão' foi aprovada.",
-      time: "há 1 dia",
-      read: true,
-      actionUrl: "/eventos/1",
-      created_at: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
-      user_id: userId
-    },
-    {
-      id: "3",
-      type: "payment",
-      title: "Pagamento recebido",
-      message: "Você recebeu um pagamento de R$1.500,00 referente ao evento 'Aniversário Empresarial'.",
-      time: "há 2 dias",
-      read: true,
-      actionUrl: "/pagamentos/3",
-      created_at: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-      user_id: userId
-    },
-    {
-      id: "4",
-      type: "review",
-      title: "Nova avaliação recebida",
-      message: "Maria Oliveira deixou uma avaliação de 5 estrelas para você.",
-      time: "há 3 dias",
-      read: true,
-      actionUrl: "/perfil-profissional",
-      created_at: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
-      user_id: userId
-    }
-  ];
-};
-
 // Format relative time (e.g. "2 hours ago")
 export const formatTimeAgo = (dateString: string) => {
   const date = new Date(dateString);
@@ -109,9 +59,8 @@ export const fetchRealNotifications = async (userId: string): Promise<Notificati
     console.log("Notifications data:", data);
     
     if (!data || data.length === 0) {
-      console.log("No notifications found, returning mock data");
-      // Return mock notifications if no real notifications found
-      return getMockNotifications(userId);
+      console.log("No notifications found for user");
+      return [];
     }
     
     // Transform database notifications to our app's notification format
@@ -128,7 +77,7 @@ export const fetchRealNotifications = async (userId: string): Promise<Notificati
     }));
   } catch (err) {
     console.error("Erro ao buscar notificações:", err);
-    return getMockNotifications(userId);
+    return [];
   }
 };
 
@@ -211,5 +160,28 @@ export const createNotification = async (
   } catch (err) {
     console.error("Erro ao criar notificação:", err);
     return false;
+  }
+};
+
+// Get unread notifications count
+export const getUnreadNotificationsCount = async (userId: string): Promise<number> => {
+  try {
+    console.log("Getting unread notifications count for user:", userId);
+    
+    const { count, error } = await supabase
+      .from('notifications')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', userId)
+      .eq('read', false);
+      
+    if (error) {
+      console.error("Error getting unread notifications count:", error);
+      return 0;
+    }
+    
+    return count || 0;
+  } catch (err) {
+    console.error("Erro ao obter contagem de notificações não lidas:", err);
+    return 0;
   }
 };
