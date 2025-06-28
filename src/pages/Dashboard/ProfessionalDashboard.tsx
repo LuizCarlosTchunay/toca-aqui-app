@@ -51,7 +51,12 @@ const ProfessionalDashboard = () => {
   const { data: professionalData } = useQuery({
     queryKey: ['professionalProfile', user?.id],
     queryFn: async () => {
-      if (!user) return null;
+      if (!user) {
+        console.log("No user found for professional profile");
+        return null;
+      }
+      
+      console.log("Fetching professional profile for user:", user.id);
       
       const { data, error } = await supabase
         .from('profissionais')
@@ -64,18 +69,24 @@ const ProfessionalDashboard = () => {
         return null;
       }
       
+      console.log("Professional profile found:", data);
       return data;
     },
     enabled: !!user
   });
   
-  // Fetch upcoming bookings - using separate queries to avoid ambiguity
+  // Fetch upcoming bookings - ONLY real data
   const { data: upcomingBookings = [], isLoading: bookingsLoading } = useQuery({
-    queryKey: ['professionalReservations', professionalData?.id],
+    queryKey: ['professionalRealReservations', professionalData?.id],
     queryFn: async () => {
-      if (!professionalData?.id) return [];
+      if (!professionalData?.id) {
+        console.log("No professional ID found, returning empty bookings");
+        return [];
+      }
       
-      // First get reservations
+      console.log("Fetching real reservations for professional:", professionalData.id);
+      
+      // First get reservations from reservas table
       const { data: reservas, error: reservasError } = await supabase
         .from('reservas')
         .select('id, status, data_reserva, evento_id')
@@ -83,89 +94,146 @@ const ProfessionalDashboard = () => {
         .order('data_reserva', { ascending: true });
         
       if (reservasError) {
-        console.error('Error fetching reservations:', reservasError);
+        console.error('Error fetching real reservations:', reservasError);
         return [];
       }
       
-      if (!reservas || reservas.length === 0) return [];
+      if (!reservas || reservas.length === 0) {
+        console.log("No real reservations found for professional:", professionalData.id);
+        return [];
+      }
+      
+      console.log("Found real reservations:", reservas);
+      
+      // Get unique event IDs
+      const eventoIds = [...new Set(reservas.map(r => r.evento_id).filter(Boolean))];
+      
+      if (eventoIds.length === 0) {
+        console.log("No event IDs found in reservations");
+        return [];
+      }
+      
+      console.log("Fetching events for reservation IDs:", eventoIds);
       
       // Then get events for those reservations
-      const eventoIds = reservas.map(r => r.evento_id).filter(Boolean);
       const { data: eventos, error: eventosError } = await supabase
         .from('eventos')
         .select('id, titulo, data, local')
         .in('id', eventoIds);
         
       if (eventosError) {
-        console.error('Error fetching events:', eventosError);
+        console.error('Error fetching events for reservations:', eventosError);
         return [];
       }
       
-      // Combine the data
-      return reservas.map(booking => {
+      console.log("Found events for reservations:", eventos);
+      
+      // Combine the real data
+      const realBookings = reservas.map(booking => {
         const evento = eventos?.find(e => e.id === booking.evento_id);
+        
+        if (!evento) {
+          console.warn("Event not found for reservation:", booking.id);
+          return null;
+        }
+        
         return {
           id: booking.id,
-          event: evento?.titulo || "Evento sem título",
-          date: evento?.data || "",
-          location: evento?.local || "",
-          city: evento?.local?.split(',')[0] || "",
-          state: evento?.local?.split(',')[1] || "",
+          event: evento.titulo || "Evento sem título",
+          date: evento.data ? new Date(evento.data).toLocaleDateString('pt-BR') : "Data não definida",
+          location: evento.local || "Local não definido",
+          city: evento.local?.split(',')[0]?.trim() || "Cidade não definida",
+          state: evento.local?.split(',')[1]?.trim() || "",
           status: booking.status,
           payment: "pending", // Default until we implement payment status
           value: 0 // Default until we implement pricing
         };
-      });
+      }).filter(Boolean); // Remove null entries
+      
+      console.log("Final real bookings data:", realBookings);
+      return realBookings;
     },
     enabled: !!professionalData?.id
   });
   
-  // Fetch applications - using separate queries to avoid ambiguity
+  // Fetch applications - ONLY real data
   const { data: applications = [], isLoading: applicationsLoading } = useQuery({
-    queryKey: ['professionalApplications', professionalData?.id],
+    queryKey: ['professionalRealApplications', professionalData?.id],
     queryFn: async () => {
-      if (!professionalData?.id) return [];
+      if (!professionalData?.id) {
+        console.log("No professional ID found, returning empty applications");
+        return [];
+      }
       
-      // First get applications
+      console.log("Fetching real applications for professional:", professionalData.id);
+      
+      // First get applications from candidaturas table
       const { data: candidaturas, error: candidaturasError } = await supabase
         .from('candidaturas')
         .select('id, status, data_candidatura, evento_id')
         .eq('profissional_id', professionalData.id)
-        .order('data_candidatura', { ascending: false });
+        .order('data_candidatura', { ascending: false })
+        .limit(5); // Show only recent 5 applications on dashboard
         
       if (candidaturasError) {
-        console.error('Error fetching applications:', candidaturasError);
+        console.error('Error fetching real applications:', candidaturasError);
         return [];
       }
       
-      if (!candidaturas || candidaturas.length === 0) return [];
+      if (!candidaturas || candidaturas.length === 0) {
+        console.log("No real applications found for professional:", professionalData.id);
+        return [];
+      }
+      
+      console.log("Found real applications:", candidaturas);
+      
+      // Get unique event IDs
+      const eventoIds = [...new Set(candidaturas.map(c => c.evento_id).filter(Boolean))];
+      
+      if (eventoIds.length === 0) {
+        console.log("No event IDs found in applications");
+        return [];
+      }
+      
+      console.log("Fetching events for application IDs:", eventoIds);
       
       // Then get events for those applications
-      const eventoIds = candidaturas.map(c => c.evento_id).filter(Boolean);
       const { data: eventos, error: eventosError } = await supabase
         .from('eventos')
         .select('id, titulo, data, local')
         .in('id', eventoIds);
         
       if (eventosError) {
-        console.error('Error fetching events:', eventosError);
+        console.error('Error fetching events for applications:', eventosError);
         return [];
       }
       
-      // Combine the data
-      return candidaturas.map(app => {
+      console.log("Found events for applications:", eventos);
+      
+      // Combine the real data
+      const realApplications = candidaturas.map(app => {
         const evento = eventos?.find(e => e.id === app.evento_id);
+        
+        if (!evento) {
+          console.warn("Event not found for application:", app.id);
+          return null;
+        }
+        
         return {
           id: app.id,
-          event: evento?.titulo || "Evento sem título",
-          date: evento?.data || "",
-          location: evento?.local || "",
-          city: evento?.local?.split(',')[0] || "",
-          state: evento?.local?.split(',')[1] || "",
+          event: evento.titulo || "Evento sem título",
+          date: evento.data ? new Date(evento.data).toLocaleDateString('pt-BR') : "Data não definida",
+          location: evento.local || "Local não definido",
+          city: evento.local?.split(',')[0]?.trim() || "Cidade não definida",
+          state: evento.local?.split(',')[1]?.trim() || "",
           status: app.status || "pendente",
-          applied: app.data_candidatura || ""
+          applied: app.data_candidatura ? new Date(app.data_candidatura).toISOString() : new Date().toISOString(),
+          eventId: evento.id
         };
-      });
+      }).filter(Boolean); // Remove null entries
+      
+      console.log("Final real applications data:", realApplications);
+      return realApplications;
     },
     enabled: !!professionalData?.id
   });
@@ -302,14 +370,14 @@ const ProfessionalDashboard = () => {
                             </span>
                           </Badge>
                           <div className="text-xs text-toca-text-secondary mt-1">
-                            Enviada em {new Date(application.applied).toLocaleDateString()}
+                            Enviada em {new Date(application.applied).toLocaleDateString('pt-BR')}
                           </div>
                         </div>
                       </div>
                       <Button 
                         variant="link" 
                         className="text-toca-accent p-0 h-auto mt-2" 
-                        onClick={() => navigate(`/eventos/${application.id}`)}
+                        onClick={() => navigate(`/eventos/${application.eventId}`)}
                       >
                         Ver evento <ChevronRight size={16} />
                       </Button>
@@ -318,7 +386,7 @@ const ProfessionalDashboard = () => {
                 </div>
               ) : (
                 <div className="text-center py-10">
-                  <p className="text-toca-text-secondary mb-4">Você ainda não enviou candidaturas.</p>
+                  <p className="text-toca-text-secondary mb-4">Você ainda não enviou candidaturas reais.</p>
                   <Button 
                     className="bg-toca-accent hover:bg-toca-accent-hover"
                     onClick={() => navigate("/eventos")}
@@ -416,9 +484,8 @@ const ProfessionalDashboard = () => {
               <CardTitle>Eventos Recomendados</CardTitle>
             </CardHeader>
             <CardContent>
-              {/* Fetch recommended events from the database in the future */}
               <div className="text-center py-10">
-                <p className="text-toca-text-secondary mb-4">Eventos recomendados aparecerão aqui.</p>
+                <p className="text-toca-text-secondary mb-4">Eventos recomendados baseados no seu perfil aparecerão aqui quando houver eventos disponíveis.</p>
                 <Button 
                   className="bg-toca-accent hover:bg-toca-accent-hover"
                   onClick={() => navigate("/eventos")}

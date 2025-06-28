@@ -22,9 +22,13 @@ const MyApplications = () => {
   const { data: professionalData } = useQuery({
     queryKey: ['professionalProfile', user?.id],
     queryFn: async () => {
-      if (!user) return null;
+      if (!user) {
+        console.log("No user found for professional profile");
+        return null;
+      }
       
-      // RLS will automatically filter to user's own professional profile
+      console.log("Fetching professional profile for user:", user.id);
+      
       const { data, error } = await supabase
         .from('profissionais')
         .select('*')
@@ -36,18 +40,24 @@ const MyApplications = () => {
         return null;
       }
       
+      console.log("Professional profile found:", data);
       return data;
     },
     enabled: !!user
   });
 
-  // Fetch real applications from Supabase - using separate queries to avoid ambiguity
+  // Fetch real applications from Supabase - ONLY real data
   const { data: applications = [], isLoading } = useQuery({
-    queryKey: ['myApplications', professionalData?.id],
+    queryKey: ['myRealApplications', professionalData?.id],
     queryFn: async () => {
-      if (!professionalData?.id) return [];
+      if (!professionalData?.id) {
+        console.log("No professional ID found, returning empty applications");
+        return [];
+      }
       
-      // First get applications
+      console.log("Fetching real applications for professional:", professionalData.id);
+      
+      // First get applications from candidaturas table
       const { data: candidaturas, error: candidaturasError } = await supabase
         .from('candidaturas')
         .select('id, status, data_candidatura, mensagem, evento_id')
@@ -55,41 +65,66 @@ const MyApplications = () => {
         .order('data_candidatura', { ascending: false });
         
       if (candidaturasError) {
-        console.error('Error fetching applications:', candidaturasError);
+        console.error('Error fetching real applications:', candidaturasError);
         return [];
       }
       
-      if (!candidaturas || candidaturas.length === 0) return [];
+      if (!candidaturas || candidaturas.length === 0) {
+        console.log("No real applications found for professional:", professionalData.id);
+        return [];
+      }
+      
+      console.log("Found real applications:", candidaturas);
+      
+      // Get unique event IDs
+      const eventoIds = [...new Set(candidaturas.map(c => c.evento_id).filter(Boolean))];
+      
+      if (eventoIds.length === 0) {
+        console.log("No event IDs found in applications");
+        return [];
+      }
+      
+      console.log("Fetching events for IDs:", eventoIds);
       
       // Then get events for those applications
-      const eventoIds = candidaturas.map(c => c.evento_id).filter(Boolean);
       const { data: eventos, error: eventosError } = await supabase
         .from('eventos')
         .select('id, titulo, data, local, contratante_id')
         .in('id', eventoIds);
         
       if (eventosError) {
-        console.error('Error fetching events:', eventosError);
+        console.error('Error fetching events for applications:', eventosError);
         return [];
       }
       
-      // Combine the data
-      return candidaturas.map(app => {
+      console.log("Found events for applications:", eventos);
+      
+      // Combine the real data
+      const realApplications = candidaturas.map(app => {
         const evento = eventos?.find(e => e.id === app.evento_id);
+        
+        if (!evento) {
+          console.warn("Event not found for application:", app.id);
+          return null;
+        }
+        
         return {
           id: app.id,
-          event: evento?.titulo || "Evento sem título",
-          date: evento?.data ? new Date(evento.data).toLocaleDateString('pt-BR') : "",
-          location: evento?.local || "",
-          city: evento?.local?.split(',')[0] || "",
-          state: evento?.local?.split(',')[1]?.trim() || "",
+          event: evento.titulo || "Evento sem título",
+          date: evento.data ? new Date(evento.data).toLocaleDateString('pt-BR') : "Data não definida",
+          location: evento.local || "Local não definido",
+          city: evento.local?.split(',')[0]?.trim() || "Cidade não definida",
+          state: evento.local?.split(',')[1]?.trim() || "",
           status: app.status || "pendente",
-          applied: app.data_candidatura ? new Date(app.data_candidatura).toLocaleDateString('pt-BR') : "",
-          eventId: evento?.id || "",
+          applied: app.data_candidatura ? new Date(app.data_candidatura).toLocaleDateString('pt-BR') : "Data não definida",
+          eventId: evento.id,
           message: app.mensagem || "",
-          contractorId: evento?.contratante_id || ""
+          contractorId: evento.contratante_id || ""
         };
-      });
+      }).filter(Boolean); // Remove null entries
+      
+      console.log("Final real applications data:", realApplications);
+      return realApplications;
     },
     enabled: !!professionalData?.id
   });
@@ -146,15 +181,17 @@ const MyApplications = () => {
       return;
     }
 
+    console.log("Cancelling application:", applicationId);
+
     // Add to cancelling set to show loading state
     setCancellingApplications(prev => new Set(prev).add(applicationId));
 
     try {
-      // RLS will automatically ensure user can only update their own applications
       const { error } = await supabase
         .from('candidaturas')
         .update({ status: 'cancelada' })
-        .eq('id', applicationId);
+        .eq('id', applicationId)
+        .eq('profissional_id', professionalData.id); // Extra security check
 
       if (error) {
         console.error('Error cancelling application:', error);
@@ -162,8 +199,11 @@ const MyApplications = () => {
         return;
       }
 
+      console.log("Application cancelled successfully");
+
       // Create notification for the contractor
       if (contractorId) {
+        console.log("Creating notification for contractor:", contractorId);
         await createNotification(
           contractorId,
           "application",
@@ -174,7 +214,7 @@ const MyApplications = () => {
       }
 
       // Refresh the applications list
-      queryClient.invalidateQueries({ queryKey: ['myApplications', professionalData.id] });
+      queryClient.invalidateQueries({ queryKey: ['myRealApplications', professionalData.id] });
       toast.success("Candidatura cancelada com sucesso");
 
     } catch (err) {
@@ -282,7 +322,7 @@ const MyApplications = () => {
               </div>
             ) : (
               <div className="text-center py-10">
-                <p className="text-toca-text-secondary mb-4">Você ainda não enviou candidaturas.</p>
+                <p className="text-toca-text-secondary mb-4">Você ainda não enviou candidaturas reais.</p>
                 <Button 
                   className="bg-toca-accent hover:bg-toca-accent-hover"
                   onClick={() => navigate("/eventos")}
