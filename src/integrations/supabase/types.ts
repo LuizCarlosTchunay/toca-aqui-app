@@ -52,6 +52,20 @@ export type Database = {
             referencedRelation: "profissionais"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "fk_avaliacoes_evento"
+            columns: ["evento_id"]
+            isOneToOne: false
+            referencedRelation: "eventos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_avaliacoes_profissional"
+            columns: ["profissional_id"]
+            isOneToOne: false
+            referencedRelation: "profissionais"
+            referencedColumns: ["id"]
+          },
         ]
       }
       candidaturas: {
@@ -89,6 +103,20 @@ export type Database = {
           },
           {
             foreignKeyName: "candidaturas_profissional_id_fkey"
+            columns: ["profissional_id"]
+            isOneToOne: false
+            referencedRelation: "profissionais"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_candidaturas_evento"
+            columns: ["evento_id"]
+            isOneToOne: false
+            referencedRelation: "eventos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_candidaturas_profissional"
             columns: ["profissional_id"]
             isOneToOne: false
             referencedRelation: "profissionais"
@@ -146,6 +174,20 @@ export type Database = {
           },
           {
             foreignKeyName: "carrinho_itens_profissional_id_fkey"
+            columns: ["profissional_id"]
+            isOneToOne: false
+            referencedRelation: "profissionais"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_carrinho_itens_carrinho"
+            columns: ["carrinho_id"]
+            isOneToOne: false
+            referencedRelation: "carrinhos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_carrinho_itens_profissional"
             columns: ["profissional_id"]
             isOneToOne: false
             referencedRelation: "profissionais"
@@ -276,6 +318,13 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "fk_pagamentos_reserva"
+            columns: ["reserva_id"]
+            isOneToOne: false
+            referencedRelation: "reservas"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "pagamentos_reserva_id_fkey"
             columns: ["reserva_id"]
             isOneToOne: false
@@ -307,6 +356,13 @@ export type Database = {
           url?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "fk_portfolio_profissional"
+            columns: ["profissional_id"]
+            isOneToOne: false
+            referencedRelation: "profissionais"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "portfolio_profissional_id_fkey"
             columns: ["profissional_id"]
@@ -396,6 +452,20 @@ export type Database = {
           status?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "fk_reservas_evento"
+            columns: ["evento_id"]
+            isOneToOne: false
+            referencedRelation: "eventos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_reservas_profissional"
+            columns: ["profissional_id"]
+            isOneToOne: false
+            referencedRelation: "profissionais"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "reservas_evento_id_fkey"
             columns: ["evento_id"]

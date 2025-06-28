@@ -1,5 +1,6 @@
 
 import { supabase } from "@/integrations/supabase/client";
+import { sanitizeText, validateNotificationData, logSecurityEvent } from "./securityValidation";
 
 // Type definition for a notification
 export type Notification = {
@@ -16,43 +17,60 @@ export type Notification = {
 
 // Format relative time (e.g. "2 hours ago")
 export const formatTimeAgo = (dateString: string) => {
-  const date = new Date(dateString);
-  const now = new Date();
-  
-  const diffMs = now.getTime() - date.getTime();
-  const diffMins = Math.round(diffMs / 60000);
-  const diffHours = Math.round(diffMs / 3600000);
-  const diffDays = Math.round(diffMs / 86400000);
-  
-  if (diffMins < 60) {
-    return `há ${diffMins} ${diffMins === 1 ? 'minuto' : 'minutos'}`;
-  } else if (diffHours < 24) {
-    return `há ${diffHours} ${diffHours === 1 ? 'hora' : 'horas'}`;
-  } else if (diffDays < 30) {
-    return `há ${diffDays} ${diffDays === 1 ? 'dia' : 'dias'}`;
-  } else {
-    // For older notifications, show the date
-    return date.toLocaleDateString('pt-BR', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric'
-    });
+  try {
+    const date = new Date(dateString);
+    const now = new Date();
+    
+    if (isNaN(date.getTime())) {
+      return 'Data inválida';
+    }
+    
+    const diffMs = now.getTime() - date.getTime();
+    const diffMins = Math.round(diffMs / 60000);
+    const diffHours = Math.round(diffMs / 3600000);
+    const diffDays = Math.round(diffMs / 86400000);
+    
+    if (diffMins < 1) {
+      return 'agora';
+    } else if (diffMins < 60) {
+      return `há ${diffMins} ${diffMins === 1 ? 'minuto' : 'minutos'}`;
+    } else if (diffHours < 24) {
+      return `há ${diffHours} ${diffHours === 1 ? 'hora' : 'horas'}`;
+    } else if (diffDays < 30) {
+      return `há ${diffDays} ${diffDays === 1 ? 'dia' : 'dias'}`;
+    } else {
+      // For older notifications, show the date
+      return date.toLocaleDateString('pt-BR', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric'
+      });
+    }
+  } catch (error) {
+    console.error('Error formatting time:', error);
+    return 'Data inválida';
   }
 };
 
 // Fetch real notifications from the Supabase database
 export const fetchRealNotifications = async (userId: string): Promise<Notification[]> => {
   try {
+    if (!userId) {
+      console.warn("User ID is required to fetch notifications");
+      return [];
+    }
+    
     console.log("Fetching notifications for user:", userId);
     
-    // No need to filter by user_id anymore - RLS will handle this automatically
     const { data, error } = await supabase
       .from('notifications')
       .select('*')
-      .order('created_at', { ascending: false });
+      .order('created_at', { ascending: false })
+      .limit(100); // Limit to prevent performance issues
       
     if (error) {
       console.error("Erro ao buscar notificações:", error);
+      logSecurityEvent("notification_fetch_error", userId, error);
       return [];
     }
     
@@ -67,16 +85,17 @@ export const fetchRealNotifications = async (userId: string): Promise<Notificati
     return data.map(notification => ({
       id: notification.id,
       type: notification.type as "booking" | "application" | "payment" | "review" | "system",
-      title: notification.title,
-      message: notification.message,
+      title: sanitizeText(notification.title, 200),
+      message: sanitizeText(notification.message, 500),
       time: formatTimeAgo(notification.created_at),
-      read: notification.read,
-      actionUrl: notification.action_url || '#',
+      read: Boolean(notification.read),
+      actionUrl: notification.action_url ? sanitizeText(notification.action_url, 300) : '#',
       created_at: notification.created_at,
       user_id: notification.user_id
     }));
   } catch (err) {
     console.error("Erro ao buscar notificações:", err);
+    logSecurityEvent("notification_fetch_exception", userId, err);
     return [];
   }
 };
@@ -84,22 +103,29 @@ export const fetchRealNotifications = async (userId: string): Promise<Notificati
 // Mark notification as read
 export const markNotificationAsRead = async (notificationId: string, userId: string): Promise<boolean> => {
   try {
+    if (!notificationId || !userId) {
+      console.warn("Notification ID and User ID are required");
+      return false;
+    }
+    
     console.log("Marking notification as read:", notificationId);
     
-    // RLS will automatically ensure user can only update their own notifications
     const { error } = await supabase
       .from('notifications')
       .update({ read: true })
-      .eq('id', notificationId);
+      .eq('id', notificationId)
+      .eq('user_id', userId); // Extra security check
       
     if (error) {
       console.error("Error marking notification as read:", error);
+      logSecurityEvent("notification_read_error", userId, { notificationId, error });
       return false;
     }
     
     return true;
   } catch (err) {
     console.error("Erro ao marcar notificação como lida:", err);
+    logSecurityEvent("notification_read_exception", userId, { notificationId, error: err });
     return false;
   }
 };
@@ -107,22 +133,29 @@ export const markNotificationAsRead = async (notificationId: string, userId: str
 // Mark all notifications as read
 export const markAllNotificationsAsRead = async (userId: string): Promise<boolean> => {
   try {
+    if (!userId) {
+      console.warn("User ID is required");
+      return false;
+    }
+    
     console.log("Marking all notifications as read for user:", userId);
     
-    // RLS will automatically ensure user can only update their own notifications
     const { error } = await supabase
       .from('notifications')
       .update({ read: true })
-      .eq('read', false);
+      .eq('read', false)
+      .eq('user_id', userId); // Extra security check
       
     if (error) {
       console.error("Error marking all notifications as read:", error);
+      logSecurityEvent("notification_read_all_error", userId, error);
       return false;
     }
     
     return true;
   } catch (err) {
     console.error("Erro ao marcar todas notificações como lidas:", err);
+    logSecurityEvent("notification_read_all_exception", userId, err);
     return false;
   }
 };
@@ -136,11 +169,24 @@ export const createNotification = async (
   actionUrl?: string
 ): Promise<boolean> => {
   try {
+    if (!userId || !type || !title || !message) {
+      console.warn("All required fields must be provided");
+      return false;
+    }
+    
+    // Validate notification data
+    const validation = validateNotificationData({ title, message, type });
+    if (!validation.isValid) {
+      console.error("Notification validation failed:", validation.errors);
+      return false;
+    }
+    
     console.log("Creating notification for user:", userId, "type:", type);
     
-    // Validate input to prevent XSS
-    const sanitizedTitle = title.trim().substring(0, 200);
-    const sanitizedMessage = message.trim().substring(0, 500);
+    // Sanitize input to prevent XSS
+    const sanitizedTitle = sanitizeText(title, 200);
+    const sanitizedMessage = sanitizeText(message, 500);
+    const sanitizedActionUrl = actionUrl ? sanitizeText(actionUrl, 300) : null;
     
     const { data, error } = await supabase
       .from('notifications')
@@ -149,13 +195,14 @@ export const createNotification = async (
         type,
         title: sanitizedTitle,
         message: sanitizedMessage,
-        action_url: actionUrl || null,
+        action_url: sanitizedActionUrl,
         read: false
       }])
       .select();
       
     if (error) {
       console.error("Error creating notification:", error);
+      logSecurityEvent("notification_create_error", userId, { type, error });
       return false;
     }
     
@@ -163,6 +210,7 @@ export const createNotification = async (
     return true;
   } catch (err) {
     console.error("Erro ao criar notificação:", err);
+    logSecurityEvent("notification_create_exception", userId, { type, error: err });
     return false;
   }
 };
@@ -170,22 +218,58 @@ export const createNotification = async (
 // Get unread notifications count
 export const getUnreadNotificationsCount = async (userId: string): Promise<number> => {
   try {
+    if (!userId) {
+      console.warn("User ID is required");
+      return 0;
+    }
+    
     console.log("Getting unread notifications count for user:", userId);
     
-    // RLS will automatically filter to user's notifications only
     const { count, error } = await supabase
       .from('notifications')
       .select('*', { count: 'exact', head: true })
-      .eq('read', false);
+      .eq('read', false)
+      .eq('user_id', userId); // Extra security check
       
     if (error) {
       console.error("Error getting unread notifications count:", error);
+      logSecurityEvent("notification_count_error", userId, error);
       return 0;
     }
     
     return count || 0;
   } catch (err) {
     console.error("Erro ao obter contagem de notificações não lidas:", err);
+    logSecurityEvent("notification_count_exception", userId, err);
     return 0;
+  }
+};
+
+// Bulk operations for notifications
+export const deleteOldNotifications = async (userId: string, daysOld: number = 30): Promise<boolean> => {
+  try {
+    if (!userId || daysOld < 1) {
+      console.warn("Valid user ID and days parameter required");
+      return false;
+    }
+    
+    const cutoffDate = new Date();
+    cutoffDate.setDate(cutoffDate.getDate() - daysOld);
+    
+    const { error } = await supabase
+      .from('notifications')
+      .delete()
+      .eq('user_id', userId)
+      .lt('created_at', cutoffDate.toISOString());
+      
+    if (error) {
+      console.error("Error deleting old notifications:", error);
+      return false;
+    }
+    
+    return true;
+  } catch (err) {
+    console.error("Erro ao deletar notificações antigas:", err);
+    return false;
   }
 };
