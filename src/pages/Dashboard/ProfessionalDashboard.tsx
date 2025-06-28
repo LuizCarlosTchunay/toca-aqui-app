@@ -69,75 +69,103 @@ const ProfessionalDashboard = () => {
     enabled: !!user
   });
   
-  // Fetch upcoming bookings
+  // Fetch upcoming bookings - using separate queries to avoid ambiguity
   const { data: upcomingBookings = [], isLoading: bookingsLoading } = useQuery({
     queryKey: ['professionalReservations', professionalData?.id],
     queryFn: async () => {
       if (!professionalData?.id) return [];
       
-      const { data, error } = await supabase
+      // First get reservations
+      const { data: reservas, error: reservasError } = await supabase
         .from('reservas')
-        .select(`
-          id, 
-          status, 
-          data_reserva,
-          eventos(id, titulo, data, local)
-        `)
+        .select('id, status, data_reserva, evento_id')
         .eq('profissional_id', professionalData.id)
         .order('data_reserva', { ascending: true });
         
-      if (error) {
-        console.error('Error fetching bookings:', error);
+      if (reservasError) {
+        console.error('Error fetching reservations:', reservasError);
         return [];
       }
       
-      return data.map(booking => ({
-        id: booking.id,
-        event: booking.eventos?.titulo || "Evento sem título",
-        date: booking.eventos?.data || "",
-        location: booking.eventos?.local || "",
-        city: booking.eventos?.local?.split(',')[0] || "",
-        state: booking.eventos?.local?.split(',')[1] || "",
-        status: booking.status,
-        payment: "pending", // Default until we implement payment status
-        value: 0 // Default until we implement pricing
-      }));
+      if (!reservas || reservas.length === 0) return [];
+      
+      // Then get events for those reservations
+      const eventoIds = reservas.map(r => r.evento_id).filter(Boolean);
+      const { data: eventos, error: eventosError } = await supabase
+        .from('eventos')
+        .select('id, titulo, data, local')
+        .in('id', eventoIds);
+        
+      if (eventosError) {
+        console.error('Error fetching events:', eventosError);
+        return [];
+      }
+      
+      // Combine the data
+      return reservas.map(booking => {
+        const evento = eventos?.find(e => e.id === booking.evento_id);
+        return {
+          id: booking.id,
+          event: evento?.titulo || "Evento sem título",
+          date: evento?.data || "",
+          location: evento?.local || "",
+          city: evento?.local?.split(',')[0] || "",
+          state: evento?.local?.split(',')[1] || "",
+          status: booking.status,
+          payment: "pending", // Default until we implement payment status
+          value: 0 // Default until we implement pricing
+        };
+      });
     },
     enabled: !!professionalData?.id
   });
   
-  // Fetch applications
+  // Fetch applications - using separate queries to avoid ambiguity
   const { data: applications = [], isLoading: applicationsLoading } = useQuery({
     queryKey: ['professionalApplications', professionalData?.id],
     queryFn: async () => {
       if (!professionalData?.id) return [];
       
-      const { data, error } = await supabase
+      // First get applications
+      const { data: candidaturas, error: candidaturasError } = await supabase
         .from('candidaturas')
-        .select(`
-          id,
-          status,
-          data_candidatura,
-          eventos(id, titulo, data, local)
-        `)
+        .select('id, status, data_candidatura, evento_id')
         .eq('profissional_id', professionalData.id)
         .order('data_candidatura', { ascending: false });
         
-      if (error) {
-        console.error('Error fetching applications:', error);
+      if (candidaturasError) {
+        console.error('Error fetching applications:', candidaturasError);
         return [];
       }
       
-      return data.map(app => ({
-        id: app.id,
-        event: app.eventos?.titulo || "Evento sem título",
-        date: app.eventos?.data || "",
-        location: app.eventos?.local || "",
-        city: app.eventos?.local?.split(',')[0] || "",
-        state: app.eventos?.local?.split(',')[1] || "",
-        status: app.status || "pendente",
-        applied: app.data_candidatura || ""
-      }));
+      if (!candidaturas || candidaturas.length === 0) return [];
+      
+      // Then get events for those applications
+      const eventoIds = candidaturas.map(c => c.evento_id).filter(Boolean);
+      const { data: eventos, error: eventosError } = await supabase
+        .from('eventos')
+        .select('id, titulo, data, local')
+        .in('id', eventoIds);
+        
+      if (eventosError) {
+        console.error('Error fetching events:', eventosError);
+        return [];
+      }
+      
+      // Combine the data
+      return candidaturas.map(app => {
+        const evento = eventos?.find(e => e.id === app.evento_id);
+        return {
+          id: app.id,
+          event: evento?.titulo || "Evento sem título",
+          date: evento?.data || "",
+          location: evento?.local || "",
+          city: evento?.local?.split(',')[0] || "",
+          state: evento?.local?.split(',')[1] || "",
+          status: app.status || "pendente",
+          applied: app.data_candidatura || ""
+        };
+      });
     },
     enabled: !!professionalData?.id
   });

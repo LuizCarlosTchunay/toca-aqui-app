@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import Navbar from "@/components/Navbar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -40,49 +41,55 @@ const MyApplications = () => {
     enabled: !!user
   });
 
-  // Fetch real applications from Supabase
+  // Fetch real applications from Supabase - using separate queries to avoid ambiguity
   const { data: applications = [], isLoading } = useQuery({
     queryKey: ['myApplications', professionalData?.id],
     queryFn: async () => {
       if (!professionalData?.id) return [];
       
-      // RLS will automatically filter to this professional's applications
-      const { data, error } = await supabase
+      // First get applications
+      const { data: candidaturas, error: candidaturasError } = await supabase
         .from('candidaturas')
-        .select(`
-          id,
-          status,
-          data_candidatura,
-          mensagem,
-          eventos!inner(
-            id,
-            titulo,
-            data,
-            local,
-            contratante_id
-          )
-        `)
+        .select('id, status, data_candidatura, mensagem, evento_id')
         .eq('profissional_id', professionalData.id)
         .order('data_candidatura', { ascending: false });
         
-      if (error) {
-        console.error('Error fetching applications:', error);
+      if (candidaturasError) {
+        console.error('Error fetching applications:', candidaturasError);
         return [];
       }
       
-      return data.map(app => ({
-        id: app.id,
-        event: app.eventos?.titulo || "Evento sem título",
-        date: app.eventos?.data ? new Date(app.eventos.data).toLocaleDateString('pt-BR') : "",
-        location: app.eventos?.local || "",
-        city: app.eventos?.local?.split(',')[0] || "",
-        state: app.eventos?.local?.split(',')[1]?.trim() || "",
-        status: app.status || "pendente",
-        applied: app.data_candidatura ? new Date(app.data_candidatura).toLocaleDateString('pt-BR') : "",
-        eventId: app.eventos?.id || "",
-        message: app.mensagem || "",
-        contractorId: app.eventos?.contratante_id || ""
-      }));
+      if (!candidaturas || candidaturas.length === 0) return [];
+      
+      // Then get events for those applications
+      const eventoIds = candidaturas.map(c => c.evento_id).filter(Boolean);
+      const { data: eventos, error: eventosError } = await supabase
+        .from('eventos')
+        .select('id, titulo, data, local, contratante_id')
+        .in('id', eventoIds);
+        
+      if (eventosError) {
+        console.error('Error fetching events:', eventosError);
+        return [];
+      }
+      
+      // Combine the data
+      return candidaturas.map(app => {
+        const evento = eventos?.find(e => e.id === app.evento_id);
+        return {
+          id: app.id,
+          event: evento?.titulo || "Evento sem título",
+          date: evento?.data ? new Date(evento.data).toLocaleDateString('pt-BR') : "",
+          location: evento?.local || "",
+          city: evento?.local?.split(',')[0] || "",
+          state: evento?.local?.split(',')[1]?.trim() || "",
+          status: app.status || "pendente",
+          applied: app.data_candidatura ? new Date(app.data_candidatura).toLocaleDateString('pt-BR') : "",
+          eventId: evento?.id || "",
+          message: app.mensagem || "",
+          contractorId: evento?.contratante_id || ""
+        };
+      });
     },
     enabled: !!professionalData?.id
   });
