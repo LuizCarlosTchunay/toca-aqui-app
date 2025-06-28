@@ -4,6 +4,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { AuthProvider } from "./hooks/useAuth";
 import Index from "./pages/Index";
 import AuthPage from "./pages/AuthPage";
 import Dashboard from "./pages/Dashboard";
@@ -27,7 +28,6 @@ import PrivacyPolicy from "./pages/PrivacyPolicy";
 import NotFound from "./pages/NotFound";
 import ProtectedRoute from "./components/ProtectedRoute";
 import NotificationManager from "./components/NotificationManager";
-import { useAuth } from "./hooks/useAuth";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -52,81 +52,85 @@ const queryClient = new QueryClient({
 });
 
 function App() {
+  console.log('App - rendering');
+  
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          {/* Notification Manager - handles push notifications globally */}
-          <NotificationManager />
-          
-          <Routes>
-            {/* Public routes */}
-            <Route path="/" element={<Index />} />
-            <Route path="/login" element={<AuthPage />} />
-            <Route path="/register" element={<AuthPage />} />
-            <Route path="/eventos" element={<ExploreEvents />} />
-            <Route path="/eventos/:id" element={<EventDetail />} />
-            <Route path="/profissionais" element={<ExploreProfessionals />} />
-            <Route path="/perfil/:id" element={<ProfessionalProfile />} />
-            <Route path="/sobre" element={<About />} />
-            <Route path="/contato" element={<Contact />} />
-            <Route path="/redefinir-senha" element={<PasswordReset />} />
-            <Route path="/termos-de-uso" element={<TermsOfUse />} />
-            <Route path="/politica-de-privacidade" element={<PrivacyPolicy />} />
+        <AuthProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            {/* Notification Manager - handles push notifications globally */}
+            <NotificationManager />
+            
+            <Routes>
+              {/* Public routes */}
+              <Route path="/" element={<Index />} />
+              <Route path="/login" element={<AuthPage />} />
+              <Route path="/register" element={<AuthPage />} />
+              <Route path="/eventos" element={<ExploreEvents />} />
+              <Route path="/eventos/:id" element={<EventDetail />} />
+              <Route path="/profissionais" element={<ExploreProfessionals />} />
+              <Route path="/perfil/:id" element={<ProfessionalProfile />} />
+              <Route path="/sobre" element={<About />} />
+              <Route path="/contato" element={<Contact />} />
+              <Route path="/redefinir-senha" element={<PasswordReset />} />
+              <Route path="/termos-de-uso" element={<TermsOfUse />} />
+              <Route path="/politica-de-privacidade" element={<PrivacyPolicy />} />
 
-            {/* Protected routes */}
-            <Route path="/dashboard" element={
-              <ProtectedRoute>
-                <Dashboard />
-              </ProtectedRoute>
-            } />
-            <Route path="/meu-perfil" element={
-              <ProtectedRoute>
-                <MyProfile />
-              </ProtectedRoute>
-            } />
-            <Route path="/editar-perfil" element={
-              <ProtectedRoute>
-                <EditProfile />
-              </ProtectedRoute>
-            } />
-            <Route path="/criar-evento" element={
-              <ProtectedRoute>
-                <CreateEvent />
-              </ProtectedRoute>
-            } />
-            <Route path="/minhas-candidaturas" element={
-              <ProtectedRoute>
-                <MyApplications />
-              </ProtectedRoute>
-            } />
-            <Route path="/contratar/:id" element={
-              <ProtectedRoute>
-                <BookProfessional />
-              </ProtectedRoute>
-            } />
-            <Route path="/checkout" element={
-              <ProtectedRoute>
-                <Checkout />
-              </ProtectedRoute>
-            } />
-            <Route path="/notifications" element={
-              <ProtectedRoute>
-                <Notifications />
-              </ProtectedRoute>
-            } />
-            <Route path="/configuracoes" element={
-              <ProtectedRoute>
-                <Settings />
-              </ProtectedRoute>
-            } />
+              {/* Protected routes */}
+              <Route path="/dashboard" element={
+                <ProtectedRoute>
+                  <Dashboard />
+                </ProtectedRoute>
+              } />
+              <Route path="/meu-perfil" element={
+                <ProtectedRoute>
+                  <MyProfile />
+                </ProtectedRoute>
+              } />
+              <Route path="/editar-perfil" element={
+                <ProtectedRoute>
+                  <EditProfile />
+                </ProtectedRoute>
+              } />
+              <Route path="/criar-evento" element={
+                <ProtectedRoute>
+                  <CreateEvent />
+                </ProtectedRoute>
+              } />
+              <Route path="/minhas-candidaturas" element={
+                <ProtectedRoute>
+                  <MyApplications />
+                </ProtectedRoute>
+              } />
+              <Route path="/contratar/:id" element={
+                <ProtectedRoute>
+                  <BookProfessional />
+                </ProtectedRoute>
+              } />
+              <Route path="/checkout" element={
+                <ProtectedRoute>
+                  <Checkout />
+                </ProtectedRoute>
+              } />
+              <Route path="/notifications" element={
+                <ProtectedRoute>
+                  <Notifications />
+                </ProtectedRoute>
+              } />
+              <Route path="/configuracoes" element={
+                <ProtectedRoute>
+                  <Settings />
+                </ProtectedRoute>
+              } />
 
-            {/* 404 route */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
+              {/* 404 route */}
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </BrowserRouter>
+        </AuthProvider>
       </TooltipProvider>
     </QueryClientProvider>
   );
