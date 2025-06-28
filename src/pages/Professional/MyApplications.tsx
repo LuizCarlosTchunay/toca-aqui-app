@@ -46,7 +46,7 @@ const MyApplications = () => {
     enabled: !!user
   });
 
-  // Fetch real applications from Supabase - ONLY real data
+  // Fetch ONLY real applications from Supabase
   const { data: applications = [], isLoading } = useQuery({
     queryKey: ['myRealApplications', professionalData?.id],
     queryFn: async () => {
@@ -55,9 +55,9 @@ const MyApplications = () => {
         return [];
       }
       
-      console.log("Fetching real applications for professional:", professionalData.id);
+      console.log("Fetching ONLY real applications for professional:", professionalData.id);
       
-      // First get applications from candidaturas table
+      // Get applications from candidaturas table
       const { data: candidaturas, error: candidaturasError } = await supabase
         .from('candidaturas')
         .select('id, status, data_candidatura, mensagem, evento_id')
@@ -74,7 +74,7 @@ const MyApplications = () => {
         return [];
       }
       
-      console.log("Found real applications:", candidaturas);
+      console.log("Found real applications from candidaturas:", candidaturas);
       
       // Get unique event IDs
       const eventoIds = [...new Set(candidaturas.map(c => c.evento_id).filter(Boolean))];
@@ -86,7 +86,7 @@ const MyApplications = () => {
       
       console.log("Fetching events for IDs:", eventoIds);
       
-      // Then get events for those applications
+      // Get events for those applications
       const { data: eventos, error: eventosError } = await supabase
         .from('eventos')
         .select('id, titulo, data, local, contratante_id')
@@ -123,7 +123,7 @@ const MyApplications = () => {
         };
       }).filter(Boolean); // Remove null entries
       
-      console.log("Final real applications data:", realApplications);
+      console.log("Final REAL applications data:", realApplications);
       return realApplications;
     },
     enabled: !!professionalData?.id
@@ -322,7 +322,7 @@ const MyApplications = () => {
               </div>
             ) : (
               <div className="text-center py-10">
-                <p className="text-toca-text-secondary mb-4">Você ainda não enviou candidaturas reais.</p>
+                <p className="text-toca-text-secondary mb-4">Você ainda não enviou nenhuma candidatura real.</p>
                 <Button 
                   className="bg-toca-accent hover:bg-toca-accent-hover"
                   onClick={() => navigate("/eventos")}

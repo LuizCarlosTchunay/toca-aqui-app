@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -75,7 +74,7 @@ const ProfessionalDashboard = () => {
     enabled: !!user
   });
   
-  // Fetch upcoming bookings - ONLY real data
+  // Fetch ONLY real upcoming bookings
   const { data: upcomingBookings = [], isLoading: bookingsLoading } = useQuery({
     queryKey: ['professionalRealReservations', professionalData?.id],
     queryFn: async () => {
@@ -84,9 +83,9 @@ const ProfessionalDashboard = () => {
         return [];
       }
       
-      console.log("Fetching real reservations for professional:", professionalData.id);
+      console.log("Fetching ONLY real reservations for professional:", professionalData.id);
       
-      // First get reservations from reservas table
+      // Get reservations from reservas table
       const { data: reservas, error: reservasError } = await supabase
         .from('reservas')
         .select('id, status, data_reserva, evento_id')
@@ -103,7 +102,7 @@ const ProfessionalDashboard = () => {
         return [];
       }
       
-      console.log("Found real reservations:", reservas);
+      console.log("Found real reservations from reservas table:", reservas);
       
       // Get unique event IDs
       const eventoIds = [...new Set(reservas.map(r => r.evento_id).filter(Boolean))];
@@ -115,7 +114,7 @@ const ProfessionalDashboard = () => {
       
       console.log("Fetching events for reservation IDs:", eventoIds);
       
-      // Then get events for those reservations
+      // Get events for those reservations
       const { data: eventos, error: eventosError } = await supabase
         .from('eventos')
         .select('id, titulo, data, local')
@@ -150,13 +149,13 @@ const ProfessionalDashboard = () => {
         };
       }).filter(Boolean); // Remove null entries
       
-      console.log("Final real bookings data:", realBookings);
+      console.log("Final REAL bookings data:", realBookings);
       return realBookings;
     },
     enabled: !!professionalData?.id
   });
   
-  // Fetch applications - ONLY real data
+  // Fetch ONLY real applications for dashboard
   const { data: applications = [], isLoading: applicationsLoading } = useQuery({
     queryKey: ['professionalRealApplications', professionalData?.id],
     queryFn: async () => {
@@ -165,9 +164,9 @@ const ProfessionalDashboard = () => {
         return [];
       }
       
-      console.log("Fetching real applications for professional:", professionalData.id);
+      console.log("Fetching ONLY real applications for professional:", professionalData.id);
       
-      // First get applications from candidaturas table
+      // Get applications from candidaturas table
       const { data: candidaturas, error: candidaturasError } = await supabase
         .from('candidaturas')
         .select('id, status, data_candidatura, evento_id')
@@ -185,7 +184,7 @@ const ProfessionalDashboard = () => {
         return [];
       }
       
-      console.log("Found real applications:", candidaturas);
+      console.log("Found real applications from candidaturas table:", candidaturas);
       
       // Get unique event IDs
       const eventoIds = [...new Set(candidaturas.map(c => c.evento_id).filter(Boolean))];
@@ -197,7 +196,7 @@ const ProfessionalDashboard = () => {
       
       console.log("Fetching events for application IDs:", eventoIds);
       
-      // Then get events for those applications
+      // Get events for those applications
       const { data: eventos, error: eventosError } = await supabase
         .from('eventos')
         .select('id, titulo, data, local')
@@ -232,7 +231,7 @@ const ProfessionalDashboard = () => {
         };
       }).filter(Boolean); // Remove null entries
       
-      console.log("Final real applications data:", realApplications);
+      console.log("Final REAL applications data:", realApplications);
       return realApplications;
     },
     enabled: !!professionalData?.id
@@ -386,7 +385,7 @@ const ProfessionalDashboard = () => {
                 </div>
               ) : (
                 <div className="text-center py-10">
-                  <p className="text-toca-text-secondary mb-4">Você ainda não enviou candidaturas reais.</p>
+                  <p className="text-toca-text-secondary mb-4">Você ainda não enviou nenhuma candidatura real.</p>
                   <Button 
                     className="bg-toca-accent hover:bg-toca-accent-hover"
                     onClick={() => navigate("/eventos")}

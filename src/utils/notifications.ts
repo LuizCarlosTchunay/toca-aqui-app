@@ -52,7 +52,7 @@ export const formatTimeAgo = (dateString: string) => {
   }
 };
 
-// Fetch real notifications from the Supabase database - ONLY user's own notifications
+// Fetch ONLY real notifications from the Supabase database - user's own notifications
 export const fetchRealNotifications = async (userId: string): Promise<Notification[]> => {
   try {
     if (!userId) {
@@ -60,7 +60,7 @@ export const fetchRealNotifications = async (userId: string): Promise<Notificati
       return [];
     }
     
-    console.log("Fetching real notifications for user:", userId);
+    console.log("Fetching ONLY real notifications for user:", userId);
     
     // RLS will automatically filter to user's own notifications
     const { data, error } = await supabase
@@ -76,15 +76,15 @@ export const fetchRealNotifications = async (userId: string): Promise<Notificati
       return [];
     }
     
-    console.log("Real notifications data for user:", userId, data);
+    console.log("REAL notifications data for user:", userId, data);
     
     if (!data || data.length === 0) {
-      console.log("No real notifications found for user:", userId);
+      console.log("No REAL notifications found for user:", userId);
       return [];
     }
     
     // Transform database notifications to our app's notification format
-    return data.map(notification => ({
+    const realNotifications = data.map(notification => ({
       id: notification.id,
       type: notification.type as "booking" | "application" | "payment" | "review" | "system",
       title: sanitizeText(notification.title, 200),
@@ -95,6 +95,9 @@ export const fetchRealNotifications = async (userId: string): Promise<Notificati
       created_at: notification.created_at,
       user_id: notification.user_id
     }));
+    
+    console.log("Final REAL notifications processed:", realNotifications.length);
+    return realNotifications;
   } catch (err) {
     console.error("Erro ao buscar notificações reais:", err);
     logSecurityEvent("notification_fetch_exception", userId, err);
@@ -110,7 +113,7 @@ export const markNotificationAsRead = async (notificationId: string, userId: str
       return false;
     }
     
-    console.log("Marking real notification as read:", notificationId, "for user:", userId);
+    console.log("Marking REAL notification as read:", notificationId, "for user:", userId);
     
     // RLS will automatically ensure user can only update their own notifications
     const { error } = await supabase
@@ -120,12 +123,12 @@ export const markNotificationAsRead = async (notificationId: string, userId: str
       .eq('user_id', userId); // Extra security check
       
     if (error) {
-      console.error("Error marking real notification as read:", error);
+      console.error("Error marking REAL notification as read:", error);
       logSecurityEvent("notification_read_error", userId, { notificationId, error });
       return false;
     }
     
-    console.log("Real notification marked as read successfully");
+    console.log("REAL notification marked as read successfully");
     return true;
   } catch (err) {
     console.error("Erro ao marcar notificação real como lida:", err);
@@ -142,7 +145,7 @@ export const markAllNotificationsAsRead = async (userId: string): Promise<boolea
       return false;
     }
     
-    console.log("Marking all real notifications as read for user:", userId);
+    console.log("Marking all REAL notifications as read for user:", userId);
     
     // RLS will automatically ensure user can only update their own notifications
     const { error } = await supabase
@@ -152,12 +155,12 @@ export const markAllNotificationsAsRead = async (userId: string): Promise<boolea
       .eq('user_id', userId); // Extra security check
       
     if (error) {
-      console.error("Error marking all real notifications as read:", error);
+      console.error("Error marking all REAL notifications as read:", error);
       logSecurityEvent("notification_read_all_error", userId, error);
       return false;
     }
     
-    console.log("All real notifications marked as read successfully");
+    console.log("All REAL notifications marked as read successfully");
     return true;
   } catch (err) {
     console.error("Erro ao marcar todas notificações reais como lidas:", err);
@@ -166,7 +169,7 @@ export const markAllNotificationsAsRead = async (userId: string): Promise<boolea
   }
 };
 
-// Create a new real notification
+// Create a new REAL notification
 export const createNotification = async (
   userId: string, 
   type: "booking" | "application" | "payment" | "review" | "system",
@@ -176,18 +179,18 @@ export const createNotification = async (
 ): Promise<boolean> => {
   try {
     if (!userId || !type || !title || !message) {
-      console.warn("All required fields must be provided for real notification");
+      console.warn("All required fields must be provided for REAL notification");
       return false;
     }
     
     // Validate notification data
     const validation = validateNotificationData({ title, message, type });
     if (!validation.isValid) {
-      console.error("Real notification validation failed:", validation.errors);
+      console.error("REAL notification validation failed:", validation.errors);
       return false;
     }
     
-    console.log("Creating real notification for user:", userId, "type:", type);
+    console.log("Creating REAL notification for user:", userId, "type:", type);
     
     // Sanitize input to prevent XSS
     const sanitizedTitle = sanitizeText(title, 200);
@@ -207,12 +210,12 @@ export const createNotification = async (
       .select();
       
     if (error) {
-      console.error("Error creating real notification:", error);
+      console.error("Error creating REAL notification:", error);
       logSecurityEvent("notification_create_error", userId, { type, error });
       return false;
     }
     
-    console.log("Real notification created successfully:", data);
+    console.log("REAL notification created successfully:", data);
     return true;
   } catch (err) {
     console.error("Erro ao criar notificação real:", err);
@@ -229,7 +232,7 @@ export const getUnreadNotificationsCount = async (userId: string): Promise<numbe
       return 0;
     }
     
-    console.log("Getting real unread notifications count for user:", userId);
+    console.log("Getting REAL unread notifications count for user:", userId);
     
     // RLS will automatically ensure user can only see their own notifications
     const { count, error } = await supabase
@@ -239,12 +242,12 @@ export const getUnreadNotificationsCount = async (userId: string): Promise<numbe
       .eq('user_id', userId); // Extra security check
       
     if (error) {
-      console.error("Error getting real unread notifications count:", error);
+      console.error("Error getting REAL unread notifications count:", error);
       logSecurityEvent("notification_count_error", userId, error);
       return 0;
     }
     
-    console.log("Real unread notifications count:", count);
+    console.log("REAL unread notifications count:", count);
     return count || 0;
   } catch (err) {
     console.error("Erro ao obter contagem de notificações reais não lidas:", err);
@@ -264,7 +267,7 @@ export const deleteOldNotifications = async (userId: string, daysOld: number = 3
     const cutoffDate = new Date();
     cutoffDate.setDate(cutoffDate.getDate() - daysOld);
     
-    console.log("Deleting old real notifications for user:", userId, "older than:", cutoffDate);
+    console.log("Deleting old REAL notifications for user:", userId, "older than:", cutoffDate);
     
     // RLS will automatically ensure user can only delete their own notifications
     const { error } = await supabase
@@ -274,11 +277,11 @@ export const deleteOldNotifications = async (userId: string, daysOld: number = 3
       .lt('created_at', cutoffDate.toISOString());
       
     if (error) {
-      console.error("Error deleting old real notifications:", error);
+      console.error("Error deleting old REAL notifications:", error);
       return false;
     }
     
-    console.log("Old real notifications deleted successfully");
+    console.log("Old REAL notifications deleted successfully");
     return true;
   } catch (err) {
     console.error("Erro ao deletar notificações reais antigas:", err);
