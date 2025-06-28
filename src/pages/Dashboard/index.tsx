@@ -49,7 +49,6 @@ const Dashboard = () => {
       <Navbar 
         isAuthenticated={true} 
         currentRole={currentRole}
-        onRoleToggle={toggleRole}
       />
       
       <div className="flex-1">

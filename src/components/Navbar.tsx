@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Bell, Menu, X, User, LogOut, Settings } from "lucide-react";
@@ -13,7 +12,6 @@ import {
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useNotifications } from "@/hooks/useNotifications";
-import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import Logo from "./Logo";
 
@@ -26,14 +24,14 @@ const Navbar = ({ isAuthenticated = false, currentRole = null }: NavbarProps) =>
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
-  const { user, logout } = useAuth();
+  const { user, signOut } = useAuth();
   
   // Use the new notifications hook
   const { unreadCount } = useNotifications();
 
   const handleLogout = async () => {
     try {
-      await logout();
+      await signOut();
       navigate("/");
       toast.success("Logout realizado com sucesso!");
     } catch (error) {

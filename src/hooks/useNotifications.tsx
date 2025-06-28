@@ -5,7 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { 
   fetchRealNotifications, 
   getUnreadNotificationsCount,
-  Notification 
+  type Notification 
 } from '@/utils/notifications';
 import { toast } from 'sonner';
 
@@ -88,8 +88,8 @@ export const useNotifications = () => {
           refreshNotifications();
 
           // Show browser notification if supported and permitted
-          if ('Notification' in window && Notification.permission === 'granted') {
-            new Notification(newNotification.title, {
+          if ('Notification' in window && window.Notification.permission === 'granted') {
+            new window.Notification(newNotification.title, {
               body: newNotification.message,
               icon: '/lovable-uploads/66d87de3-4ebd-4f4b-9d3f-c9bbb3e3c4ef.png',
               badge: '/lovable-uploads/66d87de3-4ebd-4f4b-9d3f-c9bbb3e3c4ef.png',
@@ -127,12 +127,12 @@ export const useNotifications = () => {
       return false;
     }
 
-    if (Notification.permission === 'granted') {
+    if (window.Notification.permission === 'granted') {
       return true;
     }
 
-    if (Notification.permission !== 'denied') {
-      const permission = await Notification.requestPermission();
+    if (window.Notification.permission !== 'denied') {
+      const permission = await window.Notification.requestPermission();
       return permission === 'granted';
     }
 
