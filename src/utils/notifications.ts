@@ -15,10 +15,6 @@ export type Notification = {
   user_id: string;
 };
 
-// Cache for notifications to avoid excessive API calls
-const notificationCache = new Map<string, { data: Notification[], timestamp: number }>();
-const CACHE_DURATION = 30000; // 30 seconds
-
 // Format relative time (e.g. "2 hours ago")
 export const formatTimeAgo = (dateString: string) => {
   try {
@@ -56,32 +52,23 @@ export const formatTimeAgo = (dateString: string) => {
   }
 };
 
-// Optimized fetch with caching
-export const fetchRealNotifications = async (userId: string, useCache: boolean = true): Promise<Notification[]> => {
+// Fetch ONLY real notifications from the Supabase database - user's own notifications
+export const fetchRealNotifications = async (userId: string): Promise<Notification[]> => {
   try {
     if (!userId) {
       console.warn("User ID is required to fetch notifications");
       return [];
     }
-
-    // Check cache first if enabled
-    if (useCache) {
-      const cached = notificationCache.get(userId);
-      if (cached && (Date.now() - cached.timestamp) < CACHE_DURATION) {
-        console.log("Returning cached notifications for user:", userId);
-        return cached.data;
-      }
-    }
     
-    console.log("Fetching REAL notifications from database for user:", userId);
+    console.log("Fetching ONLY real notifications for user:", userId);
     
-    // Optimized query with selective fields
+    // RLS will automatically filter to user's own notifications
     const { data, error } = await supabase
       .from('notifications')
-      .select('id, type, title, message, read, action_url, created_at, user_id')
+      .select('*')
       .eq('user_id', userId)
       .order('created_at', { ascending: false })
-      .limit(100); // Increased limit but still reasonable
+      .limit(50); // Reasonable limit for performance
       
     if (error) {
       console.error("Erro ao buscar notificações reais:", error);
@@ -89,10 +76,10 @@ export const fetchRealNotifications = async (userId: string, useCache: boolean =
       return [];
     }
     
+    console.log("REAL notifications data for user:", userId, data);
+    
     if (!data || data.length === 0) {
       console.log("No REAL notifications found for user:", userId);
-      // Cache empty result too
-      notificationCache.set(userId, { data: [], timestamp: Date.now() });
       return [];
     }
     
@@ -108,11 +95,6 @@ export const fetchRealNotifications = async (userId: string, useCache: boolean =
       created_at: notification.created_at,
       user_id: notification.user_id
     }));
-
-    // Update cache
-    if (useCache) {
-      notificationCache.set(userId, { data: realNotifications, timestamp: Date.now() });
-    }
     
     console.log("Final REAL notifications processed:", realNotifications.length);
     return realNotifications;
@@ -121,12 +103,6 @@ export const fetchRealNotifications = async (userId: string, useCache: boolean =
     logSecurityEvent("notification_fetch_exception", userId, err);
     return [];
   }
-};
-
-// Clear cache when notifications change
-const clearNotificationCache = (userId: string) => {
-  notificationCache.delete(userId);
-  console.log("Cleared notification cache for user:", userId);
 };
 
 // Mark notification as read - ONLY user's own notifications
@@ -151,9 +127,6 @@ export const markNotificationAsRead = async (notificationId: string, userId: str
       logSecurityEvent("notification_read_error", userId, { notificationId, error });
       return false;
     }
-    
-    // Clear cache to force refresh
-    clearNotificationCache(userId);
     
     console.log("REAL notification marked as read successfully");
     return true;
@@ -187,9 +160,6 @@ export const markAllNotificationsAsRead = async (userId: string): Promise<boolea
       return false;
     }
     
-    // Clear cache to force refresh
-    clearNotificationCache(userId);
-    
     console.log("All REAL notifications marked as read successfully");
     return true;
   } catch (err) {
@@ -199,7 +169,7 @@ export const markAllNotificationsAsRead = async (userId: string): Promise<boolea
   }
 };
 
-// Create a new REAL notification with optimized performance
+// Create a new REAL notification
 export const createNotification = async (
   userId: string, 
   type: "booking" | "application" | "payment" | "review" | "system",
@@ -245,9 +215,6 @@ export const createNotification = async (
       return false;
     }
     
-    // Clear cache to ensure fresh data on next fetch
-    clearNotificationCache(userId);
-    
     console.log("REAL notification created successfully:", data);
     return true;
   } catch (err) {
@@ -257,7 +224,7 @@ export const createNotification = async (
   }
 };
 
-// Get unread notifications count with caching
+// Get unread notifications count - ONLY user's own notifications
 export const getUnreadNotificationsCount = async (userId: string): Promise<number> => {
   try {
     if (!userId) {
@@ -267,7 +234,7 @@ export const getUnreadNotificationsCount = async (userId: string): Promise<numbe
     
     console.log("Getting REAL unread notifications count for user:", userId);
     
-    // Use count query for better performance
+    // RLS will automatically ensure user can only see their own notifications
     const { count, error } = await supabase
       .from('notifications')
       .select('*', { count: 'exact', head: true })
@@ -280,9 +247,8 @@ export const getUnreadNotificationsCount = async (userId: string): Promise<numbe
       return 0;
     }
     
-    const unreadCount = count || 0;
-    console.log("REAL unread notifications count:", unreadCount);
-    return unreadCount;
+    console.log("REAL unread notifications count:", count);
+    return count || 0;
   } catch (err) {
     console.error("Erro ao obter contagem de notificações reais não lidas:", err);
     logSecurityEvent("notification_count_exception", userId, err);
@@ -290,7 +256,7 @@ export const getUnreadNotificationsCount = async (userId: string): Promise<numbe
   }
 };
 
-// Delete old notifications - ONLY user's own notifications (background cleanup)
+// Delete old notifications - ONLY user's own notifications
 export const deleteOldNotifications = async (userId: string, daysOld: number = 30): Promise<boolean> => {
   try {
     if (!userId || daysOld < 1) {
@@ -315,64 +281,10 @@ export const deleteOldNotifications = async (userId: string, daysOld: number = 3
       return false;
     }
     
-    // Clear cache after cleanup
-    clearNotificationCache(userId);
-    
     console.log("Old REAL notifications deleted successfully");
     return true;
   } catch (err) {
     console.error("Erro ao deletar notificações reais antigas:", err);
-    return false;
-  }
-};
-
-// Batch create notifications for multiple users (optimized)
-export const createBatchNotifications = async (
-  userIds: string[],
-  type: "booking" | "application" | "payment" | "review" | "system",
-  title: string,
-  message: string,
-  actionUrl?: string
-): Promise<boolean> => {
-  try {
-    if (!userIds.length || !type || !title || !message) {
-      console.warn("All required fields must be provided for batch notifications");
-      return false;
-    }
-
-    console.log("Creating batch REAL notifications for", userIds.length, "users");
-
-    // Sanitize input
-    const sanitizedTitle = sanitizeText(title, 200);
-    const sanitizedMessage = sanitizeText(message, 500);
-    const sanitizedActionUrl = actionUrl ? sanitizeText(actionUrl, 300) : null;
-
-    // Create notifications for all users in one query
-    const notifications = userIds.map(userId => ({
-      user_id: userId,
-      type,
-      title: sanitizedTitle,
-      message: sanitizedMessage,
-      action_url: sanitizedActionUrl,
-      read: false
-    }));
-
-    const { error } = await supabase
-      .from('notifications')
-      .insert(notifications);
-
-    if (error) {
-      console.error("Error creating batch notifications:", error);
-      return false;
-    }
-
-    // Clear cache for all affected users
-    userIds.forEach(userId => clearNotificationCache(userId));
-
-    console.log("Batch REAL notifications created successfully");
-    return true;
-  } catch (err) {
-    console.error("Erro ao criar notificações em lote:", err);
     return false;
   }
 };
