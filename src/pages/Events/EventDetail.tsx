@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import Navbar from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
@@ -131,6 +130,9 @@ const EventDetail = () => {
 
   // Check if current user is the event owner
   const isEventOwner = user && event && user.id === event.contratante_id;
+  
+  // NEW: Check if user can apply (not the event owner)
+  const canApplyToEvent = user && event && professionalProfile && user.id !== event.contratante_id;
 
   // Handle delete event
   const handleDeleteEvent = async () => {
@@ -173,7 +175,7 @@ const EventDetail = () => {
     }
   };
 
-  // Handle apply to event
+  // Handle apply to event - UPDATED with ownership check
   const handleApply = async () => {
     if (!user) {
       toast.error("Você precisa estar logado para se candidatar a um evento");
@@ -189,6 +191,12 @@ const EventDetail = () => {
 
     if (!event) {
       toast.error("Erro ao identificar o evento");
+      return;
+    }
+
+    // NEW: Check if user is trying to apply to their own event
+    if (user.id === event.contratante_id) {
+      toast.error("Você não pode se candidatar ao seu próprio evento");
       return;
     }
 
@@ -425,7 +433,7 @@ const EventDetail = () => {
                       </div>
                     </div>
                     
-                    {!isEventOwner && (
+                    {!isEventOwner && canApplyToEvent && (
                       <Button 
                         className="w-full bg-toca-accent hover:bg-toca-accent-hover text-white font-semibold py-4 rounded-lg transition-all duration-300 transform hover:scale-[1.02] shadow-lg hover:shadow-xl mt-6"
                         onClick={handleApply}
@@ -440,6 +448,32 @@ const EventDetail = () => {
                           "🎯 Me candidatar ao evento"
                         )}
                       </Button>
+                    )}
+                    
+                    {/* NEW: Message for event owners */}
+                    {isEventOwner && (
+                      <div className="mt-6 p-4 bg-toca-accent/10 border border-toca-accent/30 rounded-lg text-center">
+                        <p className="text-toca-accent text-sm">
+                          Este é seu evento. Você não pode se candidatar ao próprio evento.
+                        </p>
+                      </div>
+                    )}
+                    
+                    {/* NEW: Message for users without professional profile */}
+                    {user && !professionalProfile && !isEventOwner && (
+                      <div className="mt-6 p-4 bg-yellow-500/10 border border-yellow-500/30 rounded-lg text-center">
+                        <p className="text-yellow-500 text-sm mb-2">
+                          Você precisa ter um perfil profissional para se candidatar.
+                        </p>
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => navigate("/editar-perfil")}
+                          className="border-yellow-500 text-yellow-500 hover:bg-yellow-500/10"
+                        >
+                          Criar perfil profissional
+                        </Button>
+                      </div>
                     )}
                   </CardContent>
                 </Card>

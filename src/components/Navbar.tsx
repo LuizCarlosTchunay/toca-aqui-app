@@ -1,290 +1,267 @@
 
-import React, { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { Menu, X, User, Search, Bell } from "lucide-react";
-import Logo from "./Logo";
+import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
-import UserAvatar from "./UserAvatar";
+import { Bell, Menu, X, User, LogOut, Settings } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
-import { getUnreadNotificationsCount } from "@/utils/notifications";
+import { useNotifications } from "@/hooks/useNotifications";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import Logo from "./Logo";
 
 interface NavbarProps {
   isAuthenticated?: boolean;
-  currentRole?: "contratante" | "profissional";
-  onRoleToggle?: () => void;
+  currentRole?: "contratante" | "profissional" | null;
 }
 
-const Navbar: React.FC<NavbarProps> = ({
-  isAuthenticated: propIsAuthenticated,
-  currentRole: propCurrentRole,
-  onRoleToggle: propOnRoleToggle,
-}) => {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [unreadCount, setUnreadCount] = useState(0);
-  const { user, signOut, currentRole: authCurrentRole, setCurrentRole } = useAuth();
-  
-  const isAuthenticated = propIsAuthenticated !== undefined ? propIsAuthenticated : !!user;
-  const activeRole = propCurrentRole || authCurrentRole || "contratante";
+const Navbar = ({ isAuthenticated = false, currentRole = null }: NavbarProps) => {
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const navigate = useNavigate();
-
-  // Fetch unread notifications count
-  useEffect(() => {
-    const fetchUnreadCount = async () => {
-      if (user) {
-        const count = await getUnreadNotificationsCount(user.id);
-        setUnreadCount(count);
-      }
-    };
-
-    if (isAuthenticated && user) {
-      fetchUnreadCount();
-      
-      // Update count every 30 seconds
-      const interval = setInterval(fetchUnreadCount, 30000);
-      return () => clearInterval(interval);
-    }
-  }, [isAuthenticated, user]);
-
-  const toggleMenu = () => {
-    setIsMenuOpen(!isMenuOpen);
-  };
+  const location = useLocation();
+  const { user, logout } = useAuth();
   
-  const handleRoleToggle = () => {
-    if (propOnRoleToggle) {
-      propOnRoleToggle();
-    } else {
-      setCurrentRole(activeRole === "contratante" ? "profissional" : "contratante");
+  // Use the new notifications hook
+  const { unreadCount } = useNotifications();
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+      navigate("/");
+      toast.success("Logout realizado com sucesso!");
+    } catch (error) {
+      console.error("Erro ao fazer logout:", error);
+      toast.error("Erro ao fazer logout");
     }
   };
-  
-  const handleSignOut = async () => {
-    await signOut();
-    setIsMenuOpen(false);
+
+  const toggleMobileMenu = () => {
+    setIsMobileMenuOpen(!isMobileMenuOpen);
   };
 
-  const handleNotificationClick = () => {
-    navigate("/notificacoes");
+  const handleNavClick = (path: string) => {
+    navigate(path);
+    setIsMobileMenuOpen(false);
+  };
+
+  const isActivePath = (path: string) => {
+    return location.pathname === path;
   };
 
   return (
-    <nav className="bg-toca-background border-b border-toca-border sticky top-0 z-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between h-16">
-          <div className="flex items-center">
-            <Link to="/" className="flex-shrink-0 flex items-center">
-              <Logo />
-            </Link>
+    <nav className="bg-toca-card border-b border-toca-border sticky top-0 z-50 backdrop-blur-sm bg-toca-card/90">
+      <div className="container mx-auto px-4">
+        <div className="flex justify-between items-center h-16">
+          {/* Logo */}
+          <div className="flex items-center space-x-4">
+            <Logo />
           </div>
 
-          <div className="hidden md:flex items-center space-x-4">
-            {isAuthenticated ? (
-              <>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="text-toca-text-secondary hover:text-white"
-                  asChild
-                >
-                  <Link to="/dashboard">Dashboard</Link>
-                </Button>
-                
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="text-toca-text-secondary hover:text-white"
-                  asChild
-                >
-                  <Link to="/explorar">Explorar</Link>
-                </Button>
-                
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="text-toca-text-secondary hover:text-white"
-                  asChild
-                >
-                  <Link to="/eventos">Eventos</Link>
-                </Button>
-                
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleRoleToggle}
-                  className={cn(
-                    "border-toca-accent text-toca-accent hover:bg-toca-accent hover:text-white"
-                  )}
-                >
-                  {activeRole === "contratante" ? "Modo profissional" : "Modo contratante"}
-                </Button>
-                
-                <Button variant="ghost" size="icon" className="text-toca-text-secondary">
-                  <Search size={20} />
-                </Button>
-                
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  className="text-toca-text-secondary relative"
-                  onClick={handleNotificationClick}
-                >
-                  <Bell size={20} />
-                  {unreadCount > 0 && (
-                    <span className="absolute -top-1 -right-1 bg-toca-accent text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                      {unreadCount > 9 ? '9+' : unreadCount}
-                    </span>
-                  )}
-                </Button>
-                
-                <UserAvatar user={{ 
-                  name: user?.user_metadata?.nome || "Usuário",
-                  image: user?.user_metadata?.avatar_url
-                }} />
-              </>
-            ) : (
-              <>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="text-toca-text-secondary hover:text-white"
-                  asChild
-                >
-                  <Link to="/sobre">Sobre</Link>
-                </Button>
-                
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="border-toca-accent text-toca-accent hover:bg-toca-accent hover:text-white"
-                  asChild
-                >
-                  <Link to="/login">Entrar</Link>
-                </Button>
-                
-                <Button
-                  className="bg-toca-accent hover:bg-toca-accent-hover text-white"
-                  size="sm"
-                  asChild
-                >
-                  <Link to="/cadastro">Cadastrar</Link>
-                </Button>
-              </>
-            )}
-          </div>
-
-          <div className="flex md:hidden items-center">
-            <button
-              onClick={toggleMenu}
-              className="inline-flex items-center justify-center p-2 rounded-md text-toca-text-secondary hover:text-white hover:bg-toca-card focus:outline-none"
+          {/* Desktop Navigation */}
+          <div className="hidden md:flex items-center space-x-6">
+            <Button
+              variant="ghost"
+              className={`text-white hover:text-toca-accent transition-colors ${
+                isActivePath("/") ? "text-toca-accent" : ""
+              }`}
+              onClick={() => handleNavClick("/")}
             >
-              {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
-            </button>
+              Início
+            </Button>
+            <Button
+              variant="ghost"
+              className={`text-white hover:text-toca-accent transition-colors ${
+                isActivePath("/eventos") ? "text-toca-accent" : ""
+              }`}
+              onClick={() => handleNavClick("/eventos")}
+            >
+              Eventos
+            </Button>
+            <Button
+              variant="ghost"
+              className={`text-white hover:text-toca-accent transition-colors ${
+                isActivePath("/profissionais") ? "text-toca-accent" : ""
+              }`}
+              onClick={() => handleNavClick("/profissionais")}
+            >
+              Profissionais
+            </Button>
           </div>
-        </div>
-      </div>
 
-      {isMenuOpen && (
-        <div className="md:hidden">
-          <div className="pt-2 pb-4 space-y-1 bg-toca-background border-b border-toca-border">
-            {isAuthenticated ? (
+          {/* Right side actions */}
+          <div className="flex items-center space-x-4">
+            {isAuthenticated && user ? (
               <>
-                <div className="px-4 py-3 border-b border-toca-border">
-                  <UserAvatar 
-                    showName 
-                    user={{ 
-                      name: user?.user_metadata?.nome || "Usuário",
-                      image: user?.user_metadata?.avatar_url
-                    }} 
-                  />
-                  <div className="mt-3">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        handleRoleToggle();
-                        setIsMenuOpen(false);
-                      }}
-                      className="w-full border-toca-accent text-toca-accent hover:bg-toca-accent hover:text-white"
-                    >
-                      {activeRole === "contratante" ? "Modo profissional" : "Modo contratante"}
-                    </Button>
-                  </div>
+                {/* Notifications - UPDATED with real-time count */}
+                <div className="relative">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="text-white hover:text-toca-accent relative"
+                    onClick={() => handleNavClick("/notifications")}
+                  >
+                    <Bell size={20} />
+                    {unreadCount > 0 && (
+                      <Badge 
+                        className="absolute -top-2 -right-2 bg-toca-accent hover:bg-toca-accent min-w-5 h-5 flex items-center justify-center text-xs font-bold"
+                      >
+                        {unreadCount > 99 ? "99+" : unreadCount}
+                      </Badge>
+                    )}
+                  </Button>
                 </div>
-                <Link
-                  to="/dashboard"
-                  className="block px-4 py-2 text-toca-text-secondary hover:bg-toca-card"
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  Dashboard
-                </Link>
-                <Link
-                  to="/explorar"
-                  className="block px-4 py-2 text-toca-text-secondary hover:bg-toca-card"
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  Explorar
-                </Link>
-                <Link
-                  to="/eventos"
-                  className="block px-4 py-2 text-toca-text-secondary hover:bg-toca-card"
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  Eventos
-                </Link>
-                <Link
-                  to="/notificacoes"
-                  className="flex items-center justify-between px-4 py-2 text-toca-text-secondary hover:bg-toca-card"
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  <span>Notificações</span>
-                  {unreadCount > 0 && (
-                    <span className="bg-toca-accent text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                      {unreadCount > 9 ? '9+' : unreadCount}
-                    </span>
-                  )}
-                </Link>
-                <Link
-                  to="/configuracoes"
-                  className="block px-4 py-2 text-toca-text-secondary hover:bg-toca-card"
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  Configurações
-                </Link>
-                <button 
-                  className="block w-full text-left px-4 py-2 text-toca-text-secondary hover:bg-toca-card"
-                  onClick={handleSignOut}
-                >
-                  Sair
-                </button>
+
+                {/* User Menu */}
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon" className="text-white hover:text-toca-accent">
+                      <User size={20} />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-48 bg-toca-card border-toca-border">
+                    <DropdownMenuItem 
+                      onClick={() => handleNavClick("/dashboard")}
+                      className="text-white hover:bg-toca-background focus:bg-toca-background cursor-pointer"
+                    >
+                      Dashboard
+                    </DropdownMenuItem>
+                    <DropdownMenuItem 
+                      onClick={() => handleNavClick("/meu-perfil")}
+                      className="text-white hover:bg-toca-background focus:bg-toca-background cursor-pointer"
+                    >
+                      Meu Perfil
+                    </DropdownMenuItem>
+                    <DropdownMenuItem 
+                      onClick={() => handleNavClick("/configuracoes")}
+                      className="text-white hover:bg-toca-background focus:bg-toca-background cursor-pointer"
+                    >
+                      <Settings size={16} className="mr-2" />
+                      Configurações
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator className="bg-toca-border" />
+                    <DropdownMenuItem 
+                      onClick={handleLogout}
+                      className="text-red-400 hover:bg-toca-background focus:bg-toca-background cursor-pointer"
+                    >
+                      <LogOut size={16} className="mr-2" />
+                      Sair
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </>
             ) : (
-              <>
-                <Link
-                  to="/sobre"
-                  className="block px-4 py-2 text-toca-text-secondary hover:bg-toca-card"
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  Sobre
-                </Link>
-                <Link
-                  to="/login"
-                  className="block px-4 py-2 text-toca-text-secondary hover:bg-toca-card"
-                  onClick={() => setIsMenuOpen(false)}
+              <div className="flex items-center space-x-2">
+                <Button
+                  variant="ghost"
+                  className="text-white hover:text-toca-accent"
+                  onClick={() => handleNavClick("/login")}
                 >
                   Entrar
-                </Link>
-                <Link
-                  to="/cadastro"
-                  className="block px-4 py-3 bg-toca-accent text-white font-medium"
-                  onClick={() => setIsMenuOpen(false)}
+                </Button>
+                <Button
+                  className="bg-toca-accent hover:bg-toca-accent-hover text-white"
+                  onClick={() => handleNavClick("/register")}
                 >
                   Cadastrar
-                </Link>
+                </Button>
+              </div>
+            )}
+
+            {/* Mobile menu button */}
+            <div className="md:hidden">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={toggleMobileMenu}
+                className="text-white hover:text-toca-accent"
+              >
+                {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+              </Button>
+            </div>
+          </div>
+        </div>
+
+        {/* Mobile Navigation */}
+        {isMobileMenuOpen && (
+          <div className="md:hidden pb-4 space-y-2">
+            <Button
+              variant="ghost"
+              className={`w-full text-left justify-start text-white hover:text-toca-accent ${
+                isActivePath("/") ? "text-toca-accent" : ""
+              }`}
+              onClick={() => handleNavClick("/")}
+            >
+              Início
+            </Button>
+            <Button
+              variant="ghost"
+              className={`w-full text-left justify-start text-white hover:text-toca-accent ${
+                isActivePath("/eventos") ? "text-toca-accent" : ""
+              }`}
+              onClick={() => handleNavClick("/eventos")}
+            >
+              Eventos
+            </Button>
+            <Button
+              variant="ghost"
+              className={`w-full text-left justify-start text-white hover:text-toca-accent ${
+                isActivePath("/profissionais") ? "text-toca-accent" : ""
+              }`}
+              onClick={() => handleNavClick("/profissionais")}
+            >
+              Profissionais
+            </Button>
+            
+            {isAuthenticated && user && (
+              <>
+                <div className="border-t border-toca-border my-2"></div>
+                <Button
+                  variant="ghost"
+                  className="w-full text-left justify-start text-white hover:text-toca-accent"
+                  onClick={() => handleNavClick("/dashboard")}
+                >
+                  Dashboard
+                </Button>
+                <Button
+                  variant="ghost"
+                  className="w-full text-left justify-start text-white hover:text-toca-accent"
+                  onClick={() => handleNavClick("/meu-perfil")}
+                >
+                  Meu Perfil
+                </Button>
+                <Button
+                  variant="ghost"
+                  className="w-full text-left justify-start text-white hover:text-toca-accent flex items-center"
+                  onClick={() => handleNavClick("/notifications")}
+                >
+                  <Bell size={16} className="mr-2" />
+                  Notificações
+                  {unreadCount > 0 && (
+                    <Badge className="ml-2 bg-toca-accent hover:bg-toca-accent">
+                      {unreadCount > 99 ? "99+" : unreadCount}
+                    </Badge>
+                  )}
+                </Button>
+                <Button
+                  variant="ghost"
+                  className="w-full text-left justify-start text-red-400 hover:text-red-300"
+                  onClick={handleLogout}
+                >
+                  <LogOut size={16} className="mr-2" />
+                  Sair
+                </Button>
               </>
             )}
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </nav>
   );
 };

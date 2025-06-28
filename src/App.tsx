@@ -1,208 +1,135 @@
 
-import { useState, useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
-import NotFound from "./pages/NotFound";
 import AuthPage from "./pages/AuthPage";
 import Dashboard from "./pages/Dashboard";
-import ExploreProfessionals from "./pages/Explore/ExploreProfessionals";
-import ExploreEvents from "./pages/Explore/ExploreEvents";
-import EventDetail from "./pages/Events/EventDetail";
-import SplashScreen from "./components/SplashScreen";
-import About from "./pages/About";
+import MyProfile from "./pages/Profile/MyProfile";
 import EditProfile from "./pages/Profile/EditProfile";
 import ProfessionalProfile from "./pages/Profile/ProfessionalProfile";
-import MyProfile from "./pages/Profile/MyProfile";
 import CreateEvent from "./pages/Events/CreateEvent";
+import EventDetail from "./pages/Events/EventDetail";
+import ExploreEvents from "./pages/Explore/ExploreEvents";
+import ExploreProfessionals from "./pages/Explore/ExploreProfessionals";
 import MyApplications from "./pages/Professional/MyApplications";
-import Notifications from "./pages/Notifications";
-import Settings from "./pages/Settings";
 import BookProfessional from "./pages/Bookings/BookProfessional";
 import Checkout from "./pages/Checkout";
+import Notifications from "./pages/Notifications";
+import Settings from "./pages/Settings";
+import About from "./pages/About";
+import Contact from "./pages/Contact";
+import PasswordReset from "./pages/PasswordReset";
 import TermsOfUse from "./pages/TermsOfUse";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
-import Contact from "./pages/Contact";
-import { AuthProvider } from "./hooks/useAuth";
-import PasswordReset from "./pages/PasswordReset";
+import NotFound from "./pages/NotFound";
 import ProtectedRoute from "./components/ProtectedRoute";
+import NotificationManager from "./components/NotificationManager";
+import { useAuth } from "./hooks/useAuth";
 
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      // Prevent auto refetching which can cause issues during navigation
+      staleTime: 1000 * 60 * 5, // 5 minutes
+      gcTime: 1000 * 60 * 10, // 10 minutes
+      retry: (failureCount, error: any) => {
+        // Only retry on network errors, not on 4xx/5xx HTTP errors
+        if (error?.status >= 400 && error?.status < 600) {
+          return false;
+        }
+        return failureCount < 3;
+      },
       refetchOnWindowFocus: false,
-      // Prevent retry loop which can cause black screens
-      retry: 1,
-      // Add proper stale time to prevent unnecessary refetches
-      staleTime: 30000
+      refetchOnMount: true,
+      refetchOnReconnect: true
     },
-  },
+    mutations: {
+      retry: 1
+    }
+  }
 });
 
-const App = () => {
-  const [showSplash, setShowSplash] = useState(true);
-  const [isReady, setIsReady] = useState(false);
-
-  const handleSplashComplete = () => {
-    setShowSplash(false);
-    // Add a small delay before rendering the app to ensure smooth transition
-    setTimeout(() => setIsReady(true), 100);
-  };
-
-  if (showSplash) {
-    return <SplashScreen onComplete={handleSplashComplete} />;
-  }
-
-  if (!isReady) {
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-toca-background">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-toca-accent"></div>
-      </div>
-    );
-  }
-
+function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <Toaster />
         <Sonner />
         <BrowserRouter>
-          <AuthProvider>
-            <Routes>
-              <Route path="/" element={<Index />} />
-              
-              {/* Auth Routes */}
-              <Route path="/login" element={<AuthPage initialMode="login" />} />
-              <Route path="/cadastro" element={<AuthPage initialMode="register" />} />
-              <Route path="/recuperar-senha" element={<AuthPage initialMode="reset-password" />} />
-              <Route path="/reset-password" element={<PasswordReset />} />
-              
-              {/* Dashboard Routes */}
-              <Route 
-                path="/dashboard" 
-                element={
-                  <ProtectedRoute>
-                    <Dashboard />
-                  </ProtectedRoute>
-                }
-              />
-              
-              {/* Profile Routes */}
-              <Route 
-                path="/meu-perfil" 
-                element={
-                  <ProtectedRoute>
-                    <MyProfile />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route path="/perfil" element={<Navigate to="/meu-perfil" replace />} />
-              <Route 
-                path="/editar-perfil" 
-                element={
-                  <ProtectedRoute>
-                    <EditProfile />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route path="/perfil-profissional" element={<ProfessionalProfile />} />
-              <Route path="/profissional/:id" element={<ProfessionalProfile />} />
-              
-              {/* Explore Routes */}
-              <Route path="/explorar" element={<ExploreProfessionals />} />
-              <Route path="/eventos" element={<ExploreEvents />} />
-              <Route path="/eventos/:id" element={<EventDetail />} />
-              
-              {/* Event Routes */}
-              <Route 
-                path="/criar-evento" 
-                element={
-                  <ProtectedRoute>
-                    <CreateEvent />
-                  </ProtectedRoute>
-                } 
-              />
-              
-              {/* Professional Routes */}
-              <Route 
-                path="/minhas-candidaturas" 
-                element={
-                  <ProtectedRoute>
-                    <MyApplications />
-                  </ProtectedRoute>
-                } 
-              />
-              
-              {/* Booking Routes */}
-              <Route 
-                path="/reservar" 
-                element={
-                  <ProtectedRoute>
-                    <BookProfessional />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/reservar/:id" 
-                element={
-                  <ProtectedRoute>
-                    <BookProfessional />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/checkout" 
-                element={
-                  <ProtectedRoute>
-                    <Checkout />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/checkout/:id" 
-                element={
-                  <ProtectedRoute>
-                    <Checkout />
-                  </ProtectedRoute>
-                } 
-              />
-              
-              {/* Static Info Routes */}
-              <Route path="/sobre" element={<About />} />
-              <Route path="/termos" element={<TermsOfUse />} />
-              <Route path="/privacidade" element={<PrivacyPolicy />} />
-              <Route path="/contato" element={<Contact />} />
-              
-              {/* Utility Routes */}
-              <Route 
-                path="/notificacoes" 
-                element={
-                  <ProtectedRoute>
-                    <Notifications />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/configuracoes" 
-                element={
-                  <ProtectedRoute>
-                    <Settings />
-                  </ProtectedRoute>
-                } 
-              />
-              
-              {/* Catch-all route */}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </AuthProvider>
+          {/* Notification Manager - handles push notifications globally */}
+          <NotificationManager />
+          
+          <Routes>
+            {/* Public routes */}
+            <Route path="/" element={<Index />} />
+            <Route path="/login" element={<AuthPage />} />
+            <Route path="/register" element={<AuthPage />} />
+            <Route path="/eventos" element={<ExploreEvents />} />
+            <Route path="/eventos/:id" element={<EventDetail />} />
+            <Route path="/profissionais" element={<ExploreProfessionals />} />
+            <Route path="/perfil/:id" element={<ProfessionalProfile />} />
+            <Route path="/sobre" element={<About />} />
+            <Route path="/contato" element={<Contact />} />
+            <Route path="/redefinir-senha" element={<PasswordReset />} />
+            <Route path="/termos-de-uso" element={<TermsOfUse />} />
+            <Route path="/politica-de-privacidade" element={<PrivacyPolicy />} />
+
+            {/* Protected routes */}
+            <Route path="/dashboard" element={
+              <ProtectedRoute>
+                <Dashboard />
+              </ProtectedRoute>
+            } />
+            <Route path="/meu-perfil" element={
+              <ProtectedRoute>
+                <MyProfile />
+              </ProtectedRoute>
+            } />
+            <Route path="/editar-perfil" element={
+              <ProtectedRoute>
+                <EditProfile />
+              </ProtectedRoute>
+            } />
+            <Route path="/criar-evento" element={
+              <ProtectedRoute>
+                <CreateEvent />
+              </ProtectedRoute>
+            } />
+            <Route path="/minhas-candidaturas" element={
+              <ProtectedRoute>
+                <MyApplications />
+              </ProtectedRoute>
+            } />
+            <Route path="/contratar/:id" element={
+              <ProtectedRoute>
+                <BookProfessional />
+              </ProtectedRoute>
+            } />
+            <Route path="/checkout" element={
+              <ProtectedRoute>
+                <Checkout />
+              </ProtectedRoute>
+            } />
+            <Route path="/notifications" element={
+              <ProtectedRoute>
+                <Notifications />
+              </ProtectedRoute>
+            } />
+            <Route path="/configuracoes" element={
+              <ProtectedRoute>
+                <Settings />
+              </ProtectedRoute>
+            } />
+
+            {/* 404 route */}
+            <Route path="*" element={<NotFound />} />
+          </Routes>
         </BrowserRouter>
       </TooltipProvider>
     </QueryClientProvider>
   );
-};
+}
 
 export default App;
