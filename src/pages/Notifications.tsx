@@ -34,13 +34,13 @@ const Notifications = () => {
       try {
         setIsLoading(true);
         
-        // Fetch real notifications from Supabase
+        // Fetch real notifications from Supabase - only for current user
         const fetchedNotifications = await fetchRealNotifications(user.id);
-        console.log("Fetched notifications:", fetchedNotifications);
+        console.log("Fetched real notifications for user:", user.id, fetchedNotifications);
         setNotifications(fetchedNotifications);
         
       } catch (err) {
-        console.error("Erro ao buscar notificações:", err);
+        console.error("Erro ao buscar notificações reais:", err);
         setError("Não foi possível carregar suas notificações.");
       } finally {
         setIsLoading(false);
