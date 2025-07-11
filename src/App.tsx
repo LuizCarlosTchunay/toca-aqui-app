@@ -36,7 +36,7 @@ const queryClient = new QueryClient({
       // Prevent auto refetching which can cause issues during navigation
       refetchOnWindowFocus: false,
       // Prevent retry loop which can cause black screens
-      retry: 1,
+      retry: 3,
       // Add proper stale time to prevent unnecessary refetches
       staleTime: 30000
     },
