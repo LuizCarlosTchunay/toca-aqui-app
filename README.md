@@ -1,73 +1,161 @@
-# Welcome to your Lovable project
+# Toca Aqui - React Native App
 
-## Project info
+Uma aplicação React Native para conectar contratantes e profissionais do audiovisual.
 
-**URL**: https://lovable.dev/projects/b9105378-c2d8-4d1b-ab46-3630a9c6e72e
+## 🚀 Tecnologias Utilizadas
 
-## How can I edit this code?
+- **React Native 0.73.2** - Framework principal
+- **TypeScript** - Tipagem estática
+- **React Navigation 6** - Navegação entre telas
+- **Supabase** - Backend e autenticação
+- **React Query** - Gerenciamento de estado e cache
+- **React Native Reanimated** - Animações performáticas
+- **React Native Gesture Handler** - Gestos nativos
+- **React Native Vector Icons** - Ícones
+- **AsyncStorage** - Armazenamento local
 
-There are several ways of editing your application.
+## 📱 Funcionalidades Implementadas
 
-**Use Lovable**
+### ✅ Primeira Fase (Concluída)
+- [x] Configuração inicial do projeto React Native
+- [x] Estrutura de navegação com React Navigation
+- [x] Sistema de autenticação com Supabase
+- [x] Tela de Splash Screen animada
+- [x] Tela inicial (Index) com design responsivo
+- [x] Tela de autenticação (Login/Registro/Recuperação)
+- [x] Dashboard básico com alternância de perfis
+- [x] Sistema de temas e cores consistente
+- [x] Componentes UI reutilizáveis (Button, Input, Card)
+- [x] Integração com AsyncStorage para persistência
+- [x] Toast notifications para feedback do usuário
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/b9105378-c2d8-4d1b-ab46-3630a9c6e72e) and start prompting.
+### 🔄 Próximas Fases
+- [ ] Tela de exploração de profissionais
+- [ ] Tela de eventos
+- [ ] Perfil do usuário e edição
+- [ ] Sistema de notificações
+- [ ] Configurações do app
+- [ ] Upload de imagens
+- [ ] Sistema de reservas
+- [ ] Pagamentos
+- [ ] Chat entre usuários
 
-Changes made via Lovable will be committed automatically to this repo.
+## 🛠️ Configuração do Ambiente
 
-**Use your preferred IDE**
+### Pré-requisitos
+- Node.js 18+
+- React Native CLI
+- Android Studio (para Android)
+- Xcode (para iOS)
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+### Instalação
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
-
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+1. **Clone o repositório**
+```bash
+git clone <repository-url>
+cd toca-aqui-mobile
 ```
 
-**Edit a file directly in GitHub**
+2. **Instale as dependências**
+```bash
+npm install
+```
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+3. **Configure o ambiente iOS (apenas macOS)**
+```bash
+cd ios && pod install && cd ..
+```
 
-**Use GitHub Codespaces**
+4. **Execute o projeto**
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+Para Android:
+```bash
+npm run android
+```
 
-## What technologies are used for this project?
+Para iOS:
+```bash
+npm run ios
+```
 
-This project is built with:
+Para iniciar o Metro bundler:
+```bash
+npm start
+```
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+## 📁 Estrutura do Projeto
 
-## How can I deploy this project?
+```
+src/
+├── components/          # Componentes reutilizáveis
+│   └── ui/             # Componentes de interface
+├── contexts/           # Contextos React
+├── hooks/              # Hooks customizados
+├── lib/                # Configurações e utilitários
+├── screens/            # Telas da aplicação
+├── styles/             # Estilos e temas
+└── App.tsx             # Componente principal
+```
 
-Simply open [Lovable](https://lovable.dev/projects/b9105378-c2d8-4d1b-ab46-3630a9c6e72e) and click on Share -> Publish.
+## 🎨 Design System
 
-## Can I connect a custom domain to my Lovable project?
+### Cores
+- **Background**: #0A0A0A (Preto profundo)
+- **Card**: #1A1A1A (Cinza escuro)
+- **Accent**: #ea384c (Vermelho Toca Aqui)
+- **Text Primary**: #FFFFFF (Branco)
+- **Text Secondary**: #AAAAAA (Cinza claro)
 
-Yes, you can!
+### Espaçamentos
+- **xs**: 4px
+- **sm**: 8px
+- **md**: 16px
+- **lg**: 24px
+- **xl**: 32px
+- **xxl**: 48px
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+## 🔐 Autenticação
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+O app utiliza Supabase para autenticação, oferecendo:
+- Login com email/senha
+- Registro de novos usuários
+- Recuperação de senha
+- Persistência de sessão
+- Alternância entre perfis (Contratante/Profissional)
+
+## 📱 Compatibilidade
+
+- **iOS**: 12.0+
+- **Android**: API 21+ (Android 5.0)
+
+## 🚀 Build para Produção
+
+### Android
+```bash
+npm run build:android
+```
+
+### iOS
+```bash
+npm run build:ios
+```
+
+## 🤝 Contribuição
+
+1. Faça um fork do projeto
+2. Crie uma branch para sua feature (`git checkout -b feature/AmazingFeature`)
+3. Commit suas mudanças (`git commit -m 'Add some AmazingFeature'`)
+4. Push para a branch (`git push origin feature/AmazingFeature`)
+5. Abra um Pull Request
+
+## 📄 Licença
+
+Este projeto está sob a licença MIT. Veja o arquivo `LICENSE` para mais detalhes.
+
+## 📞 Suporte
+
+Para suporte, entre em contato através do email: contato@tocaaqui.app.br
+
+---
+
+**Toca Aqui** - Conectando talentos do audiovisual 🎵

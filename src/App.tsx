@@ -1,207 +1,94 @@
+import React from 'react';
+import {StatusBar} from 'react-native';
+import {NavigationContainer} from '@react-navigation/native';
+import {createStackNavigator} from '@react-navigation/stack';
+import {QueryClient, QueryClientProvider} from '@tanstack/react-query';
+import {GestureHandlerRootView} from 'react-native-gesture-handler';
+import {SafeAreaProvider} from 'react-native-safe-area-context';
+import Toast from 'react-native-toast-message';
 
-import { useState, useEffect } from "react";
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import Index from "./pages/Index";
-import NotFound from "./pages/NotFound";
-import AuthPage from "./pages/AuthPage";
-import Dashboard from "./pages/Dashboard";
-import ExploreProfessionals from "./pages/Explore/ExploreProfessionals";
-import ExploreEvents from "./pages/Explore/ExploreEvents";
-import EventDetail from "./pages/Events/EventDetail";
-import SplashScreen from "./components/SplashScreen";
-import About from "./pages/About";
-import EditProfile from "./pages/Profile/EditProfile";
-import ProfessionalProfile from "./pages/Profile/ProfessionalProfile";
-import MyProfile from "./pages/Profile/MyProfile";
-import CreateEvent from "./pages/Events/CreateEvent";
-import MyApplications from "./pages/Professional/MyApplications";
-import Notifications from "./pages/Notifications";
-import Settings from "./pages/Settings";
-import BookProfessional from "./pages/Bookings/BookProfessional";
-import Checkout from "./pages/Checkout";
-import TermsOfUse from "./pages/TermsOfUse";
-import PrivacyPolicy from "./pages/PrivacyPolicy";
-import Contact from "./pages/Contact";
-import { AuthProvider } from "./hooks/useAuth";
-import PasswordReset from "./pages/PasswordReset";
-import ProtectedRoute from "./components/ProtectedRoute";
+// Screens
+import SplashScreen from './screens/SplashScreen';
+import IndexScreen from './screens/IndexScreen';
+import AuthScreen from './screens/AuthScreen';
+import DashboardScreen from './screens/DashboardScreen';
+import ExploreScreen from './screens/ExploreScreen';
+import EventsScreen from './screens/EventsScreen';
+import ProfileScreen from './screens/ProfileScreen';
+import EditProfileScreen from './screens/EditProfileScreen';
+import CreateEventScreen from './screens/CreateEventScreen';
+import NotificationsScreen from './screens/NotificationsScreen';
+import SettingsScreen from './screens/SettingsScreen';
+
+// Providers
+import {AuthProvider} from './hooks/useAuth';
+import {ThemeProvider} from './contexts/ThemeContext';
+
+// Types
+export type RootStackParamList = {
+  Splash: undefined;
+  Index: undefined;
+  Auth: {mode?: 'login' | 'register' | 'reset-password'};
+  Dashboard: undefined;
+  Explore: undefined;
+  Events: undefined;
+  Profile: {id?: string};
+  EditProfile: undefined;
+  CreateEvent: undefined;
+  Notifications: undefined;
+  Settings: undefined;
+};
+
+const Stack = createStackNavigator<RootStackParamList>();
 
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      // Prevent auto refetching which can cause issues during navigation
       refetchOnWindowFocus: false,
-      // Prevent retry loop which can cause black screens
       retry: 3,
-      // Add proper stale time to prevent unnecessary refetches
-      staleTime: 30000
+      staleTime: 30000,
     },
   },
 });
 
 const App = () => {
-  const [showSplash, setShowSplash] = useState(true);
-  const [isReady, setIsReady] = useState(false);
-
-  const handleSplashComplete = () => {
-    setShowSplash(false);
-    // Add a small delay before rendering the app to ensure smooth transition
-    setTimeout(() => setIsReady(true), 100);
-  };
-
-  if (showSplash) {
-    return <SplashScreen onComplete={handleSplashComplete} />;
-  }
-
-  if (!isReady) {
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-toca-background">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-toca-accent"></div>
-      </div>
-    );
-  }
-
   return (
-    <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <AuthProvider>
-            <Routes>
-              <Route path="/" element={<Index />} />
-              
-              {/* Auth Routes */}
-              <Route path="/login" element={<AuthPage initialMode="login" />} />
-              <Route path="/cadastro" element={<AuthPage initialMode="register" />} />
-              <Route path="/recuperar-senha" element={<AuthPage initialMode="reset-password" />} />
-              <Route path="/reset-password" element={<PasswordReset />} />
-              
-              {/* Dashboard Routes */}
-              <Route 
-                path="/dashboard" 
-                element={
-                  <ProtectedRoute>
-                    <Dashboard />
-                  </ProtectedRoute>
-                }
-              />
-              
-              {/* Profile Routes */}
-              <Route 
-                path="/meu-perfil" 
-                element={
-                  <ProtectedRoute>
-                    <MyProfile />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route path="/perfil" element={<Navigate to="/meu-perfil" replace />} />
-              <Route 
-                path="/editar-perfil" 
-                element={
-                  <ProtectedRoute>
-                    <EditProfile />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route path="/perfil-profissional" element={<ProfessionalProfile />} />
-              <Route path="/profissional/:id" element={<ProfessionalProfile />} />
-              
-              {/* Explore Routes */}
-              <Route path="/explorar" element={<ExploreProfessionals />} />
-              <Route path="/eventos" element={<ExploreEvents />} />
-              <Route path="/eventos/:id" element={<EventDetail />} />
-              
-              {/* Event Routes */}
-              <Route 
-                path="/criar-evento" 
-                element={
-                  <ProtectedRoute>
-                    <CreateEvent />
-                  </ProtectedRoute>
-                } 
-              />
-              
-              {/* Professional Routes */}
-              <Route 
-                path="/minhas-candidaturas" 
-                element={
-                  <ProtectedRoute>
-                    <MyApplications />
-                  </ProtectedRoute>
-                } 
-              />
-              
-              {/* Booking Routes */}
-              <Route 
-                path="/reservar" 
-                element={
-                  <ProtectedRoute>
-                    <BookProfessional />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/reservar/:id" 
-                element={
-                  <ProtectedRoute>
-                    <BookProfessional />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/checkout" 
-                element={
-                  <ProtectedRoute>
-                    <Checkout />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/checkout/:id" 
-                element={
-                  <ProtectedRoute>
-                    <Checkout />
-                  </ProtectedRoute>
-                } 
-              />
-              
-              {/* Static Info Routes */}
-              <Route path="/sobre" element={<About />} />
-              <Route path="/termos" element={<TermsOfUse />} />
-              <Route path="/privacidade" element={<PrivacyPolicy />} />
-              <Route path="/contato" element={<Contact />} />
-              
-              {/* Utility Routes */}
-              <Route 
-                path="/notificacoes" 
-                element={
-                  <ProtectedRoute>
-                    <Notifications />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/configuracoes" 
-                element={
-                  <ProtectedRoute>
-                    <Settings />
-                  </ProtectedRoute>
-                } 
-              />
-              
-              {/* Catch-all route */}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </AuthProvider>
-        </BrowserRouter>
-      </TooltipProvider>
-    </QueryClientProvider>
+    <GestureHandlerRootView style={{flex: 1}}>
+      <SafeAreaProvider>
+        <QueryClientProvider client={queryClient}>
+          <ThemeProvider>
+            <AuthProvider>
+              <NavigationContainer>
+                <StatusBar
+                  barStyle="light-content"
+                  backgroundColor="#0A0A0A"
+                  translucent
+                />
+                <Stack.Navigator
+                  initialRouteName="Splash"
+                  screenOptions={{
+                    headerShown: false,
+                    cardStyle: {backgroundColor: '#0A0A0A'},
+                  }}>
+                  <Stack.Screen name="Splash" component={SplashScreen} />
+                  <Stack.Screen name="Index" component={IndexScreen} />
+                  <Stack.Screen name="Auth" component={AuthScreen} />
+                  <Stack.Screen name="Dashboard" component={DashboardScreen} />
+                  <Stack.Screen name="Explore" component={ExploreScreen} />
+                  <Stack.Screen name="Events" component={EventsScreen} />
+                  <Stack.Screen name="Profile" component={ProfileScreen} />
+                  <Stack.Screen name="EditProfile" component={EditProfileScreen} />
+                  <Stack.Screen name="CreateEvent" component={CreateEventScreen} />
+                  <Stack.Screen name="Notifications" component={NotificationsScreen} />
+                  <Stack.Screen name="Settings" component={SettingsScreen} />
+                </Stack.Navigator>
+              </NavigationContainer>
+              <Toast />
+            </AuthProvider>
+          </ThemeProvider>
+        </QueryClientProvider>
+      </SafeAreaProvider>
+    </GestureHandlerRootView>
   );
 };
 
