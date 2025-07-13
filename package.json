@@ -3,13 +3,13 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "android": "react-native run-android",
-    "ios": "react-native run-ios",
-    "start": "react-native start",
+    "android": "bash -c \"react-native run-android\"",
+    "ios": "bash -c \"react-native run-ios\"",
+    "start": "bash -c \"react-native start\"",
     "test": "jest",
     "lint": "eslint .",
-    "build:android": "cd android && ./gradlew assembleRelease",
-    "build:ios": "cd ios && xcodebuild -workspace TocaAqui.xcworkspace -scheme TocaAqui -configuration Release -destination generic/platform=iOS -archivePath TocaAqui.xcarchive archive"
+    "build:android": "bash -c \"cd android && ./gradlew assembleRelease\"",
+    "build:ios": "bash -c \"cd ios && xcodebuild -workspace TocaAqui.xcworkspace -scheme TocaAqui -configuration Release -destination generic/platform=iOS -archivePath TocaAqui.xcarchive archive\""
   },
   "dependencies": {
     "@react-native-async-storage/async-storage": "^1.21.0",
