@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
+    "dev": "vite",
     "android": "SHELL=/bin/bash bash -c \"react-native run-android\"",
     "ios": "SHELL=/bin/bash bash -c \"react-native run-ios\"",
     "start": "SHELL=/bin/bash bash -c \"react-native start\"",
@@ -57,7 +58,8 @@
     "metro-react-native-babel-preset": "0.77.0",
     "prettier": "^2.8.8",
     "react-test-renderer": "18.2.0",
-    "typescript": "^5.0.4"
+    "typescript": "^5.0.4",
+    "vite": "^5.0.0"
   },
   "engines": {
     "node": ">=18"
