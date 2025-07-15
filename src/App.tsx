@@ -1,29 +1,39 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { Toaster } from 'sonner';
-import { AuthProvider } from '@/contexts/AuthContext';
-import { ThemeProvider } from '@/contexts/ThemeContext';
-import { PWAProvider } from '@/contexts/PWAContext';
-import { useAuth } from '@/hooks/useAuth';
-import { usePWA } from '@/hooks/usePWA';
+import {NavigationContainer} from '@react-navigation/native';
+import {createStackNavigator} from '@react-navigation/stack';
+import {QueryClient, QueryClientProvider} from '@tanstack/react-query';
+import Toast from 'react-native-toast-message';
+import {AuthProvider} from './contexts/AuthContext';
+import {ThemeProvider} from './contexts/ThemeContext';
 
-// Pages
-import Index from '@/pages/Index';
-import Auth from '@/pages/Auth';
-import Dashboard from '@/pages/Dashboard';
-import Explore from '@/pages/Explore';
-import Events from '@/pages/Events';
-import Profile from '@/pages/Profile';
-import EditProfile from '@/pages/EditProfile';
-import CreateEvent from '@/pages/CreateEvent';
-import Notifications from '@/pages/Notifications';
-import Settings from '@/pages/Settings';
+// Screens
+import SplashScreen from './screens/SplashScreen';
+import IndexScreen from './screens/IndexScreen';
+import AuthScreen from './screens/AuthScreen';
+import DashboardScreen from './screens/DashboardScreen';
+import ExploreScreen from './screens/ExploreScreen';
+import EventsScreen from './screens/EventsScreen';
+import ProfileScreen from './screens/ProfileScreen';
+import EditProfileScreen from './screens/EditProfileScreen';
+import CreateEventScreen from './screens/CreateEventScreen';
+import NotificationsScreen from './screens/NotificationsScreen';
+import SettingsScreen from './screens/SettingsScreen';
 
-// Components
-import Navbar from '@/components/Navbar';
-import LoadingSpinner from '@/components/LoadingSpinner';
-import PWAInstallPrompt from '@/components/PWAInstallPrompt';
+export type RootStackParamList = {
+  Splash: undefined;
+  Index: undefined;
+  Auth: {mode?: 'login' | 'register' | 'reset-password'};
+  Dashboard: undefined;
+  Explore: undefined;
+  Events: undefined;
+  Profile: {id?: string};
+  EditProfile: undefined;
+  CreateEvent: undefined;
+  Notifications: undefined;
+  Settings: undefined;
+};
+
+const Stack = createStackNavigator<RootStackParamList>();
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -35,148 +45,47 @@ const queryClient = new QueryClient({
   },
 });
 
-function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { user, loading } = useAuth();
-
-  if (loading) {
-    return <LoadingSpinner />;
-  }
-
-  if (!user) {
-    return <Navigate to="/auth" replace />;
-  }
-
-  return <>{children}</>;
-}
-
-function PublicRoute({ children }: { children: React.ReactNode }) {
-  const { user, loading } = useAuth();
-
-  if (loading) {
-    return <LoadingSpinner />;
-  }
-
-  if (user) {
-    return <Navigate to="/dashboard" replace />;
-  }
-
-  return <>{children}</>;
-}
-
-function AppContent() {
-  const { user } = useAuth();
-  const { isInstallable } = usePWA();
-
-  return (
-    <div className="min-h-screen bg-toca-background text-toca-text-primary">
-      {user && <Navbar />}
-      
-      <main className={user ? 'pt-16' : ''}>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          <Route 
-            path="/auth" 
-            element={
-              <PublicRoute>
-                <Auth />
-              </PublicRoute>
-            } 
-          />
-          <Route 
-            path="/dashboard" 
-            element={
-              <ProtectedRoute>
-                <Dashboard />
-              </ProtectedRoute>
-            } 
-          />
-          <Route 
-            path="/explore" 
-            element={
-              <ProtectedRoute>
-                <Explore />
-              </ProtectedRoute>
-            } 
-          />
-          <Route 
-            path="/events" 
-            element={
-              <ProtectedRoute>
-                <Events />
-              </ProtectedRoute>
-            } 
-          />
-          <Route 
-            path="/profile/:id?" 
-            element={
-              <ProtectedRoute>
-                <Profile />
-              </ProtectedRoute>
-            } 
-          />
-          <Route 
-            path="/edit-profile" 
-            element={
-              <ProtectedRoute>
-                <EditProfile />
-              </ProtectedRoute>
-            } 
-          />
-          <Route 
-            path="/create-event" 
-            element={
-              <ProtectedRoute>
-                <CreateEvent />
-              </ProtectedRoute>
-            } 
-          />
-          <Route 
-            path="/notifications" 
-            element={
-              <ProtectedRoute>
-                <Notifications />
-              </ProtectedRoute>
-            } 
-          />
-          <Route 
-            path="/settings" 
-            element={
-              <ProtectedRoute>
-                <Settings />
-              </ProtectedRoute>
-            } 
-          />
-        </Routes>
-      </main>
-
-      {isInstallable && <PWAInstallPrompt />}
-      
-      <Toaster 
-        theme="dark"
-        position="top-right"
-        toastOptions={{
-          style: {
-            background: 'hsl(var(--card))',
-            color: 'hsl(var(--card-foreground))',
-            border: '1px solid hsl(var(--border))',
-          },
-        }}
-      />
-    </div>
-  );
-}
-
-function App() {
+function App(): React.JSX.Element {
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
-        <PWAProvider>
-          <AuthProvider>
-            <Router>
-              <AppContent />
-            </Router>
-          </AuthProvider>
-        </PWAProvider>
+        <AuthProvider>
+          <NavigationContainer>
+            <Stack.Navigator
+              initialRouteName="Splash"
+              screenOptions={{
+                headerShown: false,
+                gestureEnabled: true,
+                cardStyleInterpolator: ({current, layouts}) => {
+                  return {
+                    cardStyle: {
+                      transform: [
+                        {
+                          translateX: current.progress.interpolate({
+                            inputRange: [0, 1],
+                            outputRange: [layouts.screen.width, 0],
+                          }),
+                        },
+                      ],
+                    },
+                  };
+                },
+              }}>
+              <Stack.Screen name="Splash" component={SplashScreen} />
+              <Stack.Screen name="Index" component={IndexScreen} />
+              <Stack.Screen name="Auth" component={AuthScreen} />
+              <Stack.Screen name="Dashboard" component={DashboardScreen} />
+              <Stack.Screen name="Explore" component={ExploreScreen} />
+              <Stack.Screen name="Events" component={EventsScreen} />
+              <Stack.Screen name="Profile" component={ProfileScreen} />
+              <Stack.Screen name="EditProfile" component={EditProfileScreen} />
+              <Stack.Screen name="CreateEvent" component={CreateEventScreen} />
+              <Stack.Screen name="Notifications" component={NotificationsScreen} />
+              <Stack.Screen name="Settings" component={SettingsScreen} />
+            </Stack.Navigator>
+          </NavigationContainer>
+          <Toast />
+        </AuthProvider>
       </ThemeProvider>
     </QueryClientProvider>
   );

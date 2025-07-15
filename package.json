@@ -3,7 +3,6 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "dev": "vite",
     "android": "SHELL=/bin/bash bash -c \"react-native run-android\"",
     "ios": "SHELL=/bin/bash bash -c \"react-native run-ios\"",
     "start": "SHELL=/bin/bash bash -c \"react-native start\"",
@@ -21,7 +20,6 @@
     "@supabase/supabase-js": "^2.50.2",
     "@tanstack/react-query": "^5.56.2",
     "react": "18.2.0",
-    "react-dom": "18.2.0",
     "react-native": "0.73.2",
     "react-native-safe-area-context": "^4.8.2",
     "react-native-screens": "^3.29.0",
@@ -38,10 +36,7 @@
     "react-native-date-picker": "^4.4.2",
     "react-native-webview": "^13.6.4",
     "react-hook-form": "^7.53.0",
-    "date-fns": "^3.6.0",
-    "react-router-dom": "^6.28.0",
-    "sonner": "^1.7.1",
-    "lucide-react": "^0.468.0"
+    "date-fns": "^3.6.0"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0",
@@ -58,8 +53,7 @@
     "metro-react-native-babel-preset": "0.77.0",
     "prettier": "^2.8.8",
     "react-test-renderer": "18.2.0",
-    "typescript": "^5.0.4",
-    "vite": "^5.0.0"
+    "typescript": "^5.0.4"
   },
   "engines": {
     "node": ">=18"
