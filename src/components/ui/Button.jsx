@@ -1,18 +1,7 @@
 
 import React from 'react';
 
-interface ButtonProps {
-  title?: string;
-  children?: React.ReactNode;
-  onPress?: () => void;
-  variant?: 'primary' | 'secondary' | 'outline' | 'ghost';
-  size?: 'sm' | 'md' | 'lg';
-  disabled?: boolean;
-  className?: string;
-  textClassName?: string;
-}
-
-export const Button: React.FC<ButtonProps> = ({
+export const Button = ({
   title,
   children,
   onPress,

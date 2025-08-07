@@ -1,13 +1,7 @@
 
 import React from 'react';
 
-interface CardProps {
-  children: React.ReactNode;
-  className?: string;
-  padding?: boolean;
-}
-
-export const Card: React.FC<CardProps> = ({ 
+export const Card = ({ 
   children, 
   className = '',
   padding = true 

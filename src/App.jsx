@@ -29,7 +29,7 @@ const queryClient = new QueryClient({
   },
 });
 
-function App(): React.JSX.Element {
+function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
