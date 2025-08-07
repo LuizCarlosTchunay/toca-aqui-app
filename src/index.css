@@ -1,0 +1,67 @@
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* Toca Aqui brand colors */
+  --background: 10 10 10;
+  --card: 26 26 26;
+  --accent: 349 84 66;
+  --accent-hover: 352 90 71;
+  --border: 210 40 20;
+  
+  /* Text colors */
+  --text-primary: 0 0 100;
+  --text-secondary: 0 0 67;
+  --text-muted: 0 0 40;
+  
+  /* Status colors */
+  --success: 142 76 36;
+  --warning: 38 92 50;
+  --error: 0 84 60;
+  --info: 221 83 53;
+  
+  /* Overlays */
+  --overlay: 0 0 0 / 0.5;
+  --overlay-light: 0 0 0 / 0.3;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Inter', sans-serif;
+  background-color: hsl(var(--background));
+  color: hsl(var(--text-primary));
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+/* Scrollbar styles */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: hsl(var(--background));
+}
+
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--border));
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--text-muted));
+}
