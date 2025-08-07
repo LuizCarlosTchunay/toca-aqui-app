@@ -22,6 +22,7 @@
     "@types/react-router-dom": "^5.3.3",
     "@vitejs/plugin-react": "^5.0.0",
     "date-fns": "^3.6.0",
+    "lovable-tagger": "^1.1.9",
     "react": "18.2.0",
     "react-hook-form": "^7.53.0",
     "react-native": "0.73.2",
